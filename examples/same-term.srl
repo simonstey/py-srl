@@ -1,0 +1,17 @@
+PREFIX : <http://example.org/>
+
+# Find exact matches (same term, not just same value)
+RULE { ?a :exactMatch ?b } WHERE {
+    ?a :code ?codeA .
+    ?b :code ?codeB .
+    FILTER(SAMETERM(?codeA, ?codeB))
+    FILTER(?a != ?b)
+}
+
+# Detect duplicate references
+RULE { ?x :duplicateRef ?y } WHERE {
+    ?x :references ?ref1 .
+    ?y :references ?ref2 .
+    FILTER(SAMETERM(?ref1, ?ref2))
+    FILTER(?x != ?y)
+}

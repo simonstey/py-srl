@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:john :email "john.doe@example.org" .
+:jane :email "jane@company.com" .
+:bob :email "bob123@mail.net" .

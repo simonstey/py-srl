@@ -1,0 +1,13 @@
+PREFIX : <http://example.org/>
+
+# Find active statuses (not terminated or suspended)
+RULE { ?account :isActive true } WHERE {
+    ?account :status ?s .
+    FILTER(?s NOT IN ("terminated", "suspended", "closed"))
+}
+
+# Find non-weekend days
+RULE { ?event :isWeekday true } WHERE {
+    ?event :dayOfWeek ?day .
+    FILTER(?day NOT IN ("Saturday", "Sunday"))
+}

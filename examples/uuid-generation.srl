@@ -1,0 +1,14 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Generate UUID as IRI for new resources
+RULE { ?order :transactionId ?txId } WHERE {
+    ?order rdf:type :Order .
+    BIND(UUID() AS ?txId)
+}
+
+# Generate UUID as string for identifiers
+RULE { ?user :sessionToken ?token } WHERE {
+    ?user rdf:type :User .
+    BIND(STRUUID() AS ?token)
+}

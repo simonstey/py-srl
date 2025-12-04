@@ -1,0 +1,11 @@
+PREFIX : <http://example.org/>
+
+# Find all ancestors (one or more steps with +)
+RULE { ?person :ancestor ?anc } WHERE {
+    ?person :parentOf+ ?anc
+}
+
+# Find all reachable nodes (zero or more steps with *)
+RULE { ?start :reachable ?end } WHERE {
+    ?start :connectedTo* ?end
+}

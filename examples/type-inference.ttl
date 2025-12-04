@@ -1,0 +1,4 @@
+@prefix : <http://example.org/> .
+
+:john :name "John Doe" .
+:jane :teaches :Math101 .

@@ -1,0 +1,9 @@
+@prefix : <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+:john rdf:type :Person ;
+    :email "john@example.org" .
+    
+:jane rdf:type :Person ;
+    :email "jane@work.com" ;
+    :email "jane@home.com" .

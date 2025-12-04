@@ -1,0 +1,18 @@
+PREFIX : <http://example.org/>
+
+# Generate various hashes of a value
+RULE { ?item :md5Hash ?hash } WHERE {
+    ?item :identifier ?id .
+    BIND(MD5(?id) AS ?hash)
+}
+
+RULE { ?item :sha256Hash ?hash } WHERE {
+    ?item :identifier ?id .
+    BIND(SHA256(?id) AS ?hash)
+}
+
+# Create content fingerprint
+RULE { ?doc :fingerprint ?fp } WHERE {
+    ?doc :content ?content .
+    BIND(SHA1(?content) AS ?fp)
+}

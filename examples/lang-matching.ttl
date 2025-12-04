@@ -1,0 +1,6 @@
+@prefix : <http://example.org/> .
+
+:item1 :label "Hello"@en ; :label "Hallo"@de .
+:item2 :label "Bonjour"@fr .
+:doc1 :description "Ein Dokument"@de .
+:doc2 :description "A document"@en .

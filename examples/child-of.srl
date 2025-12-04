@@ -1,0 +1,7 @@
+PREFIX : <http://example.org/>
+
+# A person is a child of their father
+RULE { ?x :childOf ?y } WHERE { ?y :fatherOf ?x }
+
+# A person is a child of their mother
+RULE { ?x :childOf ?y } WHERE { ?y :motherOf ?x }

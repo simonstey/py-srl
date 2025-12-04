@@ -1,0 +1,11 @@
+PREFIX : <http://example.org/>
+
+# Find any contact info (email OR phone OR address)
+RULE { ?person :hasContact ?contact } WHERE {
+    ?person (:email|:phone|:address) ?contact
+}
+
+# Find any parent (mother OR father)
+RULE { ?child :parent ?p } WHERE {
+    ?child (:motherOf|:fatherOf) ?p
+}

@@ -1,0 +1,11 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Default name from given name + family name
+RULE { ?x :fullName ?FN } WHERE {
+    ?x rdf:type :Person .
+    NOT { ?x :fullName ?existingName }
+    ?x :givenName ?gn ;
+       :familyName ?fn .
+    BIND(CONCAT(?gn, " ", ?fn) AS ?FN)
+}

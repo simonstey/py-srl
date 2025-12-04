@@ -1,0 +1,12 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Find all non-type relationships
+RULE { ?s :hasRelation ?o } WHERE {
+    ?s !rdf:type ?o
+}
+
+# Find connections that are not parent or child
+RULE { ?a :otherConnection ?b } WHERE {
+    ?a !(:parentOf|:childOf) ?b
+}

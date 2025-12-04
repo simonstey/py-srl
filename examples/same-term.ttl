@@ -1,0 +1,9 @@
+@prefix : <http://example.org/> .
+
+:item1 :code "ABC123" .
+:item2 :code "ABC123" .
+:item3 :code "XYZ789" .
+
+:doc1 :references :refA .
+:doc2 :references :refA .
+:doc3 :references :refB .

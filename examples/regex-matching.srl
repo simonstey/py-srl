@@ -1,0 +1,19 @@
+PREFIX : <http://example.org/>
+
+# Find valid email addresses
+RULE { ?person :hasValidEmail true } WHERE {
+    ?person :email ?email .
+    FILTER(REGEX(?email, "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$"))
+}
+
+# Find US phone numbers
+RULE { ?person :hasUSPhone true } WHERE {
+    ?person :phone ?phone .
+    FILTER(REGEX(?phone, "^\\\\+1-[0-9]{3}-[0-9]{4}$"))
+}
+
+# Case-insensitive search
+RULE { ?doc :mentionsJava true } WHERE {
+    ?doc :content ?text .
+    FILTER(REGEX(?text, "java", "i"))
+}

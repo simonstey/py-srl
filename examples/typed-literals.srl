@@ -1,0 +1,14 @@
+PREFIX : <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Create typed integer from string
+RULE { ?item :quantityInt ?qty } WHERE {
+    ?item :quantityStr ?qStr .
+    BIND(STRDT(?qStr, xsd:integer) AS ?qty)
+}
+
+# Add language tag to label
+RULE { ?item :labelEn ?label } WHERE {
+    ?item :rawLabel ?raw .
+    BIND(STRLANG(?raw, "en") AS ?label)
+}

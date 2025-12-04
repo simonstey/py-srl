@@ -1,0 +1,10 @@
+@prefix : <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+:alice rdf:type :Person ; :parentOf :bob .
+:carol rdf:type :Person .
+:dave rdf:type :Person .
+
+:laptop rdf:type :Product .
+:phone rdf:type :Product .
+:order1 :contains :laptop .

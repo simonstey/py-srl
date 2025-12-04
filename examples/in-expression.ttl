@@ -1,0 +1,9 @@
+@prefix : <http://example.org/> .
+
+:john :department "Engineering" .
+:jane :department "Marketing" .
+:bob :department "Product" .
+
+:order1 :status "urgent" .
+:order2 :status "normal" .
+:order3 :status "critical" .

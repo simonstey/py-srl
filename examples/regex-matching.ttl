@@ -1,0 +1,6 @@
+@prefix : <http://example.org/> .
+
+:john :email "john@example.org" ; :phone "+1-555-1234" .
+:jane :email "invalid-email" ; :phone "555-1234" .
+:doc1 :content "Learning Java programming" .
+:doc2 :content "Python is great" .

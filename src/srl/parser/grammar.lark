@@ -36,9 +36,10 @@ rule2: "IF"i body_pattern "THEN"i head_template
 rule3: head_template ":-" body_pattern
 
 // [12] Declaration ::= ( 'TRANSITIVE' '(' iri ')' | 'SYMMETRIC' '(' iri ')' | 'INVERSE' '(' iri ',' iri ')' )
-declaration: "TRANSITIVE"i "(" iri ")"
-           | "SYMMETRIC"i "(" iri ")"
-           | "INVERSE"i "(" iri "," iri ")"
+declaration: transitive_decl | symmetric_decl | inverse_decl
+transitive_decl: "TRANSITIVE"i "(" iri ")"
+symmetric_decl: "SYMMETRIC"i "(" iri ")"
+inverse_decl: "INVERSE"i "(" iri "," iri ")"
 
 // [13] Data ::= 'DATA' TriplesTemplateBlock
 data: "DATA"i triples_template_block
@@ -153,7 +154,8 @@ path: path_sequence
 path_sequence: path_elt_or_inverse ("/" path_elt_or_inverse)*
 
 // [49] PathEltOrInverse ::= PathElt | '^' PathElt
-path_elt_or_inverse: path_elt | "^" path_elt
+path_elt_or_inverse: path_elt | CARET path_elt
+CARET: "^"
 
 // [50] PathElt ::= PathPrimary
 path_elt: path_primary

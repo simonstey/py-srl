@@ -1,0 +1,7 @@
+PREFIX : <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+RULE { ?x :age ?age } WHERE {
+    ?x :birthYear ?year .
+    BIND((2024 - ?year) AS ?age)
+}

@@ -1,0 +1,8 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# If something has a name, it's a Person
+RULE { ?x rdf:type :Person } WHERE { ?x :name ?n }
+
+# If something teaches, it's a Teacher
+RULE { ?x rdf:type :Teacher } WHERE { ?x :teaches ?course }

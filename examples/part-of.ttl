@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:engine :partOf :car .
+:piston :partOf :engine .
+:car :partOf :garage .

@@ -1,0 +1,8 @@
+@prefix : <http://example.org/> .
+
+:alice :parentOf :bob .
+:bob :parentOf :carol .
+:carol :parentOf :dave .
+
+:node1 :connectedTo :node2 .
+:node2 :connectedTo :node3 .

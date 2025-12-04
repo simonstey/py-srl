@@ -1,0 +1,4 @@
+@prefix : <http://example.org/> .
+
+:alice :friendOf :bob .
+:carol :friendOf :dave .

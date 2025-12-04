@@ -1,0 +1,8 @@
+@prefix : <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+:acc1 rdf:type :Account ;
+    :status "active" .
+    
+:acc2 rdf:type :Account .
+:acc3 rdf:type :Account .

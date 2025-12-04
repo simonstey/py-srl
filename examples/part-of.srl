@@ -1,0 +1,5 @@
+PREFIX : <http://example.org/>
+
+TRANSITIVE(:partOf)
+
+RULE { ?x :containedIn ?y } WHERE { ?x :partOf ?y }

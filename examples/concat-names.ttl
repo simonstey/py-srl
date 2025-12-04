@@ -1,0 +1,4 @@
+@prefix : <http://example.org/> .
+
+:p1 :firstName "John" ; :lastName "Doe" .
+:p2 :firstName "Jane" ; :lastName "Smith" .

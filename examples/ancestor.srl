@@ -1,0 +1,13 @@
+PREFIX : <http://example.org/>
+
+# Direct ancestor (parent)
+RULE { ?x :ancestorOf ?y } WHERE { ?x :parentOf ?y }
+
+# Transitive ancestor
+RULE { ?x :ancestorOf ?z } WHERE {
+    ?x :ancestorOf ?y .
+    ?y :ancestorOf ?z
+}
+
+# Shorthand declaration
+TRANSITIVE(:ancestorOf)

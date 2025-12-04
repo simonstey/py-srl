@@ -1,0 +1,13 @@
+PREFIX : <http://example.org/>
+
+# Create URL-safe identifiers
+RULE { ?item :urlSlug ?slug } WHERE {
+    ?item :name ?name .
+    BIND(ENCODE_FOR_URI(?name) AS ?slug)
+}
+
+# Build search URLs
+RULE { ?query :searchUrl ?url } WHERE {
+    ?query :searchTerm ?term .
+    BIND(CONCAT("https://search.example.org?q=", ENCODE_FOR_URI(?term)) AS ?url)
+}

@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:greatgrandpa :parentOf :grandpa .
+:grandpa :parentOf :dad .
+:dad :parentOf :me .

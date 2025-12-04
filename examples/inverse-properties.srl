@@ -1,0 +1,8 @@
+PREFIX : <http://example.org/>
+
+INVERSE(:parentOf, :childOf)
+INVERSE(:employs, :worksFor)
+INVERSE(:contains, :containedIn)
+
+# Derive childOf from parentOf
+RULE { ?y :childOf ?x } WHERE { ?x :parentOf ?y }

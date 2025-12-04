@@ -1,0 +1,8 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# If an account doesn't have an active status, mark as inactive
+RULE { ?account :status "inactive" } WHERE {
+    ?account rdf:type :Account .
+    NOT { ?account :status "active" }
+}

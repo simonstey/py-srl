@@ -1,0 +1,6 @@
+@prefix : <http://example.org/> .
+
+:item1 :quantityStr "42" .
+:item2 :quantityStr "100" .
+:product1 :rawLabel "Widget" .
+:product2 :rawLabel "Gadget" .

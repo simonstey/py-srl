@@ -1,0 +1,11 @@
+PREFIX : <http://example.org/>
+
+# Match self or direct manager
+RULE { ?emp :selfOrManager ?target } WHERE {
+    ?emp :reportsTo? ?target
+}
+
+# Find item or its immediate container
+RULE { ?item :locationOrContainer ?loc } WHERE {
+    ?item :containedIn? ?loc
+}

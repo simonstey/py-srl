@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:item1 :identifier "product-001" .
+:item2 :identifier "product-002" .
+:doc1 :content "Hello, World!" .

@@ -1,0 +1,6 @@
+PREFIX : <http://example.org/>
+
+SYMMETRIC(:marriedTo)
+
+# Also derive spouse relationship
+RULE { ?x :spouseOf ?y } WHERE { ?x :marriedTo ?y }

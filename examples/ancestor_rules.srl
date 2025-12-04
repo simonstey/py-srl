@@ -1,0 +1,11 @@
+PREFIX : <http://example.org/>
+
+# Find grandchildren using path sequence (parent/parent)
+RULE { ?grandparent :grandchildOf ?grandchild } WHERE {
+    ?grandchild :parentOf/:parentOf ?grandparent
+}
+
+# Find great-grandparents
+RULE { ?person :greatGrandparent ?ggp } WHERE {
+    ?person :parentOf/:parentOf/:parentOf ?ggp
+}

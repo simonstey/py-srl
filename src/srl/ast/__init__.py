@@ -15,24 +15,39 @@ from .nodes import (
     NegationElement,
     Assignment,
     AggregationElement,
+    Annotation,
     RuleBodyElement,
     RuleHead,
     RuleBody,
     Rule,
     RuleSet,
     DataBlock,
-    
+    Prologue,
+    # Property Paths
+    InversePath,
+    PathSequence,
+    PathAlternative,
+    PropertyPath,
+    # Declarations
+    TransitiveDeclaration,
+    SymmetricDeclaration,
+    InverseDeclaration,
+    Declaration,
     # Supporting types
     RDFTerm,
     IRI,
     Literal,
     BlankNode,
-    
     # Operators and built-ins
     BinaryOp,
     UnaryOp,
     FunctionCall,
     BuiltInCall,
+    BinaryOperator,
+    UnaryOperator,
+    # Validation
+    WellFormednessError,
+    validate_rule_well_formedness,
 )
 
 __all__ = [
@@ -44,12 +59,22 @@ __all__ = [
     "NegationElement",
     "Assignment",
     "AggregationElement",
+    "Annotation",
     "RuleBodyElement",
     "RuleHead",
     "RuleBody",
     "Rule",
     "RuleSet",
     "DataBlock",
+    "Prologue",
+    "InversePath",
+    "PathSequence",
+    "PathAlternative",
+    "PropertyPath",
+    "TransitiveDeclaration",
+    "SymmetricDeclaration",
+    "InverseDeclaration",
+    "Declaration",
     "RDFTerm",
     "IRI",
     "Literal",
@@ -58,4 +83,8 @@ __all__ = [
     "UnaryOp",
     "FunctionCall",
     "BuiltInCall",
+    "BinaryOperator",
+    "UnaryOperator",
+    "WellFormednessError",
+    "validate_rule_well_formedness",
 ]

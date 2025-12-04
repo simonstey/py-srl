@@ -1,0 +1,11 @@
+PREFIX : <http://example.org/>
+
+# Find children using inverse of parentOf
+RULE { ?parent :child ?child } WHERE {
+    ?parent ^:parentOf ?child
+}
+
+# Find employees using inverse of worksFor
+RULE { ?company :employee ?person } WHERE {
+    ?company ^:worksFor ?person
+}

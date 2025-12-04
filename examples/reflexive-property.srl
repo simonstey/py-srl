@@ -1,0 +1,14 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# sameRegion is reflexive - every place is in the same region as itself
+REFLEXIVE(:sameRegion)
+
+# equivalentTo is reflexive
+REFLEXIVE(:equivalentTo)
+
+# Combine with rules
+RULE { ?x :compatible ?y } WHERE {
+    ?x :sameRegion ?y .
+    ?x :sameCategory ?y
+}

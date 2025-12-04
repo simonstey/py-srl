@@ -1,0 +1,6 @@
+PREFIX : <http://example.org/>
+
+SYMMETRIC(:friendOf)
+
+# If someone is your friend, you are their friend
+RULE { ?y :friendOf ?x } WHERE { ?x :friendOf ?y }

@@ -1,0 +1,7 @@
+@prefix : <http://example.org/> .
+
+:john :email "john@example.org" .
+:jane :phone "+1-555-1234" .
+:bob :address "123 Main St" .
+:alice :motherOf :carol .
+:dave :fatherOf :carol .

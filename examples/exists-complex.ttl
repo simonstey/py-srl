@@ -1,0 +1,9 @@
+@prefix : <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+:alice rdf:type :Manager .
+:bob rdf:type :Manager .
+
+:john :reportsTo :alice ; :rating 5 .
+:jane :reportsTo :alice ; :rating 3 .
+:dave :reportsTo :bob ; :rating 2 .

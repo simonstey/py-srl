@@ -1,0 +1,8 @@
+PREFIX : <http://example.org/>
+
+# Two people are siblings if they share a parent
+RULE { ?x :siblingOf ?y } WHERE {
+    ?x :childOf ?parent .
+    ?y :childOf ?parent .
+    FILTER(?x != ?y)
+}

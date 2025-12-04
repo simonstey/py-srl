@@ -1,0 +1,13 @@
+PREFIX : <http://example.org/>
+
+# Find English labels
+RULE { ?item :englishLabel ?label } WHERE {
+    ?item :label ?label .
+    FILTER(LANGMATCHES(LANG(?label), "en"))
+}
+
+# Find any German content
+RULE { ?doc :hasGermanContent true } WHERE {
+    ?doc :description ?desc .
+    FILTER(LANGMATCHES(LANG(?desc), "de"))
+}

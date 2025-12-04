@@ -1,0 +1,9 @@
+@prefix : <http://example.org/> .
+
+:acc1 :status "active" .
+:acc2 :status "terminated" .
+:acc3 :status "pending" .
+
+:event1 :dayOfWeek "Monday" .
+:event2 :dayOfWeek "Saturday" .
+:event3 :dayOfWeek "Wednesday" .

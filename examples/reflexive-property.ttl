@@ -1,0 +1,6 @@
+@prefix : <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+:item1 rdf:type :Product ; :sameCategory :item2 .
+:item2 rdf:type :Product .
+:item1 :sameRegion :item2 .

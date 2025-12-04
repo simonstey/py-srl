@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:product1 :name "Coffee & Tea" .
+:product2 :name "Books/Magazines" .
+:query1 :searchTerm "hello world" .

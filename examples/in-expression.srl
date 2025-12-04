@@ -1,0 +1,14 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Find people in specific departments
+RULE { ?person :inCoreDept true } WHERE {
+    ?person :department ?dept .
+    FILTER(?dept IN ("Engineering", "Product", "Design"))
+}
+
+# Find priority orders
+RULE { ?order :isPriority true } WHERE {
+    ?order :status ?s .
+    FILTER(?s IN ("urgent", "critical", "expedited"))
+}

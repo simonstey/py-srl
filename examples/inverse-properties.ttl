@@ -1,0 +1,4 @@
+@prefix : <http://example.org/> .
+
+:company :employs :john .
+:john :parentOf :mary .

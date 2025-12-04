@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:john :fatherOf :mary .
+:jane :motherOf :mary .
+:mary :fatherOf :tom .

@@ -1,0 +1,12 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Mark as having unique email if no second email exists
+RULE { ?x :hasUniqueEmail true } WHERE {
+    ?x rdf:type :Person ;
+       :email ?e .
+    NOT {
+        ?x :email ?e2 .
+        FILTER(?e != ?e2)
+    }
+}

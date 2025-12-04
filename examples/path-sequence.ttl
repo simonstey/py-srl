@@ -1,0 +1,5 @@
+@prefix : <http://example.org/> .
+
+:alice :parentOf :bob .
+:bob :parentOf :carol .
+:carol :parentOf :dave .

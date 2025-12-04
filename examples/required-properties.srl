@@ -1,0 +1,16 @@
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+# This is a conceptual example - actual SHACL would be in Turtle
+# Validation rules can mark invalid entities
+
+RULE { ?x :isValid false } WHERE {
+    ?x rdf:type :Person .
+    NOT { ?x :name ?n }
+}
+
+RULE { ?x :missingProperty :email } WHERE {
+    ?x rdf:type :Person .
+    NOT { ?x :email ?e }
+}
