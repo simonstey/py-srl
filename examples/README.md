@@ -204,29 +204,3 @@ Check that:
 1. Input data matches rule patterns
 2. Variables are consistent between body and head
 3. PREFIX declarations match data namespaces
-
-### Unexpected Results
-
-Enable debugging:
-
-```python
-# Print solution mappings
-for elem in rule.body.elements:
-    print(f"Element: {elem}")
-
-# Print intermediate steps
-print(f"Input: {len(graph)} triples")
-print(f"Output: {len(result)} triples")
-```
-
-## Next Steps
-
-After running these examples, see:
-
-- [User Guide](../docs/USER_GUIDE.md) - Comprehensive documentation
-- [API Reference](../docs/API.md) - Detailed API documentation
-- [Tests](../tests/test_complete.py) - More complex examples
-
-## Questions?
-
-For more information, see the main [README](../README.md) or browse the [documentation](../docs/).

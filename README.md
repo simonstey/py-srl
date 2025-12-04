@@ -132,4 +132,137 @@ RULE {
 }
 ```
 
+## CLI Usage and Sample Output
+
+This project provides a command-line interface (CLI) for parsing, analyzing, and evaluating SRL rules. The CLI is installed as the `srl` command when the package is installed (e.g. `pip install -e .`).
+
+Basic CLI commands:
+
+- `srl parse RULES_FILE` — Parse and validate a rules file and display an overview
+- `srl analyze RULES_FILE [--show-layers]` — Analyze rules for stratification and dependencies
+- `srl eval RULES_FILE DATA_FILE [-o OUTPUT] [--format FORMAT]` — Evaluate rules on an RDF data file and optionally write results
+- `srl shacl` — Placeholder: SHACL shapes integration (not implemented yet)
+
+Examples (PowerShell / pwsh):
+
+1) Parse rules and show summary
+
+```pwsh
+srl parse examples/ancestor_rules.srl
+```
+
+Sample output:
+
+```text
+✓ Successfully parsed examples/ancestor_rules.srl
+
+┌────────────────────────────────────┐
+│ Rule Set Summary                   │
+│ Rules: 2                           │
+│ Data Blocks: 0                     │
+│ Prefixes: 1                        │
+└────────────────────────────────────┘
+
+Prefixes
+┌─────────┬─────────────────────────────┐
+│ Prefix  │ IRI                         │
+├─────────┼─────────────────────────────┤
+│ :       │ <http://example.org/>       │
+└─────────┴─────────────────────────────┘
+
+Rules
+┌────┬────────────────-─┬───────────--──┐
+│ #  │ Head Templates   │ Body Elements │
+├────┼─────────────────-┼─────────────--┤
+│ 1  │ 1                │ 1             │
+│ 2  │ 1                │ 1             │
+└────┴─────────────────-┴─────────────--┘
+```
+
+
+
+2) Analyze a rule set and show stratification layers
+
+```pwsh
+srl analyze examples/ancestor_rules.srl --show-layers
+```
+
+Sample output:
+
+```text
+✓ Successfully parsed examples/ancestor_rules.srl (2 rule(s))
+
+Total strata: 1
+Total rules: 2
+
+Stratification Layers
+└── Stratum 0 (2 rule(s))
+    ├── Rule 1: ?grandparent <http://example.org/grandchildOf> ?grandchild .
+    └── Rule 2: ?person <http://example.org/greatGrandparent> ?ggp .
+```
+
+```pwsh
+srl -v analyze examples/ancestor_rules.srl --show-layers
+```
+
+Sample output:
+
+```text
+✓ Successfully parsed examples/ancestor_rules.srl (2 rule(s))
+
+Total strata: 1
+Total rules: 2
+
+Stratification Layers
+└── Stratum 0 (2 rule(s))
+    ├── Rule 1: ?grandparent <http://example.org/grandchildOf> ?grandchild .
+    │   └── PATTERN: ?grandchild <http://example.org/parentOf>/<http://example.org/parentOf> ?grandparent .
+    └── Rule 2: ?person <http://example.org/greatGrandparent> ?ggp .
+        └── PATTERN: ?person <http://example.org/parentOf>/<http://example.org/parentOf>/<http://example.org/parentOf> ?ggp .
+```
+
+3) Evaluate rules on an RDF data file and show inferred triples
+
+```pwsh
+srl eval examples/ancestor_rules.srl examples/family_data.ttl
+```
+
+Sample output (summary):
+
+```text
+✓ Parsed examples/ancestor_rules.srl (2 rule(s))
+✓ Loaded examples/family_data.ttl (3 triple(s), format: turtle)
+
+┌────────────────────────────────────────┐
+│ Evaluation Results                     │
+│ Original triples: 3                    │
+│ Result triples: 6                      │
+│ Inferred triples: 3                    │
+└────────────────────────────────────────┘
+
+Use -o/--output to save results to a file.
+```
+
+You can save the resulting graph to a file with the `-o` option:
+
+```pwsh
+srl eval examples/ancestor_rules.srl examples/family_data.ttl -o results.ttl
+```
+
+Sample output when writing results:
+
+```text
+✓ Result written to results.ttl (6 triple(s))
+```
+
+4) Verbose mode shows extra details like AST, rule details, and provenance
+
+```pwsh
+srl -v parse examples/ancestor_rules.srl
+srl -v eval examples/ancestor_rules.srl examples/family_data.ttl
+```
+
+Verbose output will include the rule details, body elements, and—when evaluating—the provenance table showing which rule inferred which triple.
+
+
 
