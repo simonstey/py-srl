@@ -9,7 +9,7 @@ RULE { ?person :hasValidEmail true } WHERE {
 # Find US phone numbers
 RULE { ?person :hasUSPhone true } WHERE {
     ?person :phone ?phone .
-    FILTER(REGEX(?phone, "^\\\\+1-[0-9]{3}-[0-9]{4}$"))
+    FILTER(REGEX(?phone, "^\\+1-[0-9]{3}-[0-9]{4}$"))
 }
 
 # Case-insensitive search
