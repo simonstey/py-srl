@@ -1,0 +1,469 @@
+// SHACL 1.2 Rules - Shape Rule Language (SRL) Grammar
+// Based on W3C specification Section 6: Shapes Rules Language Grammar
+// Productions [1]-[101] and terminals [102]-[135]
+
+// [1] RuleSet ::= ( Prologue ( Rule | Data ) )*
+rule_set: prologue (rule | data)*
+
+// [2] Prologue ::= ( BaseDecl | PrefixDecl | VersionDecl | ImportsDecl )*
+prologue: (base_decl | prefix_decl | version_decl | imports_decl)*
+
+// [3] BaseDecl ::= 'BASE' IRIREF
+base_decl: "BASE"i IRIREF
+
+// [4] PrefixDecl ::= 'PREFIX' PNAME_NS IRIREF
+prefix_decl: "PREFIX"i PNAME_NS IRIREF
+
+// [5] VersionDecl ::= 'VERSION' VersionSpecifier
+version_decl: "VERSION"i version_specifier
+
+// [6] VersionSpecifier ::= STRING_LITERAL1 | STRING_LITERAL2
+version_specifier: STRING_LITERAL1 | STRING_LITERAL2
+
+// [7] ImportsDecl ::= 'IMPORTS' iri
+imports_decl: "IMPORTS"i iri
+
+// [8] Rule ::= Rule1 | Rule2 | Rule3 | Declaration
+rule: rule1 | rule2 | rule3 | declaration
+
+// [9] Rule1 ::= 'RULE' HeadTemplate 'WHERE' BodyPattern
+rule1: "RULE"i head_template "WHERE"i body_pattern
+
+// [10] Rule2 ::= 'IF' BodyPattern 'THEN' HeadTemplate
+rule2: "IF"i body_pattern "THEN"i head_template
+
+// [11] Rule3 ::= HeadTemplate ':-' BodyPattern
+rule3: head_template ":-" body_pattern
+
+// [12] Declaration ::= ( 'TRANSITIVE' '(' iri ')' | 'SYMMETRIC' '(' iri ')' | 'INVERSE' '(' iri ',' iri ')' )
+declaration: "TRANSITIVE"i "(" iri ")"
+           | "SYMMETRIC"i "(" iri ")"
+           | "INVERSE"i "(" iri "," iri ")"
+
+// [13] Data ::= 'DATA' TriplesTemplateBlock
+data: "DATA"i triples_template_block
+
+// [14] HeadTemplate ::= TriplesTemplateBlock
+head_template: triples_template_block
+
+// [15] BodyPattern ::= '{' BodyPattern1 '}'
+body_pattern: "{" body_pattern1 "}"
+
+// [16] BodyPattern1 ::= BodyTriplesBlock? ( BodyNotTriples BodyTriplesBlock? )*
+body_pattern1: body_triples_block? (body_not_triples body_triples_block?)*
+
+// [17] BodyNotTriples ::= Filter | Negation | Assignment
+body_not_triples: filter | negation | assignment
+
+// [18] BodyTriplesBlock ::= TriplesBlock
+body_triples_block: triples_block
+
+// [19] Negation ::= 'NOT' '{' BodyBasic '}'
+negation: "NOT"i "{" body_basic "}"
+
+// [20] BodyBasic ::= BodyTriplesBlock? ( Filter BodyTriplesBlock? )*
+body_basic: body_triples_block? (filter body_triples_block?)*
+
+// [21] TriplesTemplateBlock ::= '{' TriplesTemplate? '}'
+triples_template_block: "{" triples_template? "}"
+
+// [22] TriplesTemplate ::= TriplesSameSubject ( '.' TriplesTemplate? )?
+triples_template: triples_same_subject ("." triples_template?)?
+
+// [23] TriplesBlock ::= TriplesSameSubjectPath ( '.' TriplesBlock? )?
+triples_block: triples_same_subject_path ("." triples_block?)?
+
+// [24] ReifiedTripleBlock ::= ReifiedTriple PropertyList
+reified_triple_block: reified_triple property_list
+
+// [25] ReifiedTripleBlockPath ::= ReifiedTriple PropertyListPath
+reified_triple_block_path: reified_triple property_list_path
+
+// [26] Assignment ::= 'BIND' '(' Expression 'AS' Var ')'
+assignment: "BIND"i "(" expression "AS"i var ")"
+
+// [27] Reifier ::= '~' VarOrReifierId?
+reifier: "~" var_or_reifier_id?
+
+// [28] VarOrReifierId ::= Var | iri | BlankNode
+var_or_reifier_id: var | iri | blank_node
+
+// [29] Filter ::= 'FILTER' Constraint
+filter: "FILTER"i constraint
+
+// [30] Constraint ::= BrackettedExpression | BuiltInCall | FunctionCall
+constraint: bracketted_expression | built_in_call | function_call
+
+// [31] FunctionCall ::= iri ArgList
+function_call: iri arg_list
+
+// [32] ArgList ::= NIL | '(' Expression ( ',' Expression )* ')'
+arg_list: NIL | "(" expression ("," expression)* ")"
+
+// [33] ExpressionList ::= NIL | '(' Expression ( ',' Expression )* ')'
+expression_list: NIL | "(" expression ("," expression)* ")"
+
+// [34] TriplesSameSubject ::= VarOrTerm PropertyListNotEmpty | TriplesNode PropertyList | ReifiedTripleBlock
+triples_same_subject: var_or_term property_list_not_empty
+                    | triples_node property_list
+                    | reified_triple_block
+
+// [35] PropertyList ::= PropertyListNotEmpty?
+property_list: property_list_not_empty?
+
+// [36] PropertyListNotEmpty ::= Verb ObjectList ( ';' ( Verb ObjectList )? )*
+property_list_not_empty: verb object_list (";" (verb object_list)?)*
+
+// [37] Verb ::= VarOrIri | 'a'
+verb: var_or_iri | "a"
+
+// [38] ObjectList ::= Object ( ',' Object )*
+object_list: object ("," object)*
+
+// [39] Object ::= GraphNode Annotation
+object: graph_node annotation
+
+// [40] TriplesSameSubjectPath ::= VarOrTerm PropertyListPathNotEmpty | TriplesNodePath PropertyListPath | ReifiedTripleBlockPath
+triples_same_subject_path: var_or_term property_list_path_not_empty
+                         | triples_node_path property_list_path
+                         | reified_triple_block_path
+
+// [41] PropertyListPath ::= PropertyListPathNotEmpty?
+property_list_path: property_list_path_not_empty?
+
+// [42] PropertyListPathNotEmpty ::= ( VerbPath | VerbSimple ) ObjectListPath ( ';' ( ( VerbPath | VerbSimple ) ObjectListPath )? )*
+property_list_path_not_empty: (verb_path | verb_simple) object_list_path (";" ((verb_path | verb_simple) object_list_path)?)*
+
+// [43] VerbPath ::= Path
+verb_path: path
+
+// [44] VerbSimple ::= Var
+verb_simple: var
+
+// [45] ObjectListPath ::= ObjectPath ( ',' ObjectPath )*
+object_list_path: object_path ("," object_path)*
+
+// [46] ObjectPath ::= GraphNodePath AnnotationPath
+object_path: graph_node_path annotation_path
+
+// [47] Path ::= PathSequence
+path: path_sequence
+
+// [48] PathSequence ::= PathEltOrInverse ( '/' PathEltOrInverse )*
+path_sequence: path_elt_or_inverse ("/" path_elt_or_inverse)*
+
+// [49] PathEltOrInverse ::= PathElt | '^' PathElt
+path_elt_or_inverse: path_elt | "^" path_elt
+
+// [50] PathElt ::= PathPrimary
+path_elt: path_primary
+
+// [51] PathPrimary ::= iri | 'a' | '(' Path ')'
+path_primary: iri | "a" | "(" path ")"
+
+// [52] TriplesNode ::= Collection | BlankNodePropertyList
+triples_node: collection | blank_node_property_list
+
+// [53] BlankNodePropertyList ::= '[' PropertyListNotEmpty ']'
+blank_node_property_list: "[" property_list_not_empty "]"
+
+// [54] TriplesNodePath ::= CollectionPath | BlankNodePropertyListPath
+triples_node_path: collection_path | blank_node_property_list_path
+
+// [55] BlankNodePropertyListPath ::= '[' PropertyListPathNotEmpty ']'
+blank_node_property_list_path: "[" property_list_path_not_empty "]"
+
+// [56] Collection ::= '(' GraphNode+ ')'
+collection: "(" graph_node+ ")"
+
+// [57] CollectionPath ::= '(' GraphNodePath+ ')'
+collection_path: "(" graph_node_path+ ")"
+
+// [58] AnnotationPath ::= ( Reifier | AnnotationBlockPath )*
+annotation_path: (reifier | annotation_block_path)*
+
+// [59] AnnotationBlockPath ::= '{|' PropertyListPathNotEmpty '|}'
+annotation_block_path: "{|" property_list_path_not_empty "|}"
+
+// [60] Annotation ::= ( Reifier | AnnotationBlock )*
+annotation: (reifier | annotation_block)*
+
+// [61] AnnotationBlock ::= '{|' PropertyListNotEmpty '|}'
+annotation_block: "{|" property_list_not_empty "|}"
+
+// [62] GraphNode ::= VarOrTerm | TriplesNode | ReifiedTriple
+graph_node: var_or_term | triples_node | reified_triple
+
+// [63] GraphNodePath ::= VarOrTerm | TriplesNodePath | ReifiedTriple
+graph_node_path: var_or_term | triples_node_path | reified_triple
+
+// [64] VarOrTerm ::= Var | iri | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL | TripleTerm
+var_or_term: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node | NIL | triple_term
+
+// [65] ReifiedTriple ::= '<<' ReifiedTripleSubject Verb ReifiedTripleObject Reifier? '>>'
+reified_triple: "<<" reified_triple_subject verb reified_triple_object reifier? ">>"
+
+// [66] ReifiedTripleSubject ::= Var | iri | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | ReifiedTriple
+reified_triple_subject: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node | reified_triple
+
+// [67] ReifiedTripleObject ::= Var | iri | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | ReifiedTriple | TripleTerm
+reified_triple_object: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node | reified_triple | triple_term
+
+// [68] TripleTerm ::= '<<(' TripleTermSubject Verb TripleTermObject ')>>'
+triple_term: "<<(" triple_term_subject verb triple_term_object ")>>"
+
+// [69] TripleTermSubject ::= Var | iri | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode
+triple_term_subject: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node
+
+// [70] TripleTermObject ::= Var | iri | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | TripleTerm
+triple_term_object: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node | triple_term
+
+// [71] TripleTermData ::= '<<(' TripleTermDataSubject ( iri | 'a' ) TripleTermDataObject ')>>'
+triple_term_data: "<<(" triple_term_data_subject (iri | "a") triple_term_data_object ")>>"
+
+// [72] TripleTermDataSubject ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral
+triple_term_data_subject: iri | rdf_literal | numeric_literal | boolean_literal
+
+// [73] TripleTermDataObject ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral | TripleTermData
+triple_term_data_object: iri | rdf_literal | numeric_literal | boolean_literal | triple_term_data
+
+// [74] VarOrIri ::= Var | iri
+var_or_iri: var | iri
+
+// [75] Var ::= VAR1 | VAR2
+var: VAR1 | VAR2
+
+// [76] Expression ::= ConditionalOrExpression
+expression: conditional_or_expression
+
+// [77] ConditionalOrExpression ::= ConditionalAndExpression ( '||' ConditionalAndExpression )*
+conditional_or_expression: conditional_and_expression ("||" conditional_and_expression)*
+
+// [78] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*
+conditional_and_expression: value_logical ("&&" value_logical)*
+
+// [79] ValueLogical ::= RelationalExpression
+value_logical: relational_expression
+
+// [80] RelationalExpression ::= NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression | 'IN' ExpressionList | 'NOT' 'IN' ExpressionList )?
+relational_expression: numeric_expression (EQ numeric_expression | NE numeric_expression | LT numeric_expression | GT numeric_expression | LE numeric_expression | GE numeric_expression | "IN"i expression_list | "NOT"i "IN"i expression_list)?
+
+// [81] NumericExpression ::= AdditiveExpression
+numeric_expression: additive_expression
+
+// [82] AdditiveExpression ::= MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | ( NumericLiteralPositive | NumericLiteralNegative ) ( ( '*' UnaryExpression ) | ( '/' UnaryExpression ) )* )*
+additive_expression: multiplicative_expression (("+" | "-") multiplicative_expression | (numeric_literal_positive | numeric_literal_negative) (("*" | "/") unary_expression)*)*
+
+// [83] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
+multiplicative_expression: unary_expression (("*" | "/") unary_expression)*
+
+// [84] UnaryExpression ::=   '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
+unary_expression: "!" primary_expression
+                | "+" primary_expression
+                | "-" primary_expression
+                | primary_expression
+
+// [85] PrimaryExpression ::= BrackettedExpression | BuiltInCall | iriOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var | ExprTripleTerm
+primary_expression: bracketted_expression
+                  | built_in_call
+                  | iri_or_function
+                  | rdf_literal
+                  | numeric_literal
+                  | boolean_literal
+                  | var
+                  | expr_triple_term
+
+// [86] ExprTripleTerm ::= '<<(' ExprTripleTermSubject Verb ExprTripleTermObject ')>>'
+expr_triple_term: "<<(" expr_triple_term_subject verb expr_triple_term_object ")>>"
+
+// [87] ExprTripleTermSubject ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral | Var
+expr_triple_term_subject: iri | rdf_literal | numeric_literal | boolean_literal | var
+
+// [88] ExprTripleTermObject ::= iri | RDFLiteral | NumericLiteral | BooleanLiteral | Var | ExprTripleTerm
+expr_triple_term_object: iri | rdf_literal | numeric_literal | boolean_literal | var | expr_triple_term
+
+// [89] BrackettedExpression ::= '(' Expression ')'
+bracketted_expression: "(" expression ")"
+
+// [90] BuiltInCall ::=   'STR' '(' Expression ')' | 'LANG' '(' Expression ')' | 'LANGMATCHES' '(' Expression ',' Expression ')' | 'LANGDIR' '(' Expression ')' | 'DATATYPE' '(' Expression ')' | 'BOUND' '(' Var ')' | 'IRI' '(' Expression ')' | 'URI' '(' Expression ')' | 'BNODE' ( '(' Expression ')' | NIL )
+built_in_call: builtin_str
+             | builtin_lang
+             | builtin_langmatches
+             | builtin_langdir
+             | builtin_datatype
+             | builtin_bound
+             | builtin_iri
+             | builtin_uri
+             | builtin_bnode
+             | builtin_concat
+
+builtin_str: "STR"i "(" expression ")"
+builtin_lang: "LANG"i "(" expression ")"
+builtin_langmatches: "LANGMATCHES"i "(" expression "," expression ")"
+builtin_langdir: "LANGDIR"i "(" expression ")"
+builtin_datatype: "DATATYPE"i "(" expression ")"
+builtin_bound: "BOUND"i "(" var ")"
+builtin_iri: "IRI"i "(" expression ")"
+builtin_uri: "URI"i "(" expression ")"
+builtin_bnode: "BNODE"i ("(" expression ")" | NIL)
+builtin_concat: "CONCAT"i "(" expression ("," expression)* ")"
+
+// [91] iriOrFunction ::= iri ArgList?
+iri_or_function: iri arg_list?
+
+// [92] RDFLiteral ::= String ( LANG_DIR | '^^' iri )?
+rdf_literal: string (LANG_DIR | "^^" iri)?
+
+// [93] NumericLiteral ::= NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
+numeric_literal: numeric_literal_unsigned | numeric_literal_positive | numeric_literal_negative
+
+// [94] NumericLiteralUnsigned ::= INTEGER | DECIMAL | DOUBLE
+numeric_literal_unsigned: INTEGER | DECIMAL | DOUBLE
+
+// [95] NumericLiteralPositive ::= INTEGER_POSITIVE | DECIMAL_POSITIVE | DOUBLE_POSITIVE
+numeric_literal_positive: INTEGER_POSITIVE | DECIMAL_POSITIVE | DOUBLE_POSITIVE
+
+// [96] NumericLiteralNegative ::= INTEGER_NEGATIVE | DECIMAL_NEGATIVE | DOUBLE_NEGATIVE
+numeric_literal_negative: INTEGER_NEGATIVE | DECIMAL_NEGATIVE | DOUBLE_NEGATIVE
+
+// [97] BooleanLiteral ::= 'true' | 'false'
+boolean_literal: TRUE | FALSE
+
+// [98] String ::= STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
+string: STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
+
+// [99] iri ::= IRIREF | PrefixedName
+iri: IRIREF | prefixed_name
+
+// [100] PrefixedName ::= PNAME_LN | PNAME_NS
+prefixed_name: PNAME_LN | PNAME_NS
+
+// [101] BlankNode ::= BLANK_NODE_LABEL | ANON
+blank_node: BLANK_NODE_LABEL | ANON
+
+// ============================================================================
+// TERMINALS [102]-[135]
+// ============================================================================
+
+// Comparison operators
+GE: ">="
+LE: "<="
+NE: "!="
+EQ: "="
+GT: ">"
+LT: "<"
+
+// Boolean literals
+TRUE: "true"i
+FALSE: "false"i
+
+// [102] IRIREF ::= '<' ([^<>"{}|^`\]-[#x00-#x20])* '>'
+IRIREF: "<" /[^\x00-\x20<>"{}|^`\\]*/ ">"
+
+// [103] PNAME_NS ::= PN_PREFIX? ':'
+PNAME_NS: PN_PREFIX? ":"
+
+// [104] PNAME_LN ::= PNAME_NS PN_LOCAL
+PNAME_LN: PNAME_NS PN_LOCAL
+
+// [105] BLANK_NODE_LABEL ::= '_:' ( PN_CHARS_U | [0-9] ) ((PN_CHARS|'.')* PN_CHARS)?
+BLANK_NODE_LABEL: "_:" (PN_CHARS_U | /[0-9]/) ((PN_CHARS | ".")* PN_CHARS)?
+
+// [106] VAR1 ::= '?' VARNAME
+VAR1: "?" VARNAME
+
+// [107] VAR2 ::= '$' VARNAME
+VAR2: "$" VARNAME
+
+// [108] LANG_DIR ::= '@' [a-zA-Z]+ ('-' [a-zA-Z0-9]+)* ('--' [a-zA-Z]+)?
+LANG_DIR: "@" /[a-zA-Z]+/ ("-" /[a-zA-Z0-9]+/)* ("--" /[a-zA-Z]+/)?
+
+// [109] INTEGER ::= [0-9]+
+INTEGER: /[0-9]+/
+
+// [110] DECIMAL ::= [0-9]* '.' [0-9]+
+DECIMAL: /[0-9]*/ "." /[0-9]+/
+
+// [111] DOUBLE ::= ( ([0-9]+ ('.'[0-9]*)? ) | ( '.' ([0-9])+ ) ) [eE][+-]?[0-9]+
+DOUBLE: ((/[0-9]+/ ("." /[0-9]*/)?) | ("." /[0-9]+/)) /[eE][+-]?[0-9]+/
+
+// [112] INTEGER_POSITIVE ::= '+' INTEGER
+INTEGER_POSITIVE: "+" INTEGER
+
+// [113] DECIMAL_POSITIVE ::= '+' DECIMAL
+DECIMAL_POSITIVE: "+" DECIMAL
+
+// [114] DOUBLE_POSITIVE ::= '+' DOUBLE
+DOUBLE_POSITIVE: "+" DOUBLE
+
+// [115] INTEGER_NEGATIVE ::= '-' INTEGER
+INTEGER_NEGATIVE: "-" INTEGER
+
+// [116] DECIMAL_NEGATIVE ::= '-' DECIMAL
+DECIMAL_NEGATIVE: "-" DECIMAL
+
+// [117] DOUBLE_NEGATIVE ::= '-' DOUBLE
+DOUBLE_NEGATIVE: "-" DOUBLE
+
+// [118] STRING_LITERAL1 ::= "'" ( ([^#x27#x5C#xA#xD]) | ECHAR )* "'"
+STRING_LITERAL1: "'" (/[^\x27\x5C\x0A\x0D]/ | ECHAR)* "'"
+
+// [119] STRING_LITERAL2 ::= '"' ( ([^#x22#x5C#xA#xD]) | ECHAR )* '"'
+STRING_LITERAL2: "\"" (/[^\x22\x5C\x0A\x0D]/ | ECHAR)* "\""
+
+// [120] STRING_LITERAL_LONG1 ::= "'''" ( ( "'" | "''" )? ( [^'\] | ECHAR ) )* "'''"
+STRING_LITERAL_LONG1: "'''" (("'" | "''")? (/[^'\\]/ | ECHAR))* "'''"
+
+// [121] STRING_LITERAL_LONG2 ::= '"""' ( ( '"' | '""' )? ( [^"\] | ECHAR ) )* '"""'
+STRING_LITERAL_LONG2: "\"\"\"" (("\"" | "\"\"")? (/[^"\\]/ | ECHAR))* "\"\"\""
+
+// [122] ECHAR ::= '\' [tbnrf\"']
+ECHAR: "\\" /[tbnrf\\"']/
+
+// [123] NIL ::= '(' WS* ')'
+// Note: WS is imported from common at end of file
+NIL.9: "(" /[\x20\x09\x0D\x0A]*/ ")"
+
+// [124] WS ::= #x20 | #x9 | #xD | #xA
+// Handled by %import common.WS at end of file
+
+// [125] ANON ::= '[' WS* ']'
+// Note: WS is imported from common at end of file
+ANON.9: "[" /[\x20\x09\x0D\x0A]*/ "]"
+
+// [126] PN_CHARS_BASE ::= [A-Z] | [a-z] | [#x00C0-#x00D6] | [#x00D8-#x00F6] | [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
+PN_CHARS_BASE: /[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]/ | /[\U00010000-\U000EFFFF]/
+
+// [127] PN_CHARS_U ::= PN_CHARS_BASE | '_'
+PN_CHARS_U: PN_CHARS_BASE | "_"
+
+// [128] VARNAME ::= ( PN_CHARS_U | [0-9] ) ( PN_CHARS_U | [0-9] | #x00B7 | [#x0300-#x036F] | [#x203F-#x2040] )*
+VARNAME: (PN_CHARS_U | /[0-9]/) (PN_CHARS_U | /[0-9]/ | "\u00B7" | /[\u0300-\u036F]/ | /[\u203F-\u2040]/)*
+
+// [129] PN_CHARS ::= PN_CHARS_U | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | [#x203F-#x2040]
+PN_CHARS: PN_CHARS_U | "-" | /[0-9]/ | "\u00B7" | /[\u0300-\u036F]/ | /[\u203F-\u2040]/
+
+// [130] PN_PREFIX ::= PN_CHARS_BASE ((PN_CHARS|'.')* PN_CHARS)?
+PN_PREFIX: PN_CHARS_BASE ((PN_CHARS | ".")* PN_CHARS)?
+
+// [131] PN_LOCAL ::= (PN_CHARS_U | ':' | [0-9] | PLX ) ((PN_CHARS | '.' | ':' | PLX)* (PN_CHARS | ':' | PLX) )?
+PN_LOCAL: (PN_CHARS_U | ":" | /[0-9]/ | PLX) ((PN_CHARS | "." | ":" | PLX)* (PN_CHARS | ":" | PLX))?
+
+// [132] PLX ::= PERCENT | PN_LOCAL_ESC
+PLX: PERCENT | PN_LOCAL_ESC
+
+// [133] PERCENT ::= '%' HEX HEX
+PERCENT: "%" HEX HEX
+
+// [134] HEX ::= [0-9] | [A-F] | [a-f]
+HEX: /[0-9A-Fa-f]/
+
+// [135] PN_LOCAL_ESC ::= '\' ( '_' | '~' | '.' | '-' | '!' | '$' | '&' | "'" | '(' | ')' | '*' | '+' | ',' | ';' | '=' | '/' | '?' | '#' | '@' | '%' )
+PN_LOCAL_ESC: "\\" /[_~.\-!$&'()*+,;=\/?#@%]/
+
+// Ignore whitespace and comments
+%import common.WS
+%ignore WS
+
+COMMENT: "#" /[^\n]*/
+%ignore COMMENT
