@@ -1,0 +1,13 @@
+# Rule Format Example 7: RULE/WHERE with Multiple Head Triples
+# Demonstrates Rule1 with multiple inferred triples
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Infer both type and relationship
+RULE {
+    ?person rdf:type ex:Employee .
+    ?person ex:worksFor ?company .
+} WHERE {
+    ?person ex:hasEmployer ?company .
+}

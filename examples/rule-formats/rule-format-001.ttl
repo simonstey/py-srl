@@ -1,0 +1,12 @@
+@prefix ex: <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# Input data
+ex:Alice ex:parent ex:Bob .
+ex:Bob ex:parent ex:Charlie .
+ex:Charlie ex:parent ex:Diana .
+
+# Expected inferred triples (from rule):
+# ex:Alice ex:ancestor ex:Bob .
+# ex:Bob ex:ancestor ex:Charlie .
+# ex:Charlie ex:ancestor ex:Diana .

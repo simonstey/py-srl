@@ -1,0 +1,12 @@
+@prefix ex: <http://example.org/> .
+
+# Input data
+ex:Rectangle1 ex:width 5 ;
+              ex:height 10 .
+
+ex:Rectangle2 ex:width 7 ;
+              ex:height 3 .
+
+# Expected inferred triples (from rule):
+# ex:Rectangle1 ex:area 50 .
+# ex:Rectangle2 ex:area 21 .

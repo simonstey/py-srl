@@ -700,6 +700,159 @@ class SRLTransformer(Transformer):
 
     def builtin_concat(self, items):
         return BuiltInCall(function_name="CONCAT", arguments=items)
+    
+    def builtin_rand(self, items):
+        return BuiltInCall(function_name="RAND", arguments=[])
+    
+    def builtin_abs(self, items):
+        return BuiltInCall(function_name="ABS", arguments=items)
+    
+    def builtin_ceil(self, items):
+        return BuiltInCall(function_name="CEIL", arguments=items)
+    
+    def builtin_floor(self, items):
+        return BuiltInCall(function_name="FLOOR", arguments=items)
+    
+    def builtin_round(self, items):
+        return BuiltInCall(function_name="ROUND", arguments=items)
+    
+    def builtin_substr(self, items):
+        return BuiltInCall(function_name="SUBSTR", arguments=items)
+    
+    def builtin_strlen(self, items):
+        return BuiltInCall(function_name="STRLEN", arguments=items)
+    
+    def builtin_replace(self, items):
+        return BuiltInCall(function_name="REPLACE", arguments=items)
+    
+    def builtin_ucase(self, items):
+        return BuiltInCall(function_name="UCASE", arguments=items)
+    
+    def builtin_lcase(self, items):
+        return BuiltInCall(function_name="LCASE", arguments=items)
+    
+    def builtin_encode_for_uri(self, items):
+        return BuiltInCall(function_name="ENCODE_FOR_URI", arguments=items)
+    
+    def builtin_contains(self, items):
+        return BuiltInCall(function_name="CONTAINS", arguments=items)
+    
+    def builtin_strstarts(self, items):
+        return BuiltInCall(function_name="STRSTARTS", arguments=items)
+    
+    def builtin_strends(self, items):
+        return BuiltInCall(function_name="STRENDS", arguments=items)
+    
+    def builtin_strbefore(self, items):
+        return BuiltInCall(function_name="STRBEFORE", arguments=items)
+    
+    def builtin_strafter(self, items):
+        return BuiltInCall(function_name="STRAFTER", arguments=items)
+    
+    def builtin_year(self, items):
+        return BuiltInCall(function_name="YEAR", arguments=items)
+    
+    def builtin_month(self, items):
+        return BuiltInCall(function_name="MONTH", arguments=items)
+    
+    def builtin_day(self, items):
+        return BuiltInCall(function_name="DAY", arguments=items)
+    
+    def builtin_hours(self, items):
+        return BuiltInCall(function_name="HOURS", arguments=items)
+    
+    def builtin_minutes(self, items):
+        return BuiltInCall(function_name="MINUTES", arguments=items)
+    
+    def builtin_seconds(self, items):
+        return BuiltInCall(function_name="SECONDS", arguments=items)
+    
+    def builtin_timezone(self, items):
+        return BuiltInCall(function_name="TIMEZONE", arguments=items)
+    
+    def builtin_tz(self, items):
+        return BuiltInCall(function_name="TZ", arguments=items)
+    
+    def builtin_now(self, items):
+        return BuiltInCall(function_name="NOW", arguments=[])
+    
+    def builtin_uuid(self, items):
+        return BuiltInCall(function_name="UUID", arguments=[])
+    
+    def builtin_struuid(self, items):
+        return BuiltInCall(function_name="STRUUID", arguments=[])
+    
+    def builtin_md5(self, items):
+        return BuiltInCall(function_name="MD5", arguments=items)
+    
+    def builtin_sha1(self, items):
+        return BuiltInCall(function_name="SHA1", arguments=items)
+    
+    def builtin_sha256(self, items):
+        return BuiltInCall(function_name="SHA256", arguments=items)
+    
+    def builtin_sha384(self, items):
+        return BuiltInCall(function_name="SHA384", arguments=items)
+    
+    def builtin_sha512(self, items):
+        return BuiltInCall(function_name="SHA512", arguments=items)
+    
+    def builtin_coalesce(self, items):
+        return BuiltInCall(function_name="COALESCE", arguments=items)
+    
+    def builtin_if(self, items):
+        return BuiltInCall(function_name="IF", arguments=items)
+    
+    def builtin_strlang(self, items):
+        return BuiltInCall(function_name="STRLANG", arguments=items)
+    
+    def builtin_strlangdir(self, items):
+        return BuiltInCall(function_name="STRLANGDIR", arguments=items)
+    
+    def builtin_strdt(self, items):
+        return BuiltInCall(function_name="STRDT", arguments=items)
+    
+    def builtin_sameterm(self, items):
+        return BuiltInCall(function_name="sameTerm", arguments=items)
+    
+    def builtin_isiri(self, items):
+        return BuiltInCall(function_name="isIRI", arguments=items)
+    
+    def builtin_isuri(self, items):
+        return BuiltInCall(function_name="isURI", arguments=items)
+    
+    def builtin_isblank(self, items):
+        return BuiltInCall(function_name="isBLANK", arguments=items)
+    
+    def builtin_isliteral(self, items):
+        return BuiltInCall(function_name="isLITERAL", arguments=items)
+    
+    def builtin_isnumeric(self, items):
+        return BuiltInCall(function_name="isNUMERIC", arguments=items)
+    
+    def builtin_haslang(self, items):
+        return BuiltInCall(function_name="hasLANG", arguments=items)
+    
+    def builtin_haslangdir(self, items):
+        return BuiltInCall(function_name="hasLANGDIR", arguments=items)
+    
+    def builtin_regex(self, items):
+        return BuiltInCall(function_name="REGEX", arguments=items)
+    
+    def builtin_istriple(self, items):
+        return BuiltInCall(function_name="isTRIPLE", arguments=items)
+    
+    def builtin_triple(self, items):
+        return BuiltInCall(function_name="TRIPLE", arguments=items)
+    
+    def builtin_subject(self, items):
+        return BuiltInCall(function_name="SUBJECT", arguments=items)
+    
+    def builtin_predicate(self, items):
+        return BuiltInCall(function_name="PREDICATE", arguments=items)
+    
+    def builtin_object(self, items):
+        return BuiltInCall(function_name="OBJECT", arguments=items)
 
     def function_call(self, items):
         """[31] FunctionCall ::= iri ArgList"""

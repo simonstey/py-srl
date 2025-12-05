@@ -1,7 +1,7 @@
 PREFIX : <http://example.org/>
 
 # Extract username from email
-RULE { ?person :username ?user } WHERE {
+RULE{ ?person :username ?user } WHERE {
     ?person :email ?email .
     BIND(STRBEFORE(?email, "@") AS ?user)
 }

@@ -1,0 +1,8 @@
+# Rule Format Example 9: Datalog Form with Type Pattern
+# Demonstrates Rule3 with rdf:type using 'a' keyword
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Infer animal classification
+?x a ex:Animal :- ?x a ex:Dog .

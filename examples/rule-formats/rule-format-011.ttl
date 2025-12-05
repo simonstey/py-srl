@@ -1,0 +1,18 @@
+@prefix ex: <http://example.org/> .
+
+# Input data
+ex:Alice ex:friend ex:Bob .
+ex:Bob ex:friend ex:Charlie .
+
+# Expected inferred triples (from rules):
+# From Rule 1:
+# ex:Alice ex:knows ex:Bob .
+# ex:Bob ex:knows ex:Charlie .
+#
+# From Rule 3 (symmetric):
+# ex:Bob ex:knows ex:Alice .
+# ex:Charlie ex:knows ex:Bob .
+#
+# From Rule 2 (transitive via knows):
+# ex:Alice ex:indirectlyKnows ex:Charlie .
+# (and potentially more depending on evaluation order)

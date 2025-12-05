@@ -1,0 +1,12 @@
+# Rule Format Example 1: RULE/WHERE Form
+# Demonstrates the Rule1 syntax: RULE HeadTemplate WHERE BodyPattern
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Simple property inference
+RULE {
+    ?x ex:ancestor ?y .
+} WHERE {
+    ?x ex:parent ?y .
+}

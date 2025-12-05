@@ -1,0 +1,13 @@
+# Rule Format Example 2: IF/THEN Form
+# Demonstrates the Rule2 syntax: IF BodyPattern THEN HeadTemplate
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Type inference based on property
+IF {
+    ?person ex:age ?age .
+    ?person ex:name ?name .
+} THEN {
+    ?person rdf:type ex:Person .
+}

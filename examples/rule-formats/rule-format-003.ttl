@@ -1,0 +1,10 @@
+@prefix ex: <http://example.org/> .
+
+# Input data
+ex:Alice ex:parent ex:Parent1 .
+ex:Bob ex:parent ex:Parent1 .
+ex:Charlie ex:parent ex:Parent2 .
+
+# Expected inferred triples (from rule):
+# ex:Alice ex:sibling ex:Bob .
+# ex:Bob ex:sibling ex:Alice .
