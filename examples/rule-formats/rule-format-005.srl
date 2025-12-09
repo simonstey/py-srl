@@ -1,0 +1,13 @@
+# Rule Format Example 5: IF/THEN with FILTER
+# Demonstrates Rule2 with conditional logic
+
+PREFIX ex: <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Classify adults based on age
+IF {
+    ?person ex:age ?age .
+    FILTER (?age >= 18)
+} THEN {
+    ?person ex:isAdult true .
+}

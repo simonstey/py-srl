@@ -1,0 +1,15 @@
+# Rule Format Example 8: IF/THEN with Negation
+# Demonstrates Rule2 with NOT clause
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Identify childless people
+IF {
+    ?person rdf:type ex:Person .
+    NOT {
+        ?person ex:hasChild ?child .
+    }
+} THEN {
+    ?person ex:isChildless true .
+}

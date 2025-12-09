@@ -1,0 +1,23 @@
+# Rule Format Example 11: Mixed Format - Multiple Rules
+# Demonstrates all three rule formats in one file
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Rule 1: RULE/WHERE form
+RULE {
+    ?x ex:knows ?y .
+} WHERE {
+    ?x ex:friend ?y .
+}
+
+# Rule 2: IF/THEN form
+IF {
+    ?x ex:knows ?y .
+    ?y ex:knows ?z .
+} THEN {
+    ?x ex:indirectlyKnows ?z .
+}
+
+# Rule 3: Datalog form
+?x ex:knows ?y :- ?y ex:friend ?x .

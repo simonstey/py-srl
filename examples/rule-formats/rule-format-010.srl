@@ -1,0 +1,14 @@
+# Rule Format Example 10: RULE/WHERE with Arithmetic
+# Demonstrates Rule1 with numeric operations
+
+PREFIX ex: <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Calculate area from width and height
+RULE {
+    ?rectangle ex:area ?area .
+} WHERE {
+    ?rectangle ex:width ?width .
+    ?rectangle ex:height ?height .
+    BIND(?width * ?height AS ?area)
+}

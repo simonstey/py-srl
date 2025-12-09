@@ -1,0 +1,12 @@
+@prefix ex: <http://example.org/> .
+
+# Input data
+ex:Alice ex:age 25 .
+ex:Bob ex:age 16 .
+ex:Charlie ex:age 30 .
+ex:Diana ex:age 12 .
+
+# Expected inferred triples (from rule):
+# ex:Alice ex:isAdult true .
+# ex:Charlie ex:isAdult true .
+# (Bob and Diana are under 18, so no triples inferred)

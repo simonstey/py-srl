@@ -248,7 +248,7 @@ conditional_and_expression: value_logical ("&&" value_logical)*
 value_logical: relational_expression
 
 // [80] RelationalExpression ::= NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression | 'IN' ExpressionList | 'NOT' 'IN' ExpressionList )?
-relational_expression: numeric_expression (EQ numeric_expression | NE numeric_expression | LT numeric_expression | GT numeric_expression | LE numeric_expression | GE numeric_expression | "IN"i expression_list | "NOT"i "IN"i expression_list)?
+relational_expression: numeric_expression ("=" numeric_expression | "!=" numeric_expression | "<" numeric_expression | ">" numeric_expression | "<=" numeric_expression | ">=" numeric_expression | "IN"i expression_list | "NOT"i "IN"i expression_list)?
 
 // [81] NumericExpression ::= AdditiveExpression
 numeric_expression: additive_expression
@@ -287,7 +287,7 @@ expr_triple_term_object: iri | rdf_literal | numeric_literal | boolean_literal |
 // [89] BrackettedExpression ::= '(' Expression ')'
 bracketted_expression: "(" expression ")"
 
-// [90] BuiltInCall ::=   'STR' '(' Expression ')' | 'LANG' '(' Expression ')' | 'LANGMATCHES' '(' Expression ',' Expression ')' | 'LANGDIR' '(' Expression ')' | 'DATATYPE' '(' Expression ')' | 'BOUND' '(' Var ')' | 'IRI' '(' Expression ')' | 'URI' '(' Expression ')' | 'BNODE' ( '(' Expression ')' | NIL )
+// [90] BuiltInCall ::= All SPARQL 1.2 and RDF-star built-in functions
 built_in_call: builtin_str
              | builtin_lang
              | builtin_langmatches
@@ -297,7 +297,58 @@ built_in_call: builtin_str
              | builtin_iri
              | builtin_uri
              | builtin_bnode
+             | builtin_rand
+             | builtin_abs
+             | builtin_ceil
+             | builtin_floor
+             | builtin_round
              | builtin_concat
+             | builtin_substr
+             | builtin_strlen
+             | builtin_replace
+             | builtin_ucase
+             | builtin_lcase
+             | builtin_encode_for_uri
+             | builtin_contains
+             | builtin_strstarts
+             | builtin_strends
+             | builtin_strbefore
+             | builtin_strafter
+             | builtin_year
+             | builtin_month
+             | builtin_day
+             | builtin_hours
+             | builtin_minutes
+             | builtin_seconds
+             | builtin_timezone
+             | builtin_tz
+             | builtin_now
+             | builtin_uuid
+             | builtin_struuid
+             | builtin_md5
+             | builtin_sha1
+             | builtin_sha256
+             | builtin_sha384
+             | builtin_sha512
+             | builtin_coalesce
+             | builtin_if
+             | builtin_strlang
+             | builtin_strlangdir
+             | builtin_strdt
+             | builtin_sameterm
+             | builtin_isiri
+             | builtin_isuri
+             | builtin_isblank
+             | builtin_isliteral
+             | builtin_isnumeric
+             | builtin_haslang
+             | builtin_haslangdir
+             | builtin_regex
+             | builtin_istriple
+             | builtin_triple
+             | builtin_subject
+             | builtin_predicate
+             | builtin_object
 
 builtin_str: "STR"i "(" expression ")"
 builtin_lang: "LANG"i "(" expression ")"
@@ -308,7 +359,58 @@ builtin_bound: "BOUND"i "(" var ")"
 builtin_iri: "IRI"i "(" expression ")"
 builtin_uri: "URI"i "(" expression ")"
 builtin_bnode: "BNODE"i ("(" expression ")" | NIL)
-builtin_concat: "CONCAT"i "(" expression ("," expression)* ")"
+builtin_rand: "RAND"i NIL
+builtin_abs: "ABS"i "(" expression ")"
+builtin_ceil: "CEIL"i "(" expression ")"
+builtin_floor: "FLOOR"i "(" expression ")"
+builtin_round: "ROUND"i "(" expression ")"
+builtin_concat: "CONCAT"i expression_list
+builtin_substr: "SUBSTR"i "(" expression "," expression ("," expression)? ")"
+builtin_strlen: "STRLEN"i "(" expression ")"
+builtin_replace: "REPLACE"i "(" expression "," expression "," expression ("," expression)? ")"
+builtin_ucase: "UCASE"i "(" expression ")"
+builtin_lcase: "LCASE"i "(" expression ")"
+builtin_encode_for_uri: "ENCODE_FOR_URI"i "(" expression ")"
+builtin_contains: "CONTAINS"i "(" expression "," expression ")"
+builtin_strstarts: "STRSTARTS"i "(" expression "," expression ")"
+builtin_strends: "STRENDS"i "(" expression "," expression ")"
+builtin_strbefore: "STRBEFORE"i "(" expression "," expression ")"
+builtin_strafter: "STRAFTER"i "(" expression "," expression ")"
+builtin_year: "YEAR"i "(" expression ")"
+builtin_month: "MONTH"i "(" expression ")"
+builtin_day: "DAY"i "(" expression ")"
+builtin_hours: "HOURS"i "(" expression ")"
+builtin_minutes: "MINUTES"i "(" expression ")"
+builtin_seconds: "SECONDS"i "(" expression ")"
+builtin_timezone: "TIMEZONE"i "(" expression ")"
+builtin_tz: "TZ"i "(" expression ")"
+builtin_now: "NOW"i NIL
+builtin_uuid: "UUID"i NIL
+builtin_struuid: "STRUUID"i NIL
+builtin_md5: "MD5"i "(" expression ")"
+builtin_sha1: "SHA1"i "(" expression ")"
+builtin_sha256: "SHA256"i "(" expression ")"
+builtin_sha384: "SHA384"i "(" expression ")"
+builtin_sha512: "SHA512"i "(" expression ")"
+builtin_coalesce: "COALESCE"i expression_list
+builtin_if: "IF"i "(" expression "," expression "," expression ")"
+builtin_strlang: "STRLANG"i "(" expression "," expression ")"
+builtin_strlangdir: "STRLANGDIR"i "(" expression "," expression "," expression ")"
+builtin_strdt: "STRDT"i "(" expression "," expression ")"
+builtin_sameterm: "sameTerm"i "(" expression "," expression ")"
+builtin_isiri: "isIRI"i "(" expression ")"
+builtin_isuri: "isURI"i "(" expression ")"
+builtin_isblank: "isBLANK"i "(" expression ")"
+builtin_isliteral: "isLITERAL"i "(" expression ")"
+builtin_isnumeric: "isNUMERIC"i "(" expression ")"
+builtin_haslang: "hasLANG"i "(" expression ")"
+builtin_haslangdir: "hasLANGDIR"i "(" expression ")"
+builtin_regex: "REGEX"i "(" expression "," expression ("," expression)? ")"
+builtin_istriple: "isTRIPLE"i "(" expression ")"
+builtin_triple: "TRIPLE"i "(" expression "," expression "," expression ")"
+builtin_subject: "SUBJECT"i "(" expression ")"
+builtin_predicate: "PREDICATE"i "(" expression ")"
+builtin_object: "OBJECT"i "(" expression ")"
 
 // [91] iriOrFunction ::= iri ArgList?
 iri_or_function: iri arg_list?
@@ -346,14 +448,6 @@ blank_node: BLANK_NODE_LABEL | ANON
 // ============================================================================
 // TERMINALS [102]-[135]
 // ============================================================================
-
-// Comparison operators
-GE: ">="
-LE: "<="
-NE: "!="
-EQ: "="
-GT: ">"
-LT: "<"
 
 // Boolean literals
 TRUE: "true"i

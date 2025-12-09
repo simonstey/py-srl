@@ -1,0 +1,12 @@
+# Rule Format Example 12: RULE/WHERE with String Functions
+# Demonstrates Rule1 with SPARQL string built-ins
+
+PREFIX ex: <http://example.org/>
+
+# Extract domain from email
+RULE {
+    ?person ex:emailDomain ?domain .
+} WHERE {
+    ?person ex:email ?email .
+    BIND(STRAFTER(?email, "@") AS ?domain)
+}

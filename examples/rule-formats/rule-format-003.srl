@@ -1,0 +1,8 @@
+# Rule Format Example 3: Datalog Form
+# Demonstrates the Rule3 syntax: HeadTemplate :- BodyPattern
+
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+# Sibling inference using Datalog syntax
+?x ex:sibling ?y :- ?x ex:parent ?p , ?y ex:parent ?p , FILTER(?x != ?y) .

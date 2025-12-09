@@ -1,0 +1,12 @@
+@prefix ex: <http://example.org/> .
+
+# Input data
+ex:Person1 ex:firstName "John" ;
+           ex:lastName "Doe" .
+
+ex:Person2 ex:firstName "Jane" ;
+           ex:lastName "Smith" .
+
+# Expected inferred triples (from rule):
+# ex:Person1 ex:fullName "John Doe" .
+# ex:Person2 ex:fullName "Jane Smith" .

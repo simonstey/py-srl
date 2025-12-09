@@ -1,0 +1,12 @@
+@prefix ex: <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# Input data
+ex:Buddy rdf:type ex:Dog .
+ex:Rex rdf:type ex:Dog .
+ex:Fluffy rdf:type ex:Cat .
+
+# Expected inferred triples (from rule):
+# ex:Buddy rdf:type ex:Animal .
+# ex:Rex rdf:type ex:Animal .
+# (Fluffy is a Cat, not a Dog, so no triple inferred)

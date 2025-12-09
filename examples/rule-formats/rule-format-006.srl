@@ -1,0 +1,8 @@
+# Rule Format Example 6: Datalog Form with BIND
+# Demonstrates Rule3 with variable assignment
+
+PREFIX ex: <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Calculate full name from first and last name
+?person ex:fullName ?fullName :- ?person ex:firstName ?first , ?person ex:lastName ?last , BIND(CONCAT(?first, " ", ?last) AS ?fullName) .

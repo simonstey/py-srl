@@ -1,0 +1,12 @@
+@prefix ex: <http://example.org/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+# Input data
+ex:Alice ex:hasEmployer ex:CompanyA .
+ex:Bob ex:hasEmployer ex:CompanyB .
+
+# Expected inferred triples (from rule):
+# ex:Alice rdf:type ex:Employee .
+# ex:Alice ex:worksFor ex:CompanyA .
+# ex:Bob rdf:type ex:Employee .
+# ex:Bob ex:worksFor ex:CompanyB .
