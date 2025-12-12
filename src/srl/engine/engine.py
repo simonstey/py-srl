@@ -48,7 +48,7 @@ class RuleEngine:
         """
         self.strata = stratify_rules(self.rule_set)
     
-    def evaluate(self, graph: Graph, inplace: bool = True) -> Graph:
+    def evaluate(self, graph: Graph, inplace: bool = True, results_only: bool = False) -> Graph:
         """
         Evaluate the rule set against a graph.
         
@@ -73,6 +73,7 @@ class RuleEngine:
         Args:
             graph: RDF graph to evaluate rules against
             inplace: If True, modify graph in place; if False, work on a copy
+            results_only: If True, return only the resulting triples
             
         Returns:
             Graph with inferred triples added
@@ -80,22 +81,29 @@ class RuleEngine:
         Raises:
             StratificationError: If stratification fails
         """
+        if inplace and results_only:
+            raise ValueError("If you set results_only=True then you must not also select inplace=True")
+
         # Stratify if not already done
         if not self.strata:
             self.stratify()
-        
+
+        result_graph = Graph()
+
         # Work on a copy if not inplace
-        if not inplace:
-            result_graph = Graph()
-            for triple in graph:
-                result_graph.add(triple)
-            graph = result_graph
-        
+        if inplace:
+            result_graph = graph
+        else:
+            result_graph += graph
+
         # Evaluate each stratum in order
         for stratum_num, rule_indices in enumerate(self.strata):
-            self._evaluate_stratum(stratum_num, rule_indices, graph)
-        
-        return graph
+            self._evaluate_stratum(stratum_num, rule_indices, result_graph)
+
+        if results_only:
+            return result_graph - graph
+        else:
+            return result_graph
     
     def _evaluate_stratum(
         self,
