@@ -1,7 +1,8 @@
 """Debug BIND/CONCAT evaluation"""
 from rdflib import Graph, Namespace, Literal
-from src.srl.parser import SRLParser
+
 from src.srl.engine import RuleEngine
+from src.srl.parser import SRLParser
 
 EX = Namespace("http://example.org/")
 

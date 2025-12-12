@@ -6,6 +6,7 @@ needed by the SRL evaluation engine.
 """
 
 from typing import Any, Optional, Iterator, Tuple
+
 from rdflib import Graph as RDFLibGraph
 
 

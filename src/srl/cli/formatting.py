@@ -5,6 +5,7 @@ Provides styled output using Rich for tables, trees, panels, and error display.
 """
 
 from typing import Any, List, Optional, Tuple
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -22,7 +23,6 @@ from ..ast.nodes import (
     IRI,
     Literal,
 )
-
 
 console = Console()
 error_console = Console(stderr=True)

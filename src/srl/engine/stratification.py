@@ -5,13 +5,12 @@ Implements Section 5.4 of the specification: stratifying a rule set
 to determine evaluation order and detect problematic negation cycles.
 """
 
-from typing import List, Set, Dict, Tuple, Optional
 from dataclasses import dataclass
+from typing import List, Set, Tuple
 
 from ..ast.nodes import (
     Rule, RuleSet, Variable,
-    TriplePattern, TripleTemplate, NegationElement,
-    RuleBodyElement,
+    TriplePattern, NegationElement,
 )
 
 

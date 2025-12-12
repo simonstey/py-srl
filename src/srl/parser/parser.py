@@ -3,10 +3,11 @@ Main parser class for SHACL 1.2 Rules (Shape Rule Language).
 """
 
 from pathlib import Path
+
 from lark import Lark, UnexpectedInput, UnexpectedToken, UnexpectedCharacters
 
-from ..ast import RuleSet
 from .transformer import SRLTransformer
+from ..ast import RuleSet
 
 
 class ParseError(Exception):

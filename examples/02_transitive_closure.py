@@ -6,8 +6,8 @@ recursive rules and stratification.
 """
 
 from rdflib import Graph, Namespace
-from srl.parser import SRLParser
 from srl.engine import RuleEngine
+from srl.parser import SRLParser
 
 # Define namespace
 EX = Namespace("http://example.org/")

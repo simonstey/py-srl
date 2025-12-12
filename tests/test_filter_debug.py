@@ -1,5 +1,6 @@
 """Debug filter evaluation in detail"""
 from rdflib import Graph, Namespace, Literal as RDFLiteral
+
 from src.srl.engine import RuleEngine
 
 EX = Namespace("http://example.org/")

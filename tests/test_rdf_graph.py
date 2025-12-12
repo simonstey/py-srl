@@ -2,7 +2,6 @@
 Unit tests for RDF graph wrapper.
 """
 
-import pytest
 from src.srl.rdf import RDFGraph
 
 

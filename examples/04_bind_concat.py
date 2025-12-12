@@ -6,8 +6,8 @@ with computed values, including string concatenation.
 """
 
 from rdflib import Graph, Namespace, Literal
-from srl.parser import SRLParser
 from srl.engine import RuleEngine
+from srl.parser import SRLParser
 
 # Define namespace
 EX = Namespace("http://example.org/")
