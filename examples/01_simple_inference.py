@@ -6,8 +6,8 @@ ancestor relationships from parent relationships.
 """
 
 from rdflib import Graph, Namespace
-from srl.engine import RuleEngine
-from srl.parser import SRLParser
+from src.srl.engine import RuleEngine
+from src.srl.parser import SRLParser
 
 # Define namespace
 EX = Namespace("http://example.org/")
