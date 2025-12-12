@@ -1,6 +1,6 @@
 """Debug filter evaluation in detail"""
 from rdflib import Graph, Namespace, Literal as RDFLiteral
-from srl.engine import RuleEngine
+from src.srl.engine import RuleEngine
 
 EX = Namespace("http://example.org/")
 
@@ -26,7 +26,7 @@ RULE {
 """
 
 # Patch eval_filter to add debugging
-from srl.engine import expressions
+from src.srl.engine import expressions
 original_eval_filter = expressions.eval_filter
 
 def debug_eval_filter(condition, mu, active_graph=None):

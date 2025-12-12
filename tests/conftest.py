@@ -3,7 +3,7 @@ Test configuration and fixtures for py-srl.
 """
 
 import pytest
-from srl.rdf import RDFGraph
+from src.srl.rdf import RDFGraph
 
 
 @pytest.fixture

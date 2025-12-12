@@ -5,8 +5,8 @@ Tests the complete pipeline: parsing SRL → evaluating rules → generating inf
 """
 
 from rdflib import Graph, Namespace, Literal, URIRef
-from srl.parser import SRLParser
-from srl.engine import RuleEngine
+from src.srl.parser import SRLParser
+from src.srl.engine import RuleEngine
 
 # Define namespaces
 EX = Namespace("http://example.org/")

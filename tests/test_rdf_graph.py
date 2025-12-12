@@ -3,7 +3,7 @@ Unit tests for RDF graph wrapper.
 """
 
 import pytest
-from srl.rdf import RDFGraph
+from src.srl.rdf import RDFGraph
 
 
 def test_create_empty_graph():
