@@ -28,7 +28,6 @@ RULE {
 
 # Patch eval_filter to add debugging
 from src.srl.engine import expressions
-original_eval_filter = expressions.eval_filter
 
 def debug_eval_filter(condition, mu, active_graph=None):
     """Debug wrapper for eval_filter"""
@@ -52,13 +51,3 @@ def debug_eval_filter(condition, mu, active_graph=None):
     
     return ebv
 
-expressions.eval_filter = debug_eval_filter
-
-# Execute
-engine = RuleEngine(g)
-engine.add_rules(rule_text)
-result = engine.apply_rules()
-
-print(f"\nFinal result ({len(result)} triples):")
-for s, p, o in result:
-    print(f"  {s} {p} {o}")
