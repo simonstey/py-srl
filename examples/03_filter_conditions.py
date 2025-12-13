@@ -6,8 +6,8 @@ in rule bodies, such as filtering by numeric values.
 """
 
 from rdflib import Graph, Namespace, Literal
-from srl.parser import SRLParser
-from srl.engine import RuleEngine
+from src.srl.engine import RuleEngine
+from src.srl.parser import SRLParser
 
 # Define namespace
 EX = Namespace("http://example.org/")

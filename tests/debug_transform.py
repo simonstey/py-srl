@@ -1,9 +1,10 @@
 """Debug transformer."""
 
-from src.srl.parser.parser import SRLParser
-from src.srl.parser.transformer import SRLTransformer
-from lark import Lark
 import pathlib
+
+from lark import Lark
+
+from src.srl.parser.transformer import SRLTransformer
 
 srl_text = """
 PREFIX ex: <http://example.org/>

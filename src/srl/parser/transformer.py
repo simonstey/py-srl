@@ -6,8 +6,9 @@ the AST nodes defined in srl.ast.nodes, following the abstract syntax
 from Section 3 of the SHACL 1.2 Rules specification.
 """
 
-from lark import Transformer, Token
 from typing import Dict
+
+from lark import Transformer, Token
 
 from ..ast.nodes import (
     # Core structures
@@ -45,7 +46,6 @@ from ..ast.nodes import (
     BinaryOperator,
     UnaryOperator,
 )
-
 
 # Standard well-known prefixes
 STANDARD_PREFIXES: Dict[str, str] = {

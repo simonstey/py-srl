@@ -5,11 +5,11 @@ This module provides rule evaluation functionality including solution mappings,
 expression evaluation, and fixpoint iteration.
 """
 
-from .solutions import SolutionMapping, compatible, merge, graphMatch
+from .engine import RuleEngine, evaluate_rules
 from .expressions import eval_expr, effective_boolean_value
 from .rules import eval_rule
+from .solutions import SolutionMapping, compatible, merge, graphMatch
 from .stratification import stratify_rules, StratificationError
-from .engine import RuleEngine, evaluate_rules
 
 __all__ = [
     # Solution mappings

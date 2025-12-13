@@ -5,9 +5,9 @@ This example demonstrates a basic SHACL 1.2 rule that infers
 ancestor relationships from parent relationships.
 """
 
-from rdflib import Graph, Namespace, Literal
-from srl.parser import SRLParser
-from srl.engine import RuleEngine
+from rdflib import Graph, Namespace
+from src.srl.engine import RuleEngine
+from src.srl.parser import SRLParser
 
 # Define namespace
 EX = Namespace("http://example.org/")

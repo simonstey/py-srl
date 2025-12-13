@@ -11,8 +11,6 @@ from typing import Optional
 import rich_click as click
 from rdflib import Graph
 
-from ..parser import SRLParser, ParseError
-from ..engine import RuleEngine, StratificationError
 from .formatting import (
     console,
     print_success,
@@ -25,6 +23,8 @@ from .formatting import (
     display_evaluation_results,
     display_shacl_coming_soon,
 )
+from ..engine import RuleEngine, StratificationError
+from ..parser import SRLParser, ParseError
 
 click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.USE_MARKDOWN = True

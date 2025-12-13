@@ -5,21 +5,18 @@ Implements Section 5.2 of the specification: expression evaluation,
 built-in functions, operators, and effective boolean values.
 """
 
-from typing import Any, Union, Optional
-from decimal import Decimal
-from datetime import datetime
 import re
+from typing import Union, Optional
 
 from rdflib import Literal as RDFLiteral, URIRef, BNode, Namespace
 from rdflib.term import Node as RDFNode
 
+from .solutions import SolutionMapping, substitute_term
 from ..ast.nodes import (
     Expression, BinaryOp, UnaryOp, FunctionCall, BuiltInCall,
     BinaryOperator, UnaryOperator,
     Variable, IRI, Literal, BlankNode,
 )
-from .solutions import SolutionMapping, substitute_term
-
 
 # XSD namespace for datatype operations
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")

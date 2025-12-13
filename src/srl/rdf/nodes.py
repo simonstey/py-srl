@@ -5,8 +5,8 @@ Provides typed wrappers around rdflib node types.
 """
 
 from typing import Union, Optional
-from rdflib import URIRef, Literal as RDFLibLiteral, BNode
 
+from rdflib import URIRef, Literal as RDFLibLiteral, BNode
 
 # Type alias for any RDF node
 RDFNode = Union[URIRef, RDFLibLiteral, BNode]

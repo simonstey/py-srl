@@ -4,9 +4,10 @@ Comprehensive test of SHACL 1.2 Rules implementation.
 Tests the complete pipeline: parsing SRL → evaluating rules → generating inferences.
 """
 
-from rdflib import Graph, Namespace, Literal, URIRef
-from srl.parser import SRLParser
-from srl.engine import RuleEngine
+from rdflib import Graph, Namespace, Literal
+
+from src.srl.engine import RuleEngine
+from src.srl.parser import SRLParser
 
 # Define namespaces
 EX = Namespace("http://example.org/")

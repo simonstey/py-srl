@@ -1,7 +1,8 @@
 """Debug parser output."""
 
-from src.srl.parser.parser import SRLParser
 from lark import Lark
+
+from src.srl.parser.parser import SRLParser
 
 srl_text = """
 PREFIX ex: <http://example.org/>

@@ -6,16 +6,17 @@ to produce solution mappings from the rule body.
 """
 
 from typing import List, Optional
+
 from rdflib import Graph
 
+from .expressions import eval_expr, effective_boolean_value
+from .solutions import (
+    SolutionMapping, graphMatch, join, minus, extend
+)
 from ..ast.nodes import (
     Rule, RuleBody, RuleBodyElement,
     TriplePattern, ConditionExpression, NegationElement, Assignment,
 )
-from .solutions import (
-    SolutionMapping, graphMatch, join, minus, extend
-)
-from .expressions import eval_expr, effective_boolean_value
 
 
 def eval_rule(

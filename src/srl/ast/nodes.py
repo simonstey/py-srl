@@ -5,8 +5,8 @@ Based on Section 3: Shape Rules Abstract Syntax from the W3C specification.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Union
 from enum import Enum
+from typing import List, Optional, Union
 
 
 # ============================================================================

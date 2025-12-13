@@ -5,8 +5,9 @@ Implements Section 5.1 of the specification: solution mappings,
 substitution, compatibility, merging, and graph matching.
 """
 
-from typing import Dict, Set, List, Optional, Union
 from dataclasses import dataclass, field
+from typing import Dict, Set, List, Optional, Union
+
 from rdflib import Graph, URIRef, Literal as RDFLiteral, BNode
 
 from ..ast.nodes import (
@@ -20,7 +21,6 @@ from ..ast.nodes import (
     PathSequence,
     PathAlternative,
 )
-
 
 # Type aliases for RDF terms
 RDFTerm = Union[URIRef, RDFLiteral, BNode]

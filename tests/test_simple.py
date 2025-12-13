@@ -2,9 +2,10 @@
 Simple test to verify basic rule evaluation.
 """
 
-from rdflib import Graph, Namespace, Literal
-from src.srl.parser import SRLParser
+from rdflib import Graph, Namespace
+
 from src.srl.engine import RuleEngine
+from src.srl.parser import SRLParser
 
 # Define namespace
 EX = Namespace("http://example.org/")

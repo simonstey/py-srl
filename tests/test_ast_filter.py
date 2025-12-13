@@ -1,6 +1,6 @@
 """Debug rule AST to see what body elements are created"""
-from srl.parser import SRLParser
-from srl.ast.nodes import *
+from src.srl.ast.nodes import *
+from src.srl.parser import SRLParser
 
 rule_text = """
 PREFIX ex: <http://example.org/>

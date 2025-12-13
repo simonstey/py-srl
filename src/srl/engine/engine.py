@@ -5,13 +5,14 @@ Implements Section 5.5 of the specification: rule set evaluation
 with stratification and fixpoint iteration.
 """
 
-from typing import List, Optional, Set, Tuple
+from typing import List, Set, Tuple
+
 from rdflib import Graph
 
-from ..ast.nodes import RuleSet, Rule, TripleTemplate
-from .solutions import SolutionMapping, substitute_triple_template
 from .rules import eval_rule
-from .stratification import stratify_rules, StratificationError
+from .solutions import substitute_triple_template
+from .stratification import stratify_rules
+from ..ast.nodes import RuleSet, Rule
 
 
 class RuleEngine:

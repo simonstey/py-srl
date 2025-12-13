@@ -5,6 +5,7 @@ Handles prefix declarations and IRI expansion/abbreviation.
 """
 
 from typing import Dict, Optional
+
 from rdflib import Namespace as RDFLibNamespace
 
 
