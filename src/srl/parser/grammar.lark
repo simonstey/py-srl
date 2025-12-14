@@ -157,6 +157,29 @@ path_sequence: path_elt_or_inverse ("/" path_elt_or_inverse)*
 path_elt_or_inverse: path_elt | CARET path_elt
 CARET: "^"
 
+// ============================================================================
+// Expression/operator terminals (named so they are kept in the parse tree)
+// ============================================================================
+
+OR_OP: "||"
+AND_OP: "&&"
+
+EQ_OP: "="
+NE_OP: "!="
+LE_OP: "<="
+GE_OP: ">="
+LT_OP: "<"
+GT_OP: ">"
+
+PLUS_OP: "+"
+MINUS_OP: "-"
+TIMES_OP: "*"
+DIV_OP: "/"
+BANG_OP: "!"
+
+IN_KW: "IN"i
+NOT_KW: "NOT"i
+
 // [50] PathElt ::= PathPrimary
 path_elt: path_primary
 
@@ -239,30 +262,30 @@ var: VAR1 | VAR2
 expression: conditional_or_expression
 
 // [77] ConditionalOrExpression ::= ConditionalAndExpression ( '||' ConditionalAndExpression )*
-conditional_or_expression: conditional_and_expression ("||" conditional_and_expression)*
+conditional_or_expression: conditional_and_expression (OR_OP conditional_and_expression)*
 
 // [78] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*
-conditional_and_expression: value_logical ("&&" value_logical)*
+conditional_and_expression: value_logical (AND_OP value_logical)*
 
 // [79] ValueLogical ::= RelationalExpression
 value_logical: relational_expression
 
 // [80] RelationalExpression ::= NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression | 'IN' ExpressionList | 'NOT' 'IN' ExpressionList )?
-relational_expression: numeric_expression ("=" numeric_expression | "!=" numeric_expression | "<" numeric_expression | ">" numeric_expression | "<=" numeric_expression | ">=" numeric_expression | "IN"i expression_list | "NOT"i "IN"i expression_list)?
+relational_expression: numeric_expression ((EQ_OP | NE_OP | LT_OP | GT_OP | LE_OP | GE_OP) numeric_expression | IN_KW expression_list | NOT_KW IN_KW expression_list)?
 
 // [81] NumericExpression ::= AdditiveExpression
 numeric_expression: additive_expression
 
 // [82] AdditiveExpression ::= MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | ( NumericLiteralPositive | NumericLiteralNegative ) ( ( '*' UnaryExpression ) | ( '/' UnaryExpression ) )* )*
-additive_expression: multiplicative_expression (("+" | "-") multiplicative_expression | (numeric_literal_positive | numeric_literal_negative) (("*" | "/") unary_expression)*)*
+additive_expression: multiplicative_expression ((PLUS_OP | MINUS_OP) multiplicative_expression | (numeric_literal_positive | numeric_literal_negative) ((TIMES_OP | DIV_OP) unary_expression)*)*
 
 // [83] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
-multiplicative_expression: unary_expression (("*" | "/") unary_expression)*
+multiplicative_expression: unary_expression ((TIMES_OP | DIV_OP) unary_expression)*
 
 // [84] UnaryExpression ::=   '!' PrimaryExpression | '+' PrimaryExpression | '-' PrimaryExpression | PrimaryExpression
-unary_expression: "!" primary_expression
-                | "+" primary_expression
-                | "-" primary_expression
+unary_expression: BANG_OP primary_expression
+                | PLUS_OP primary_expression
+                | MINUS_OP primary_expression
                 | primary_expression
 
 // [85] PrimaryExpression ::= BrackettedExpression | BuiltInCall | iriOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var | ExprTripleTerm
