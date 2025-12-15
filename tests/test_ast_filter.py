@@ -1,6 +1,6 @@
 """Debug rule AST to see what body elements are created"""
-from src.srl.ast.nodes import *
-from src.srl.parser import SRLParser
+from srl.ast.nodes import ConditionExpression
+from srl.parser import SRLParser
 
 rule_text = """
 PREFIX ex: <http://example.org/>
@@ -10,6 +10,7 @@ RULE {
 } WHERE {
     ?person ex:age ?age .
     FILTER (?age >= 18)
+    FILTER (18 < ?age )
 }
 """
 
@@ -31,8 +32,8 @@ for i, elem in enumerate(rule.body.elements):
     print(f"  Value: {elem}")
     
     if isinstance(elem, ConditionExpression):
-        print(f"  Is ConditionExpression: YES")
+        print("  Is ConditionExpression: YES")
         print(f"  Expression: {elem.expression}")
         print(f"  Expression type: {type(elem.expression)}")
     else:
-        print(f"  Is ConditionExpression: NO")
+        print("  Is ConditionExpression: NO")

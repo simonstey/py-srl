@@ -557,9 +557,14 @@ class SRLTransformer(Transformer):
         if len(items) == 1:
             return items[0]
 
+        # With named terminals, items are interleaved: expr, OR_OP, expr, OR_OP, expr, ...
         result = items[0]
-        for i in range(1, len(items)):
-            result = BinaryOp(operator=BinaryOperator.OR, left=result, right=items[i])
+        i = 1
+        while i < len(items):
+            # items[i] is the operator token (OR_OP)
+            right = items[i + 1]
+            result = BinaryOp(operator=BinaryOperator.OR, left=result, right=right)
+            i += 2
         return result
 
     def conditional_and_expression(self, items):
@@ -567,9 +572,13 @@ class SRLTransformer(Transformer):
         if len(items) == 1:
             return items[0]
 
+        # With named terminals, items are interleaved: expr, AND_OP, expr, AND_OP, expr, ...
         result = items[0]
-        for i in range(1, len(items)):
-            result = BinaryOp(operator=BinaryOperator.AND, left=result, right=items[i])
+        i = 1
+        while i < len(items):
+            right = items[i + 1]
+            result = BinaryOp(operator=BinaryOperator.AND, left=result, right=right)
+            i += 2
         return result
 
     def value_logical(self, items):
@@ -581,25 +590,45 @@ class SRLTransformer(Transformer):
         if len(items) == 1:
             return items[0]
 
-        if len(items) < 3:
-            # Missing operator - shouldn't happen now with terminals
-            return items[0]
-
         left = items[0]
-        op_token = str(items[1])
-        right = items[2]
 
-        op_map = {
-            "=": BinaryOperator.EQ,
-            "!=": BinaryOperator.NE,
-            "<": BinaryOperator.LT,
-            ">": BinaryOperator.GT,
-            "<=": BinaryOperator.LE,
-            ">=": BinaryOperator.GE,
-        }
+        # Comparison: left OP right
+        if len(items) == 3:
+            op_token = str(items[1])
+            right = items[2]
 
-        operator = op_map.get(op_token)
-        return BinaryOp(operator=operator, left=left, right=right)
+            # IN(...) is represented via the existing built-in dispatch in the engine.
+            if op_token.upper() == "IN":
+                exprs = right if isinstance(right, list) else [right]
+                return BuiltInCall(function_name="IN", arguments=[left, *exprs])
+
+            op_map = {
+                "=": BinaryOperator.EQ,
+                "!=": BinaryOperator.NE,
+                "<": BinaryOperator.LT,
+                ">": BinaryOperator.GT,
+                "<=": BinaryOperator.LE,
+                ">=": BinaryOperator.GE,
+            }
+
+            operator = op_map.get(op_token)
+            if operator is None:
+                return left
+            return BinaryOp(operator=operator, left=left, right=right)
+
+        # NOT IN (...) -> !(IN(...))
+        if len(items) == 4:
+            not_kw = str(items[1]).upper()
+            in_kw = str(items[2]).upper()
+            expr_list = items[3]
+
+            if not_kw == "NOT" and in_kw == "IN":
+                exprs = expr_list if isinstance(expr_list, list) else [expr_list]
+                in_call = BuiltInCall(function_name="IN", arguments=[left, *exprs])
+                return UnaryOp(operator=UnaryOperator.NOT, operand=in_call)
+
+        # Fallback: return the left side if something unexpected is produced.
+        return left
 
     def numeric_expression(self, items):
         """[81] NumericExpression ::= AdditiveExpression"""
@@ -610,16 +639,15 @@ class SRLTransformer(Transformer):
         if len(items) == 1:
             return items[0]
 
+        # With named terminals, items are interleaved: expr, PLUS_OP|MINUS_OP, expr, ...
         result = items[0]
         i = 1
-        while i < len(items):
+        while i + 1 < len(items):
             op_token = str(items[i])
-            i += 1
-            if i < len(items):
-                right = items[i]
-                i += 1
-                operator = BinaryOperator.ADD if op_token == "+" else BinaryOperator.SUB
-                result = BinaryOp(operator=operator, left=result, right=right)
+            right = items[i + 1]
+            operator = BinaryOperator.ADD if op_token == "+" else BinaryOperator.SUB
+            result = BinaryOp(operator=operator, left=result, right=right)
+            i += 2
 
         return result
 
@@ -628,16 +656,15 @@ class SRLTransformer(Transformer):
         if len(items) == 1:
             return items[0]
 
+        # With named terminals, items are interleaved: expr, TIMES_OP|DIV_OP, expr, ...
         result = items[0]
         i = 1
-        while i < len(items):
+        while i + 1 < len(items):
             op_token = str(items[i])
-            i += 1
-            if i < len(items):
-                right = items[i]
-                i += 1
-                operator = BinaryOperator.MUL if op_token == "*" else BinaryOperator.DIV
-                result = BinaryOp(operator=operator, left=result, right=right)
+            right = items[i + 1]
+            operator = BinaryOperator.MUL if op_token == "*" else BinaryOperator.DIV
+            result = BinaryOp(operator=operator, left=result, right=right)
+            i += 2
 
         return result
 
@@ -699,6 +726,10 @@ class SRLTransformer(Transformer):
         return BuiltInCall(function_name="BNODE", arguments=items)
 
     def builtin_concat(self, items):
+        # Grammar uses ExpressionList, which is transformed as a single Python list.
+        # Unwrap that list so BuiltInCall.arguments is a flat list of expressions.
+        if len(items) == 1 and isinstance(items[0], list):
+            items = items[0]
         return BuiltInCall(function_name="CONCAT", arguments=items)
     
     def builtin_rand(self, items):
@@ -798,6 +829,8 @@ class SRLTransformer(Transformer):
         return BuiltInCall(function_name="SHA512", arguments=items)
     
     def builtin_coalesce(self, items):
+        if len(items) == 1 and isinstance(items[0], list):
+            items = items[0]
         return BuiltInCall(function_name="COALESCE", arguments=items)
     
     def builtin_if(self, items):
@@ -862,6 +895,15 @@ class SRLTransformer(Transformer):
 
     def arg_list(self, items):
         """[32] ArgList ::= NIL | '(' Expression ( ',' Expression )* ')'"""
+        # NIL is a named terminal for "( WS* )"; when present, it arrives as a single Token.
+        if len(items) == 1 and isinstance(items[0], Token) and items[0].type == "NIL":
+            return []
+        return items if items else []
+
+    def expression_list(self, items):
+        """[33] ExpressionList ::= NIL | '(' Expression ( ',' Expression )* ')'"""
+        if len(items) == 1 and isinstance(items[0], Token) and items[0].type == "NIL":
+            return []
         return items if items else []
 
     # ========================================================================
