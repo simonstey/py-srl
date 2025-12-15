@@ -5,7 +5,7 @@ description = "Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine"
 authors = [{ name = "py-srl contributors" }]
 requires-python = ">=3.9"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = { text = "MIT" }
 keywords = [
     "SHACL",
     "RDF",
