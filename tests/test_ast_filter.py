@@ -1,39 +1,51 @@
-"""Debug rule AST to see what body elements are created"""
-from srl.ast.nodes import ConditionExpression
+"""Test rule AST structure for filters."""
+
+import logging
+from srl.ast.nodes import ConditionExpression, BinaryOp, BinaryOperator, Variable, Literal
 from srl.parser import SRLParser
 
-rule_text = """
-PREFIX ex: <http://example.org/>
+logger = logging.getLogger(__name__)
 
-RULE {
-    ?person ex:isAdult true .
-} WHERE {
-    ?person ex:age ?age .
-    FILTER (?age >= 18)
-    FILTER (18 < ?age )
-}
-"""
+def test_ast_filter_structure():
+    """Verify AST structure for FILTER expressions."""
+    rule_text = """
+    PREFIX ex: <http://example.org/>
 
-# Parse
-parser = SRLParser()
-result = parser.parse(rule_text)
-print(f"Parsed {len(result.rules)} rule(s)")
+    RULE {
+        ?person ex:isAdult true .
+    } WHERE {
+        ?person ex:age ?age .
+        FILTER (?age >= 18)
+        FILTER (18 < ?age )
+    }
+    """
 
-rule = result.rules[0]
-print(f"\nRule: {rule}")
-print(f"Rule type: {type(rule)}")
-print(f"Body: {rule.body}")
-print(f"Body type: {type(rule.body)}")
-print(f"Body elements: {len(rule.body.elements)}")
-
-for i, elem in enumerate(rule.body.elements):
-    print(f"\nElement {i}:")
-    print(f"  Type: {type(elem)}")
-    print(f"  Value: {elem}")
+    logger.info("Parsing rule text...")
+    parser = SRLParser()
+    result = parser.parse(rule_text)
     
-    if isinstance(elem, ConditionExpression):
-        print("  Is ConditionExpression: YES")
-        print(f"  Expression: {elem.expression}")
-        print(f"  Expression type: {type(elem.expression)}")
-    else:
-        print("  Is ConditionExpression: NO")
+    assert len(result.rules) == 1
+    rule = result.rules[0]
+    
+    logger.info(f"Body elements: {len(rule.body.elements)}")
+    
+    # We expect 3 elements: TriplePattern, Filter, Filter
+    assert len(rule.body.elements) == 3
+    
+    # Check first filter
+    filter1 = rule.body.elements[1]
+    assert isinstance(filter1, ConditionExpression)
+    assert isinstance(filter1.expression, BinaryOp)
+    assert filter1.expression.operator == BinaryOperator.GE
+    assert isinstance(filter1.expression.left, Variable)
+    assert filter1.expression.left.name == "age"
+    
+    # Check second filter
+    filter2 = rule.body.elements[2]
+    assert isinstance(filter2, ConditionExpression)
+    assert isinstance(filter2.expression, BinaryOp)
+    assert filter2.expression.operator == BinaryOperator.LT
+    assert isinstance(filter2.expression.left, Literal)
+    assert filter2.expression.left.value == "18"
+    
+    logger.info("AST filter structure verified.")

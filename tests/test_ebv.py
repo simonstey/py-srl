@@ -1,24 +1,45 @@
-"""Debug effective_boolean_value"""
-from rdflib import Literal as RDFLiteral, Namespace
+"""Test effective boolean value logic."""
 
+import logging
+from rdflib import Literal as RDFLiteral, Namespace
+from srl.engine.expressions import effective_boolean_value
+
+logger = logging.getLogger(__name__)
 XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
 
-# Test boolean literal created from comparison
-result = True
-lit = RDFLiteral(result, datatype=XSD.boolean)
-
-print(f"Literal: {lit}")
-print(f"Datatype: {lit.datatype}")
-print(f"Value: {lit.value}")
-print(f"Value type: {type(lit.value)}")
-
-# Try the EBV logic
-if lit.datatype == XSD.boolean:
-    print(f"Is boolean datatype: True")
-    print(f"Value.lower() attempt:")
-    try:
-        result = lit.value.lower() in ('true', '1')
-        print(f"  Result: {result}")
-    except Exception as e:
-        print(f"  ERROR: {e}")
-        print(f"  This is the bug - value is {type(lit.value)}, not string!")
+def test_effective_boolean_value():
+    """Test EBV calculation for various literals."""
+    
+    # Boolean True
+    lit_true = RDFLiteral(True, datatype=XSD.boolean)
+    assert effective_boolean_value(lit_true) is True
+    
+    # Boolean False
+    lit_false = RDFLiteral(False, datatype=XSD.boolean)
+    assert effective_boolean_value(lit_false) is False
+    
+    # String "true" (boolean)
+    lit_str_true = RDFLiteral("true", datatype=XSD.boolean)
+    assert effective_boolean_value(lit_str_true) is True
+    
+    # String "false" (boolean)
+    lit_str_false = RDFLiteral("false", datatype=XSD.boolean)
+    assert effective_boolean_value(lit_str_false) is False
+    
+    # Non-empty string
+    lit_str = RDFLiteral("hello")
+    assert effective_boolean_value(lit_str) is True
+    
+    # Empty string
+    lit_empty = RDFLiteral("")
+    assert effective_boolean_value(lit_empty) is False
+    
+    # Numeric non-zero
+    lit_num = RDFLiteral(1)
+    assert effective_boolean_value(lit_num) is True
+    
+    # Numeric zero
+    lit_zero = RDFLiteral(0)
+    assert effective_boolean_value(lit_zero) is False
+    
+    logger.info("EBV tests passed.")

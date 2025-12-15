@@ -4,12 +4,23 @@ import pathlib
 
 from lark import Lark
 
-from src.srl.parser.transformer import SRLTransformer
+from srl.parser.transformer import SRLTransformer
 
 srl_text = """
-PREFIX ex: <http://example.org/>
+PREFIX : <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-RULE { ?x ex:derived ?y . } WHERE { ?x ex:source ?y . }
+# Find people who have at least one child
+RULE { ?person :isParent true } WHERE {
+    ?person rdf:type :Person .
+    FILTER(EXISTS { ?person :parentOf ?child })
+}
+
+# Find companies with employees
+RULE { ?company :hasEmployees true } WHERE {
+    ?company rdf:type :Company .
+    FILTER(EXISTS { ?emp :worksFor ?company })
+}
 """
 
 # Get the parse tree

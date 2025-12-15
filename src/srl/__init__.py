@@ -6,8 +6,8 @@ providing parsing, validation, and evaluation capabilities for RDF
 rule-based reasoning.
 """
 
-__version__ = "0.1.0-dev"
-__author__ = "py-srl contributors"
+__version__ = "0.1.0"
+__author__ = "Simon Steyskal"
 
 # Public API exports (to be implemented)
 # from .api import RuleSet, RDFGraph

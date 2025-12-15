@@ -26,7 +26,6 @@ from .nodes import (
     # Property Paths
     InversePath,
     PathSequence,
-    PathAlternative,
     PropertyPath,
     # Declarations
     TransitiveDeclaration,

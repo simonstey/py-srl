@@ -63,7 +63,7 @@ def cli(ctx: click.Context, verbose: bool) -> None:
     """
     **SRL** - SHACL 1.2 Rules command-line interface.
 
-    Parse, evaluate, and analyze SHACL 1.2 rules with rich terminal output.
+    Parse, evaluate, and analyze SHACL 1.2 rules (Shape Rules Language) with rich terminal output.
 
     ## Examples
 

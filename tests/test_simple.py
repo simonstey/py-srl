@@ -2,41 +2,38 @@
 Simple test to verify basic rule evaluation.
 """
 
+import logging
 from rdflib import Graph, Namespace
 
-from src.srl.engine import RuleEngine
-from src.srl.parser import SRLParser
+from srl.engine import RuleEngine
+from srl.parser import SRLParser
 
-# Define namespace
+logger = logging.getLogger(__name__)
 EX = Namespace("http://example.org/")
 
-# Simple SRL rule
-srl_text = """
-PREFIX ex: <http://example.org/>
+def test_simple_rule_evaluation():
+    """Test a very basic rule evaluation."""
+    srl_text = """
+    PREFIX ex: <http://example.org/>
 
-RULE { ?x ex:derived ?y . } WHERE { ?x ex:source ?y . }
-"""
+    RULE { ?x ex:derived ?y . } WHERE { ?x ex:source ?y . }
+    """
 
-print("Parsing SRL...")
-parser = SRLParser()
-rule_set = parser.parse(srl_text)
-print(f"Parsed {len(rule_set.rules)} rule(s)")
+    logger.info("Parsing SRL...")
+    parser = SRLParser()
+    rule_set = parser.parse(srl_text)
+    assert len(rule_set.rules) == 1
 
-# Create data
-print("\nCreating data graph...")
-data = Graph()
-data.bind("ex", EX)
-data.add((EX.A, EX.source, EX.B))
-print(f"Data has {len(data)} triple(s)")
+    logger.info("Creating data graph...")
+    data = Graph()
+    data.bind("ex", EX)
+    data.add((EX.A, EX.source, EX.B))
+    
+    logger.info("Evaluating rules...")
+    engine = RuleEngine(rule_set)
+    result = engine.evaluate(data, inplace=False)
 
-# Evaluate
-print("\nEvaluating rules...")
-engine = RuleEngine(rule_set)
-result = engine.evaluate(data, inplace=False)
-
-print(f"\nResult has {len(result)} triple(s)")
-print("\nAll triples:")
-for s, p, o in result:
-    print(f"  {s.n3(result.namespace_manager)} {p.n3(result.namespace_manager)} {o.n3(result.namespace_manager)}")
-
-print("\n✓ Test complete!")
+    logger.info(f"Result has {len(result)} triple(s)")
+    
+    assert (EX.A, EX.derived, EX.B) in result
+    logger.info("Simple rule evaluation passed.")

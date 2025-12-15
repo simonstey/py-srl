@@ -19,7 +19,6 @@ from ..ast.nodes import (
     TripleTemplate,
     InversePath,
     PathSequence,
-    PathAlternative,
 )
 
 # Type aliases for RDF terms
@@ -142,7 +141,7 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
             return RDFLiteral(term.value)
     elif isinstance(term, BlankNode):
         return BNode(term.label) if term.label else BNode()
-    elif isinstance(term, (InversePath, PathSequence, PathAlternative)):
+    elif isinstance(term, (InversePath, PathSequence)):
         # Property paths are handled specially in graph matching, not substitution
         # Return as-is for path evaluation
         return term
@@ -197,7 +196,7 @@ def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Grap
                 return RDFLiteral(term.value)
         elif isinstance(term, BlankNode):
             return BNode(term.label) if term.label else BNode()
-        elif isinstance(term, (InversePath, PathSequence, PathAlternative)):
+        elif isinstance(term, (InversePath, PathSequence)):
             # Property paths need special evaluation
             return term
         else:
@@ -208,7 +207,7 @@ def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Grap
     obj = pattern_term(pattern.object)
 
     # Check if predicate is a property path
-    if isinstance(pred, (InversePath, PathSequence, PathAlternative)):
+    if isinstance(pred, (InversePath, PathSequence)):
         return graphMatchWithPath(graph, pattern.subject, pred, pattern.object, active_graph)
 
     # Query the graph
@@ -243,12 +242,11 @@ def graphMatchWithPath(
     Property paths allow matching patterns like:
     - ex:parent/ex:parent (sequence - grandparent)
     - ^ex:hasChild (inverse - parent)
-    - ex:knows|ex:friendOf (alternative)
 
     Args:
         graph: RDF graph to match against
         subject_pattern: Subject term or variable
-        path: Property path (InversePath, PathSequence, PathAlternative)
+        path: Property path (InversePath, PathSequence)
         object_pattern: Object term or variable
         active_graph: Optional active graph for dataset queries
 
@@ -352,13 +350,6 @@ def evaluate_path(graph: Graph, path) -> Set[tuple]:
             current_results = new_results
 
         return current_results
-
-    elif isinstance(path, PathAlternative):
-        # Alternative path: p1|p2 means either p1 or p2
-        results = set()
-        for alt in path.alternatives:
-            results |= evaluate_path(graph, alt)
-        return results
 
     else:
         raise TypeError(f"Unknown path type: {type(path)}")
