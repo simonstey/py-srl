@@ -11,7 +11,7 @@ def rule_engine(rule_text):
     return RuleEngine(SRLParser().parse(rule_text))
 
 
-def test_results_plus_data():
+def test_results_without_data():
     r = """
         PREFIX : <http://example.org/>
 
