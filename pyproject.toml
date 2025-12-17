@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=80"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
-name = "shacl-rules"
-version = "0.1.0"
+name = "py-srl"
+dynamic = ["version"]
 description = "Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine"
 readme = "README.md"
 license-files = ["LICEN[CS]E*"]
@@ -51,14 +51,21 @@ Issues = "https://github.com/simonstey/py-srl/issues"
 srl = "srl.cli.main:cli"
 
 # ---------------------------------------------------------------------------
-# Setuptools configuration
+# Hatchling configuration
 # ---------------------------------------------------------------------------
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["srl*"]
+[tool.hatch.version]
+source = "vcs"
+fallback-version = "0.0.1"
 
-[tool.setuptools.package-data]
-srl = ["py.typed", "parser/*.lark"]
+[tool.hatch.build.hooks.vcs]
+version-file = "src/srl/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/srl"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/srl/py.typed" = "srl/py.typed"
+"src/srl/parser/grammar.lark" = "srl/parser/grammar.lark"
 
 # ---------------------------------------------------------------------------
 # Pytest

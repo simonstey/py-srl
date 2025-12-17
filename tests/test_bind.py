@@ -6,6 +6,7 @@ from rdflib import Graph, Namespace, Literal
 from srl.engine import RuleEngine
 from srl.parser import SRLParser
 
+
 logger = logging.getLogger(__name__)
 EX = Namespace("http://example.org/")
 

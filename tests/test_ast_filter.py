@@ -16,7 +16,7 @@ def test_ast_filter_structure():
     } WHERE {
         ?person ex:age ?age .
         FILTER (?age >= 18)
-        FILTER (18 < ?age )
+        FILTER (17 < ?age )
     }
     """
 
@@ -39,6 +39,9 @@ def test_ast_filter_structure():
     assert filter1.expression.operator == BinaryOperator.GE
     assert isinstance(filter1.expression.left, Variable)
     assert filter1.expression.left.name == "age"
+    assert isinstance(filter1.expression.right, Literal)
+    assert filter1.expression.right.value == "18"
+    logger.info(f"First filter verified: {filter1.expression.left.name} {filter1.expression.operator} {filter1.expression.right.value}")
     
     # Check second filter
     filter2 = rule.body.elements[2]
@@ -46,6 +49,9 @@ def test_ast_filter_structure():
     assert isinstance(filter2.expression, BinaryOp)
     assert filter2.expression.operator == BinaryOperator.LT
     assert isinstance(filter2.expression.left, Literal)
-    assert filter2.expression.left.value == "18"
-    
+    assert filter2.expression.left.value == "17"
+    assert isinstance(filter2.expression.right, Variable)
+    assert filter2.expression.right.name == "age"    
+    logger.info(f"Second filter verified: {filter2.expression.left.value} {filter2.expression.operator} {filter2.expression.right.name}")
     logger.info("AST filter structure verified.")
+

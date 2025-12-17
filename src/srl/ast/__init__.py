@@ -68,7 +68,6 @@ __all__ = [
     "Prologue",
     "InversePath",
     "PathSequence",
-    "PathAlternative",
     "PropertyPath",
     "TransitiveDeclaration",
     "SymmetricDeclaration",
