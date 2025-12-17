@@ -5,7 +5,7 @@ parsing FILTER expressions (e.g. ?age >= 18) and are represented as BinaryOp
 nodes in the AST.
 """
 
-from src.srl.ast.nodes import (
+from srl.ast.nodes import (
     BinaryOp,
     BinaryOperator,
     ConditionExpression,
@@ -13,7 +13,7 @@ from src.srl.ast.nodes import (
     Literal,
     Variable,
 )
-from src.srl.parser import SRLParser
+from srl.parser import SRLParser
 
 
 def test_filter_relational_expressions_are_parsed_fully():

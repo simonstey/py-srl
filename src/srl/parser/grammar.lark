@@ -35,11 +35,12 @@ rule2: "IF"i body_pattern "THEN"i head_template
 // [11] Rule3 ::= HeadTemplate ':-' BodyPattern
 rule3: head_template ":-" body_pattern
 
-// [12] Declaration ::= ( 'TRANSITIVE' '(' iri ')' | 'SYMMETRIC' '(' iri ')' | 'INVERSE' '(' iri ',' iri ')' )
-declaration: transitive_decl | symmetric_decl | inverse_decl
+// [12] Declaration ::= ( 'TRANSITIVE' '(' iri ')' | 'SYMMETRIC' '(' iri ')' | 'INVERSE' '(' iri ',' iri ')' | 'REFLEXIVE' '(' iri ')' )
+declaration: transitive_decl | symmetric_decl | inverse_decl | reflexive_decl
 transitive_decl: "TRANSITIVE"i "(" iri ")"
 symmetric_decl: "SYMMETRIC"i "(" iri ")"
 inverse_decl: "INVERSE"i "(" iri "," iri ")"
+reflexive_decl: "REFLEXIVE"i "(" iri ")"
 
 // [13] Data ::= 'DATA' TriplesTemplateBlock
 data: "DATA"i triples_template_block
@@ -183,7 +184,7 @@ NOT_KW: "NOT"i
 // [50] PathElt ::= PathPrimary
 path_elt: path_primary
 
-// [51] PathPrimary ::= iri | 'a' | '(' Path ')'
+// [51] PathPrimary ::= iri | 'a' | '(' path ')'
 path_primary: iri | "a" | "(" path ")"
 
 // [52] TriplesNode ::= Collection | BlankNodePropertyList
@@ -372,6 +373,8 @@ built_in_call: builtin_str
              | builtin_subject
              | builtin_predicate
              | builtin_object
+             | builtin_exists
+             | builtin_not_exists
 
 builtin_str: "STR"i "(" expression ")"
 builtin_lang: "LANG"i "(" expression ")"
@@ -434,6 +437,8 @@ builtin_triple: "TRIPLE"i "(" expression "," expression "," expression ")"
 builtin_subject: "SUBJECT"i "(" expression ")"
 builtin_predicate: "PREDICATE"i "(" expression ")"
 builtin_object: "OBJECT"i "(" expression ")"
+builtin_exists: "EXISTS"i "{" body_basic "}"
+builtin_not_exists: "NOT"i "EXISTS"i "{" body_basic "}"
 
 // [91] iriOrFunction ::= iri ArgList?
 iri_or_function: iri arg_list?

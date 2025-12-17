@@ -101,22 +101,12 @@ class PathSequence:
         return "/".join(str(e) for e in self.elements)
 
 
-@dataclass(frozen=True)
-class PathAlternative:
-    """Alternative property path (path1|path2).
-
-    From production [47]: Path ::= PathSequence ( '|' PathSequence )*
-    Note: The current grammar only has single PathSequence, but spec allows alternatives.
-    """
-
-    alternatives: List[Union[IRI, "PropertyPath"]]
-
-    def __str__(self) -> str:
-        return "|".join(str(a) for a in self.alternatives)
-
-
 # Union type for property paths
-PropertyPath = Union[IRI, InversePath, PathSequence, PathAlternative]
+PropertyPath = Union[
+    IRI,
+    InversePath,
+    PathSequence,
+]
 
 
 # ============================================================================
@@ -203,6 +193,23 @@ class BuiltInCall:
     arguments: List["Expression"]
 
 
+@dataclass(frozen=True)
+class ExistsExpression:
+    """
+    EXISTS or NOT EXISTS expression.
+    
+    Evaluates to true if the pattern matches (or doesn't match for NOT EXISTS).
+    """
+    
+    patterns: List["RuleBodyElement"]
+    negated: bool = False
+    
+    def __str__(self) -> str:
+        prefix = "NOT " if self.negated else ""
+        patterns_str = " ".join(str(p) for p in self.patterns)
+        return f"{prefix}EXISTS {{ {patterns_str} }}"
+
+
 # Expression can be a term, variable, operation, or function call
 Expression = Union[
     RDFTerm,
@@ -210,6 +217,7 @@ Expression = Union[
     UnaryOp,
     FunctionCall,
     BuiltInCall,
+    ExistsExpression,
 ]
 
 
@@ -482,8 +490,21 @@ class InverseDeclaration:
         return f"INVERSE({self.predicate1}, {self.predicate2})"
 
 
+@dataclass(frozen=True)
+class ReflexiveDeclaration:
+    """Declaration that a predicate is reflexive.
+
+    From production [12]: 'REFLEXIVE' '(' iri ')'
+    """
+
+    predicate: IRI
+
+    def __str__(self) -> str:
+        return f"REFLEXIVE({self.predicate})"
+
+
 # Union type for declarations
-Declaration = Union[TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration]
+Declaration = Union[TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration, ReflexiveDeclaration]
 
 
 @dataclass

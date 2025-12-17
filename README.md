@@ -1,4 +1,4 @@
-# py-srl: Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine
+# shacl-rules: Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine
 
 ## Overview
 

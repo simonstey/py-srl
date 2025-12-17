@@ -26,7 +26,6 @@ from .nodes import (
     # Property Paths
     InversePath,
     PathSequence,
-    PathAlternative,
     PropertyPath,
     # Declarations
     TransitiveDeclaration,
@@ -69,7 +68,6 @@ __all__ = [
     "Prologue",
     "InversePath",
     "PathSequence",
-    "PathAlternative",
     "PropertyPath",
     "TransitiveDeclaration",
     "SymmetricDeclaration",

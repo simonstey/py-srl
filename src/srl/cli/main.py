@@ -57,13 +57,13 @@ def detect_format(filepath: str) -> str:
 
 @click.group()
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output with detailed information.")
-@click.version_option(package_name="py-srl")
+@click.version_option(package_name="shacl-rules")
 @click.pass_context
 def cli(ctx: click.Context, verbose: bool) -> None:
     """
     **SRL** - SHACL 1.2 Rules command-line interface.
 
-    Parse, evaluate, and analyze SHACL 1.2 rules with rich terminal output.
+    Parse, evaluate, and analyze SHACL 1.2 rules (Shape Rules Language) with rich terminal output.
 
     ## Examples
 

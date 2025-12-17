@@ -1,42 +1,49 @@
 """Test FILTER evaluation."""
 
+import logging
 from rdflib import Graph, Namespace, Literal
 
-from src.srl.engine import RuleEngine
-from src.srl.parser import SRLParser
+from srl.engine import RuleEngine
+from srl.parser import SRLParser
 
+logger = logging.getLogger(__name__)
 EX = Namespace("http://example.org/")
 
-srl_text = """
-PREFIX ex: <http://example.org/>
+def test_filter_evaluation():
+    """Test that FILTER correctly filters solution mappings."""
+    srl_text = """
+    PREFIX ex: <http://example.org/>
 
-RULE {
-    ?person ex:isAdult true .
-} WHERE {
-    ?person ex:age ?age .
-    FILTER (?age >= 18)
-}
-"""
+    RULE {
+        ?person ex:isAdult true .
+    } WHERE {
+        ?person ex:age ?age .
+        FILTER (?age >= 18)
+    }
+    """
 
-parser = SRLParser()
-rule_set = parser.parse(srl_text)
+    logger.info("Parsing rule set...")
+    parser = SRLParser()
+    rule_set = parser.parse(srl_text)
 
-data = Graph()
-data.bind("ex", EX)
-data.add((EX.Alice, EX.age, Literal(25)))
-data.add((EX.Bob, EX.age, Literal(16)))
-data.add((EX.Charlie, EX.age, Literal(30)))
+    data = Graph()
+    data.bind("ex", EX)
+    data.add((EX.Alice, EX.age, Literal(25)))
+    data.add((EX.Bob, EX.age, Literal(16)))
+    data.add((EX.Charlie, EX.age, Literal(30)))
 
-print("Data:")
-for s, p, o in data:
-    print(f"  {s.n3(data.namespace_manager)} {p.n3(data.namespace_manager)} {o}")
+    logger.info(f"Input data graph size: {len(data)}")
 
-engine = RuleEngine(rule_set)
-result = engine.evaluate(data, inplace=False)
+    engine = RuleEngine(rule_set)
+    result = engine.evaluate(data, inplace=False)
 
-print("\nResult:")
-for s, p, o in result:
-    if EX.isAdult in (p,):
-        print(f"  {s.n3(result.namespace_manager)} {p.n3(result.namespace_manager)} {o}")
+    logger.info(f"Result graph size: {len(result)}")
 
-print("\nExpected: Alice and Charlie should be adults, Bob should NOT be.")
+    # Check expected results
+    assert (EX.Alice, EX.isAdult, Literal(True)) in result
+    assert (EX.Charlie, EX.isAdult, Literal(True)) in result
+    
+    # Check negative result (Bob is 16)
+    assert (EX.Bob, EX.isAdult, Literal(True)) not in result
+    
+    logger.info("Filter evaluation test passed.")
