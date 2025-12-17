@@ -561,7 +561,7 @@ wheels = [
 ]
 
 [[package]]
-name = "python-srl"
+name = "shacl-rules"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

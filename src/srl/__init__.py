@@ -1,5 +1,5 @@
 """
-python-srl: Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine
+shacl-rules: Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine
 
 A comprehensive implementation of the SHACL 1.2 Rules specification,
 providing parsing, validation, and evaluation capabilities for RDF
@@ -44,7 +44,7 @@ except ImportError:
     # Fallback for development installations without build
     try:
         from importlib.metadata import version
-        __version__ = version("python-srl")
+        __version__ = version("shacl-rules")
     except Exception:
         __version__ = "0.0.0+unknown"
 

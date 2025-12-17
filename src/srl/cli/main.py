@@ -57,7 +57,7 @@ def detect_format(filepath: str) -> str:
 
 @click.group()
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output with detailed information.")
-@click.version_option(package_name="python-srl")
+@click.version_option(package_name="shacl-rules")
 @click.pass_context
 def cli(ctx: click.Context, verbose: bool) -> None:
     """

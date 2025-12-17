@@ -3,7 +3,7 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "python-srl"
+name = "shacl-rules"
 dynamic = ["version"]
 description = "Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine"
 readme = "README.md"
