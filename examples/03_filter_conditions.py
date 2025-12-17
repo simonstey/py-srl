@@ -52,4 +52,4 @@ for s, p, o in sorted(result_graph):
         age = graph.value(s, EX.age)
         print(f"  {s.n3(result_graph.namespace_manager)} - age: {age}")
 
-print(f"\nFiltered correctly: Bob (16) and Diana (12) excluded")
+

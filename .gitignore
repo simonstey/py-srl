@@ -137,8 +137,7 @@ Thumbs.db
 docs/spec/*.pdf
 docs/spec/*.html
 /tmp
-/.github/prompts
-
+/.github/**/*.md
 
 # Build artifacts
 dist/
