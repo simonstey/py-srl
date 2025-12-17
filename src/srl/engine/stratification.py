@@ -89,15 +89,11 @@ def compute_dependencies(rules: List[Rule]) -> List[StrataInfo]:
     Returns:
         List of StrataInfo, one per rule
     """
-    n = len(rules)
     dependencies = []
     
     for i, rule in enumerate(rules):
         depends_on = set()
         neg_depends_on = set()
-        
-        # Extract predicates from rule head (what this rule produces)
-        head_predicates = extract_head_predicates(rule)
         
         # Check dependencies with other rules
         for j, other_rule in enumerate(rules):

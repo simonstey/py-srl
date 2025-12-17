@@ -26,7 +26,6 @@ from ..ast.nodes import (
     # Property Paths
     InversePath,
     PathSequence,
-    PathAlternative,
     # Body elements
     TriplePattern,
     TripleTemplate,
@@ -38,11 +37,13 @@ from ..ast.nodes import (
     TransitiveDeclaration,
     SymmetricDeclaration,
     InverseDeclaration,
+    ReflexiveDeclaration,
     # Expressions
     BinaryOp,
     UnaryOp,
     FunctionCall,
     BuiltInCall,
+    ExistsExpression,
     BinaryOperator,
     UnaryOperator,
 )
@@ -151,7 +152,7 @@ class SRLTransformer(Transformer):
         return items[0] if items else None
 
     def declaration(self, items):
-        """[12] Declaration ::= transitive_decl | symmetric_decl | inverse_decl"""
+        """[12] Declaration ::= transitive_decl | symmetric_decl | inverse_decl | reflexive_decl"""
         # Just pass through the specific declaration type
         return items[0] if items else None
 
@@ -166,6 +167,10 @@ class SRLTransformer(Transformer):
     def inverse_decl(self, items):
         """Handle INVERSE declaration explicitly."""
         return InverseDeclaration(predicate1=items[0], predicate2=items[1])
+
+    def reflexive_decl(self, items):
+        """Handle REFLEXIVE declaration explicitly."""
+        return ReflexiveDeclaration(predicate=items[0])
 
     def rule1(self, items):
         """[9] Rule1 ::= 'RULE' HeadTemplate 'WHERE' BodyPattern"""
@@ -197,6 +202,17 @@ class SRLTransformer(Transformer):
 
     def body_pattern1(self, items):
         """[16] BodyPattern1 ::= BodyTriplesBlock? ( BodyNotTriples BodyTriplesBlock? )*"""
+        elements = []
+        for item in items:
+            if isinstance(item, list):
+                elements.extend(item)
+            else:
+                elements.append(item)
+        return elements
+
+    def body_basic(self, items):
+        """[20] BodyBasic ::= BodyTriplesBlock? ( Filter BodyTriplesBlock? )*"""
+        # Same structure as body_pattern1 but restricted elements
         elements = []
         for item in items:
             if isinstance(item, list):
@@ -397,13 +413,8 @@ class SRLTransformer(Transformer):
         return items[0] if items else []
 
     def path(self, items):
-        """[47] Path ::= PathSequence ( '|' PathSequence )*"""
-        if not items:
-            return None
-        if len(items) == 1:
-            return items[0]
-        # Multiple path sequences = alternative paths
-        return PathAlternative(alternatives=items)
+        """[47] Path ::= PathSequence"""
+        return items[0]
 
     def path_sequence(self, items):
         """[48] PathSequence ::= PathEltOrInverse ( '/' PathEltOrInverse )*"""
@@ -428,12 +439,23 @@ class SRLTransformer(Transformer):
         return items[0]
 
     def path_elt(self, items):
-        """[50] PathElt ::= PathPrimary PathMod?"""
-        return items[0] if items else None
+        """[50] PathElt ::= PathPrimary"""
+        return items[0]
 
     def path_primary(self, items):
-        """[51] PathPrimary ::= iri | 'a' | ..."""
-        return items[0] if items else None
+        """[51] PathPrimary ::= iri | 'a' | '(' Path ')'"""
+        if len(items) == 1:
+            item = items[0]
+            if item == "a":
+                return IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+            return item
+        
+        # Parenthesized path
+        for item in items:
+            if not isinstance(item, Token):
+                return item
+        
+        return items[0]
 
     def prefixed_name(self, items):
         """[100] PrefixedName ::= PNAME_LN | PNAME_NS"""
@@ -886,6 +908,14 @@ class SRLTransformer(Transformer):
     
     def builtin_object(self, items):
         return BuiltInCall(function_name="OBJECT", arguments=items)
+
+    def builtin_exists(self, items):
+        # items[0] is body_basic (list of patterns)
+        return ExistsExpression(patterns=items[0], negated=False)
+
+    def builtin_not_exists(self, items):
+        # items[0] is body_basic (list of patterns)
+        return ExistsExpression(patterns=items[0], negated=True)
 
     def function_call(self, items):
         """[31] FunctionCall ::= iri ArgList"""

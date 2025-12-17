@@ -57,14 +57,6 @@ class SRLParser:
         """
         try:
             return self.parser.parse(text)
-        except UnexpectedInput as e:
-            line = e.line
-            column = e.column
-            expected = ', '.join(e.expected) if hasattr(e, 'expected') else 'unknown'
-            raise ParseError(
-                f"Unexpected input at line {line}, column {column}. "
-                f"Expected: {expected}"
-            ) from e
         except UnexpectedToken as e:
             raise ParseError(
                 f"Unexpected token '{e.token}' at line {e.line}, column {e.column}"
@@ -72,6 +64,14 @@ class SRLParser:
         except UnexpectedCharacters as e:
             raise ParseError(
                 f"Unexpected character at line {e.line}, column {e.column}"
+            ) from e
+        except UnexpectedInput as e:
+            line = e.line
+            column = e.column
+            expected = ', '.join(e.expected) if hasattr(e, 'expected') else 'unknown'
+            raise ParseError(
+                f"Unexpected input at line {line}, column {column}. "
+                f"Expected: {expected}"
             ) from e
         except Exception as e:
             raise ParseError(f"Parse error: {e}") from e

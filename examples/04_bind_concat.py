@@ -50,5 +50,3 @@ print("\nGenerated full names:")
 for s, p, o in sorted(result_graph):
     if p == EX.fullName:
         print(f"  {s.n3(result_graph.namespace_manager)} -> {o}")
-
-print(f"\nBIND successfully created new variables with CONCAT")
