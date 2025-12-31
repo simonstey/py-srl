@@ -1,0 +1,4 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:item1 ns1:compatible ns1:item2 .
+

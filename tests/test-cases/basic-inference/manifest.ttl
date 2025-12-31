@@ -1,0 +1,44 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Basic Inference Tests" ;
+    rdfs:comment "Tests for basic rule inference (childOf, sibling, type inference)" ;
+    mf:entries (
+        :basic-inference-001
+        :basic-inference-002
+        :basic-inference-003
+    ) .
+
+:basic-inference-001 a srt:RulesEvalTest ;
+    mf:name "child-of" ;
+    rdfs:comment "Derive childOf from fatherOf and motherOf" ;
+    mf:action [
+        srt:ruleset <basic-inference-001.srl> ;
+        srt:data <basic-inference-001.ttl> ;
+    ] ;
+    mf:result <basic-inference-001-result.ttl> ;
+    mf:status srt:approved .
+
+:basic-inference-002 a srt:RulesEvalTest ;
+    mf:name "sibling" ;
+    rdfs:comment "Derive sibling relationships from shared parents" ;
+    mf:action [
+        srt:ruleset <basic-inference-002.srl> ;
+        srt:data <basic-inference-002.ttl> ;
+    ] ;
+    mf:result <basic-inference-002-result.ttl> ;
+    mf:status srt:approved .
+
+:basic-inference-003 a srt:RulesEvalTest ;
+    mf:name "type-inference" ;
+    rdfs:comment "Infer types based on property usage" ;
+    mf:action [
+        srt:ruleset <basic-inference-003.srl> ;
+        srt:data <basic-inference-003.ttl> ;
+    ] ;
+    mf:result <basic-inference-003-result.ttl> ;
+    mf:status srt:approved .

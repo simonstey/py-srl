@@ -1,0 +1,11 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:bob ns1:emailDomain "mail.net" ;
+    ns1:username "bob123" .
+
+ns1:jane ns1:emailDomain "company.com" ;
+    ns1:username "jane" .
+
+ns1:john ns1:emailDomain "example.org" ;
+    ns1:username "john.doe" .
+

@@ -1,0 +1,81 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Path Expression Tests" ;
+    rdfs:comment "Tests for property path expressions (sequence, alternative, inverse, transitive)" ;
+    mf:entries (
+        :path-expressions-001
+        :path-expressions-002
+        :path-expressions-003
+        :path-expressions-004
+        :path-expressions-005
+        :path-expressions-006
+    ) .
+
+:path-expressions-001 a srt:RulesEvalTest ;
+    mf:name "path-sequence" ;
+    rdfs:comment "Navigate multiple properties (parent/parent for grandparent)" ;
+    mf:action [
+        srt:ruleset <path-expressions-001.srl> ;
+        srt:data <path-expressions-001.ttl> ;
+    ] ;
+    mf:result <path-expressions-001-result.ttl> ;
+    mf:status srt:approved .
+
+:path-expressions-002 a srt:RulesEvalTest ;
+    mf:name "path-alternative" ;
+    rdfs:comment "Match any of several properties via alternatives (|)" ;
+    mf:action [
+        srt:ruleset <path-expressions-002.srl> ;
+        srt:data <path-expressions-002.ttl> ;
+    ] ;
+    mf:result <path-expressions-002-result.ttl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Alternative paths not yet implemented" .
+
+:path-expressions-003 a srt:RulesEvalTest ;
+    mf:name "path-inverse" ;
+    rdfs:comment "Traverse properties in reverse direction (^)" ;
+    mf:action [
+        srt:ruleset <path-expressions-003.srl> ;
+        srt:data <path-expressions-003.ttl> ;
+    ] ;
+    mf:result <path-expressions-003-result.ttl> ;
+    mf:status srt:approved .
+
+:path-expressions-004 a srt:RulesEvalTest ;
+    mf:name "path-transitive" ;
+    rdfs:comment "Use + and * for transitive path traversal" ;
+    mf:action [
+        srt:ruleset <path-expressions-004.srl> ;
+        srt:data <path-expressions-004.ttl> ;
+    ] ;
+    mf:result <path-expressions-004-result.ttl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Transitive path operators not yet implemented" .
+
+:path-expressions-005 a srt:RulesEvalTest ;
+    mf:name "path-optional" ;
+    rdfs:comment "Use ? for zero or one step traversal" ;
+    mf:action [
+        srt:ruleset <path-expressions-005.srl> ;
+        srt:data <path-expressions-005.ttl> ;
+    ] ;
+    mf:result <path-expressions-005-result.ttl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Optional path operator not yet implemented" .
+
+:path-expressions-006 a srt:RulesEvalTest ;
+    mf:name "path-negated" ;
+    rdfs:comment "Match any property except specified ones" ;
+    mf:action [
+        srt:ruleset <path-expressions-006.srl> ;
+        srt:data <path-expressions-006.ttl> ;
+    ] ;
+    mf:result <path-expressions-006-result.ttl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Negated property paths not yet implemented" .

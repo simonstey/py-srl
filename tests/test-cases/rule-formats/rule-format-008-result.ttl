@@ -1,0 +1,7 @@
+@prefix ns1: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:Charlie ns1:isChildless true .
+
+ns1:Diana ns1:isChildless true .
+

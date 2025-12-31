@@ -1,0 +1,4 @@
+# Bad syntax: Invalid keyword
+PREFIX : <http://example.org/>
+
+WHEN { ?x :parent ?y . } INFER { ?x :childOf ?y . }

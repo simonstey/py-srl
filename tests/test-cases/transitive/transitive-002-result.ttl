@@ -1,0 +1,8 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:piston ns1:containedIn ns1:engine .
+
+ns1:car ns1:containedIn ns1:garage .
+
+ns1:engine ns1:containedIn ns1:car .
+

@@ -1,0 +1,45 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Hash Function Tests" ;
+    rdfs:comment "Tests for hash functions (MD5, SHA), UUID generation, and term equality" ;
+    mf:entries (
+        :hash-functions-001
+        :hash-functions-002
+        :hash-functions-003
+    ) .
+
+:hash-functions-001 a srt:RulesEvalTest ;
+    mf:name "hash-functions" ;
+    rdfs:comment "Generate MD5, SHA hashes and fingerprints" ;
+    mf:action [
+        srt:ruleset <hash-functions-001.srl> ;
+        srt:data <hash-functions-001.ttl> ;
+    ] ;
+    mf:result <hash-functions-001-result.ttl> ;
+    mf:status srt:approved .
+
+:hash-functions-002 a srt:RulesEvalTest ;
+    mf:name "uuid-generation" ;
+    rdfs:comment "Generate UUID IRI and strings" ;
+    mf:action [
+        srt:ruleset <hash-functions-002.srl> ;
+        srt:data <hash-functions-002.ttl> ;
+    ] ;
+    mf:result <hash-functions-002-result.ttl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "UUID generates unique values each time, causing non-termination" .
+
+:hash-functions-003 a srt:RulesEvalTest ;
+    mf:name "same-term" ;
+    rdfs:comment "Check exact term equality with SAMETERM" ;
+    mf:action [
+        srt:ruleset <hash-functions-003.srl> ;
+        srt:data <hash-functions-003.ttl> ;
+    ] ;
+    mf:result <hash-functions-003-result.ttl> ;
+    mf:status srt:approved .

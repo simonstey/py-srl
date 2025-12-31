@@ -1,0 +1,5 @@
+
+<http://example.org/Alice> a <http://example.org/Person> .
+
+<http://example.org/Bob> a <http://example.org/Person> .
+

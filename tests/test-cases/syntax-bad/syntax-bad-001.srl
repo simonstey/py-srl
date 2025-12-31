@@ -1,0 +1,4 @@
+# Bad syntax: RULE without WHERE clause
+PREFIX : <http://example.org/>
+
+RULE { ?x :childOf ?y }

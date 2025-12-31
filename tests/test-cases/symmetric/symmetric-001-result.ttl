@@ -1,0 +1,6 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:bob ns1:friendOf ns1:alice .
+
+ns1:dave ns1:friendOf ns1:carol .
+

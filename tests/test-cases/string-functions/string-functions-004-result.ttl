@@ -1,0 +1,7 @@
+@prefix ns1: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:doc1 ns1:hasGermanContent true .
+
+ns1:item1 ns1:englishLabel "Hello"@en .
+

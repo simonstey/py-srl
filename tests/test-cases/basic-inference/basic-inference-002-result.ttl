@@ -1,0 +1,6 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:jane ns1:siblingOf ns1:john .
+
+ns1:john ns1:siblingOf ns1:jane .
+

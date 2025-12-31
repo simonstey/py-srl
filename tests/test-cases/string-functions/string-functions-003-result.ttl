@@ -1,0 +1,8 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:product1 ns1:urlSlug "Coffee%20%26%20Tea" .
+
+ns1:product2 ns1:urlSlug "Books%2FMagazines" .
+
+ns1:query1 ns1:searchUrl "https://search.example.org?q=hello%20world" .
+

@@ -1,0 +1,4 @@
+# Bad syntax: Completely malformed rule - extra braces
+PREFIX : <http://example.org/>
+
+RULE { { ?x :childOf ?y . } } WHERE { ?y :fatherOf ?x . }

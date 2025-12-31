@@ -1,0 +1,11 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:greatgrandpa ns1:ancestorOf ns1:dad,
+        ns1:grandpa,
+        ns1:me .
+
+ns1:grandpa ns1:ancestorOf ns1:dad,
+        ns1:me .
+
+ns1:dad ns1:ancestorOf ns1:me .
+

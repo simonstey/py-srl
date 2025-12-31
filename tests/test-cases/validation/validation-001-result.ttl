@@ -1,0 +1,8 @@
+@prefix ns1: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:bob ns1:isValid false ;
+    ns1:missingProperty ns1:email .
+
+ns1:jane ns1:missingProperty ns1:email .
+

@@ -1,0 +1,55 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Symmetric Relationship Tests" ;
+    rdfs:comment "Tests for symmetric and reflexive relationship inference" ;
+    mf:entries (
+        :symmetric-001
+        :symmetric-002
+        :symmetric-003
+        :symmetric-004
+    ) .
+
+:symmetric-001 a srt:RulesEvalTest ;
+    mf:name "friend-of" ;
+    rdfs:comment "Symmetric friendship relationship" ;
+    mf:action [
+        srt:ruleset <symmetric-001.srl> ;
+        srt:data <symmetric-001.ttl> ;
+    ] ;
+    mf:result <symmetric-001-result.ttl> ;
+    mf:status srt:approved .
+
+:symmetric-002 a srt:RulesEvalTest ;
+    mf:name "married-to" ;
+    rdfs:comment "Symmetric marriage relationship" ;
+    mf:action [
+        srt:ruleset <symmetric-002.srl> ;
+        srt:data <symmetric-002.ttl> ;
+    ] ;
+    mf:result <symmetric-002-result.ttl> ;
+    mf:status srt:approved .
+
+:symmetric-003 a srt:RulesEvalTest ;
+    mf:name "inverse-properties" ;
+    rdfs:comment "Declare inverse property relationships" ;
+    mf:action [
+        srt:ruleset <symmetric-003.srl> ;
+        srt:data <symmetric-003.ttl> ;
+    ] ;
+    mf:result <symmetric-003-result.ttl> ;
+    mf:status srt:approved .
+
+:symmetric-004 a srt:RulesEvalTest ;
+    mf:name "reflexive-property" ;
+    rdfs:comment "REFLEXIVE declaration with rule" ;
+    mf:action [
+        srt:ruleset <symmetric-004.srl> ;
+        srt:data <symmetric-004.ttl> ;
+    ] ;
+    mf:result <symmetric-004-result.ttl> ;
+    mf:status srt:approved .

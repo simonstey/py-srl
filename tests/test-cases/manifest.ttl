@@ -1,0 +1,37 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# =============================================================================
+# py-srl Test Suite Root Manifest
+# =============================================================================
+#
+# This is the root manifest for the py-srl (SHACL 1.2 Shape Rule Language)
+# test suite. It references category manifests for different test categories.
+#
+# Namespaces:
+#   mf:   - W3C Test Manifest vocabulary
+#   srt:  - SHACL Rules Test vocabulary  
+#   pyrl: - py-srl extension vocabulary
+#   rdfs: - RDF Schema
+#
+# =============================================================================
+
+<> a mf:Manifest ;
+    rdfs:label "py-srl Test Suite" ;
+    rdfs:comment "W3C-style manifest-based test suite for py-srl SHACL 1.2 Rules implementation" ;
+    mf:include (
+        <aggregation/manifest.ttl>
+        <basic-inference/manifest.ttl>
+        <exists-patterns/manifest.ttl>
+        <hash-functions/manifest.ttl>
+        <negation/manifest.ttl>
+        <path-expressions/manifest.ttl>
+        <rule-formats/manifest.ttl>
+        <string-functions/manifest.ttl>
+        <symmetric/manifest.ttl>
+        <transitive/manifest.ttl>
+        <validation/manifest.ttl>
+        <syntax-bad/manifest.ttl>
+    ) .

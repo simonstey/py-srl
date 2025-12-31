@@ -1,0 +1,4 @@
+# Bad syntax: Missing closing brace in head template
+PREFIX : <http://example.org/>
+
+RULE { ?x :childOf ?y  WHERE { ?y :fatherOf ?x . }

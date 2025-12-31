@@ -1,0 +1,8 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:Alice a ns1:Employee ;
+    ns1:worksFor ns1:CompanyA .
+
+ns1:Bob a ns1:Employee ;
+    ns1:worksFor ns1:CompanyB .
+

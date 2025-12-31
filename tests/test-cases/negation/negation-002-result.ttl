@@ -1,0 +1,6 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:acc2 ns1:status "inactive" .
+
+ns1:acc3 ns1:status "inactive" .
+

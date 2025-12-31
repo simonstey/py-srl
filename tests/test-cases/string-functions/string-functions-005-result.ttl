@@ -1,0 +1,6 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:product1 ns1:labelEn "Widget"@en .
+
+ns1:product2 ns1:labelEn "Gadget"@en .
+

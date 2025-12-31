@@ -1,0 +1,99 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Rule Format Tests" ;
+    rdfs:comment "Tests for different rule syntax formats (RULE/WHERE, IF/THEN, Datalog)" ;
+    mf:entries (
+        :rule-format-001
+        :rule-format-002
+        :rule-format-003
+        :rule-format-004
+        :rule-format-005
+        :rule-format-006
+        :rule-format-007
+        :rule-format-008
+        :rule-format-009
+        :rule-format-010
+        :rule-format-011
+        :rule-format-012
+    ) .
+
+:rule-format-001 a srt:RulesPositiveSyntaxTest ;
+    mf:name "rule-where-simple" ;
+    rdfs:comment "Simple RULE/WHERE format" ;
+    mf:action <rule-format-001.srl> ;
+    mf:status srt:approved .
+
+:rule-format-002 a srt:RulesPositiveSyntaxTest ;
+    mf:name "if-then-multiple" ;
+    rdfs:comment "IF/THEN format with multiple body patterns" ;
+    mf:action <rule-format-002.srl> ;
+    mf:status srt:approved .
+
+:rule-format-003 a srt:RulesPositiveSyntaxTest ;
+    mf:name "datalog-filter" ;
+    rdfs:comment "Datalog format with FILTER condition" ;
+    mf:action <rule-format-003.srl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Datalog syntax not yet implemented" .
+
+:rule-format-004 a srt:RulesPositiveSyntaxTest ;
+    mf:name "rule-where-chained" ;
+    rdfs:comment "RULE/WHERE with chained patterns" ;
+    mf:action <rule-format-004.srl> ;
+    mf:status srt:approved .
+
+:rule-format-005 a srt:RulesPositiveSyntaxTest ;
+    mf:name "if-then-comparison" ;
+    rdfs:comment "IF/THEN with comparison filter" ;
+    mf:action <rule-format-005.srl> ;
+    mf:status srt:approved .
+
+:rule-format-006 a srt:RulesPositiveSyntaxTest ;
+    mf:name "datalog-bind" ;
+    rdfs:comment "Datalog format with BIND and CONCAT" ;
+    mf:action <rule-format-006.srl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Datalog syntax not yet implemented" .
+
+:rule-format-007 a srt:RulesPositiveSyntaxTest ;
+    mf:name "rule-where-multi-head" ;
+    rdfs:comment "RULE/WHERE with multiple head triples" ;
+    mf:action <rule-format-007.srl> ;
+    mf:status srt:approved .
+
+:rule-format-008 a srt:RulesPositiveSyntaxTest ;
+    mf:name "if-then-negation" ;
+    rdfs:comment "IF/THEN with NOT pattern" ;
+    mf:action <rule-format-008.srl> ;
+    mf:status srt:approved .
+
+:rule-format-009 a srt:RulesPositiveSyntaxTest ;
+    mf:name "datalog-type-keyword" ;
+    rdfs:comment "Datalog using 'a' keyword for rdf:type" ;
+    mf:action <rule-format-009.srl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Datalog syntax not yet implemented" .
+
+:rule-format-010 a srt:RulesPositiveSyntaxTest ;
+    mf:name "rule-where-arithmetic" ;
+    rdfs:comment "RULE/WHERE with arithmetic operations" ;
+    mf:action <rule-format-010.srl> ;
+    mf:status srt:approved .
+
+:rule-format-011 a srt:RulesPositiveSyntaxTest ;
+    mf:name "mixed-formats" ;
+    rdfs:comment "Multiple rules with different formats in one file" ;
+    mf:action <rule-format-011.srl> ;
+    mf:status pyrl:xfail ;
+    rdfs:comment "Datalog syntax not yet implemented" .
+
+:rule-format-012 a srt:RulesPositiveSyntaxTest ;
+    mf:name "rule-where-string" ;
+    rdfs:comment "RULE/WHERE with string functions (STRAFTER)" ;
+    mf:action <rule-format-012.srl> ;
+    mf:status srt:approved .

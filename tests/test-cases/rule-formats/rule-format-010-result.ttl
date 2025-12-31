@@ -1,0 +1,7 @@
+@prefix ns1: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:Rectangle1 ns1:area 50 .
+
+ns1:Rectangle2 ns1:area 21 .
+

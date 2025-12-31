@@ -1,0 +1,7 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:tom ns1:childOf ns1:mary .
+
+ns1:mary ns1:childOf ns1:jane,
+        ns1:john .
+

@@ -1,0 +1,22 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Validation Tests" ;
+    rdfs:comment "Tests for validation-style rules (required properties, constraints)" ;
+    mf:entries (
+        :validation-001
+    ) .
+
+:validation-001 a srt:RulesEvalTest ;
+    mf:name "required-properties" ;
+    rdfs:comment "Check Persons have required name and email properties" ;
+    mf:action [
+        srt:ruleset <validation-001.srl> ;
+        srt:data <validation-001.ttl> ;
+    ] ;
+    mf:result <validation-001-result.ttl> ;
+    mf:status srt:approved .

@@ -1,0 +1,6 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:p1 ns1:displayName "John Doe" .
+
+ns1:p2 ns1:displayName "Jane Smith" .
+

@@ -1,0 +1,5 @@
+
+<http://example.org/jane> a <http://example.org/Teacher> .
+
+<http://example.org/john> a <http://example.org/Person> .
+

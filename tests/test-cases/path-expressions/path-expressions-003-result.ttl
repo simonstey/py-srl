@@ -1,0 +1,9 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:acme ns1:employee ns1:jane,
+        ns1:john .
+
+ns1:bob ns1:child ns1:alice .
+
+ns1:carol ns1:child ns1:alice .
+

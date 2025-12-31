@@ -1,0 +1,11 @@
+@prefix ns1: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:acc1 ns1:isActive true .
+
+ns1:acc3 ns1:isActive true .
+
+ns1:event1 ns1:isWeekday true .
+
+ns1:event3 ns1:isWeekday true .
+

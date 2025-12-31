@@ -1,0 +1,76 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+
+# py-srl Test Vocabulary Extension
+#
+# This vocabulary extends the W3C SHACL Rules Test vocabulary (srt:)
+# with py-srl-specific test types and properties.
+
+pyrl: a owl:Ontology ;
+    rdfs:label "py-srl Test Vocabulary" ;
+    rdfs:comment "Extension vocabulary for py-srl test suite, extending srt: vocabulary." ;
+    owl:imports <http://www.w3.org/ns/shacl-rules-test#> .
+
+# =============================================================================
+# Test Types
+# =============================================================================
+
+pyrl:StratificationTest a rdfs:Class ;
+    rdfs:label "Stratification Test" ;
+    rdfs:comment """A test that expects a StratificationError to be raised.
+        
+        This test type is used to verify that the engine correctly detects
+        and reports stratification errors (e.g., cycles through negation)
+        in rule sets that cannot be stratified.
+        
+        For this test type:
+        - mf:action should contain srt:ruleset pointing to the SRL file
+        - srt:data is optional (rules may be analyzed without data)
+        - mf:result should NOT be specified (error expected, not output)
+        """ ;
+    rdfs:subClassOf mf:ManifestEntry .
+
+pyrl:EvaluationErrorTest a rdfs:Class ;
+    rdfs:label "Evaluation Error Test" ;
+    rdfs:comment """A test that expects an EvaluationError to be raised.
+        
+        This test type is used to verify that the engine correctly handles
+        runtime evaluation errors (e.g., type mismatches, unbound variables).
+        
+        For this test type:
+        - mf:action should contain srt:ruleset and srt:data
+        - mf:result should NOT be specified (error expected, not output)
+        """ ;
+    rdfs:subClassOf mf:ManifestEntry .
+
+# =============================================================================
+# Test Status Values
+# =============================================================================
+
+pyrl:xfail a mf:Status ;
+    rdfs:label "Expected Failure" ;
+    rdfs:comment "Test is expected to fail (known limitation or unimplemented feature)." .
+
+pyrl:skip a mf:Status ;
+    rdfs:label "Skip" ;
+    rdfs:comment "Test should be skipped (e.g., not applicable to current configuration)." .
+
+# =============================================================================
+# Additional Properties
+# =============================================================================
+
+pyrl:expectedError a rdf:Property ;
+    rdfs:label "expected error" ;
+    rdfs:comment "The error type expected to be raised (e.g., 'StratificationError')." ;
+    rdfs:domain mf:ManifestEntry ;
+    rdfs:range xsd:string .
+
+pyrl:feature a rdf:Property ;
+    rdfs:label "feature" ;
+    rdfs:comment "The SRL feature being tested (e.g., 'negation', 'property-paths')." ;
+    rdfs:domain mf:ManifestEntry ;
+    rdfs:range xsd:string .

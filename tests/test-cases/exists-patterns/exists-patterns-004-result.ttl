@@ -1,0 +1,7 @@
+@prefix ns1: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ns1:alice ns1:inCoreDept true .
+
+ns1:order1 ns1:isPriority true .
+

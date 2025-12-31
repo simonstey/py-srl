@@ -1,0 +1,46 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "Negative Syntax Tests" ;
+    rdfs:comment "Tests for SRL files that should produce parse errors" ;
+    mf:entries (
+        :syntax-bad-001
+        :syntax-bad-002
+        :syntax-bad-003
+        :syntax-bad-004
+        :syntax-bad-005
+    ) .
+
+:syntax-bad-001 a srt:RulesNegativeSyntaxTest ;
+    mf:name "missing-where" ;
+    rdfs:comment "RULE without WHERE clause" ;
+    mf:action <syntax-bad-001.srl> ;
+    mf:status srt:approved .
+
+:syntax-bad-002 a srt:RulesNegativeSyntaxTest ;
+    mf:name "unclosed-brace" ;
+    rdfs:comment "Missing closing brace in head template" ;
+    mf:action <syntax-bad-002.srl> ;
+    mf:status srt:approved .
+
+:syntax-bad-003 a srt:RulesNegativeSyntaxTest ;
+    mf:name "malformed-braces" ;
+    rdfs:comment "Extra braces in head template" ;
+    mf:action <syntax-bad-003.srl> ;
+    mf:status srt:approved .
+
+:syntax-bad-004 a srt:RulesNegativeSyntaxTest ;
+    mf:name "invalid-keyword" ;
+    rdfs:comment "Using invalid keywords WHEN/INFER instead of IF/THEN" ;
+    mf:action <syntax-bad-004.srl> ;
+    mf:status srt:approved .
+
+:syntax-bad-005 a srt:RulesNegativeSyntaxTest ;
+    mf:name "invalid-variable" ;
+    rdfs:comment "Variable without ? prefix" ;
+    mf:action <syntax-bad-005.srl> ;
+    mf:status srt:approved .

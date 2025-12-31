@@ -1,0 +1,6 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:Alice ns1:grandparent ns1:Charlie .
+
+ns1:Bob ns1:grandparent ns1:Diana .
+

@@ -1,0 +1,66 @@
+@prefix mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> .
+@prefix srt: <http://www.w3.org/ns/shacl-rules-test#> .
+@prefix pyrl: <http://example.org/py-srl/test#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <#> .
+
+<> a mf:Manifest ;
+    rdfs:label "EXISTS Pattern Tests" ;
+    rdfs:comment "Tests for EXISTS and NOT EXISTS patterns, IN and NOT IN expressions" ;
+    mf:entries (
+        :exists-patterns-001
+        :exists-patterns-002
+        :exists-patterns-003
+        :exists-patterns-004
+        :exists-patterns-005
+    ) .
+
+:exists-patterns-001 a srt:RulesEvalTest ;
+    mf:name "exists-filter" ;
+    rdfs:comment "Use EXISTS to check for pattern existence" ;
+    mf:action [
+        srt:ruleset <exists-patterns-001.srl> ;
+        srt:data <exists-patterns-001.ttl> ;
+    ] ;
+    mf:result <exists-patterns-001-result.ttl> ;
+    mf:status srt:approved .
+
+:exists-patterns-002 a srt:RulesEvalTest ;
+    mf:name "not-exists-filter" ;
+    rdfs:comment "Use NOT EXISTS for absence checks" ;
+    mf:action [
+        srt:ruleset <exists-patterns-002.srl> ;
+        srt:data <exists-patterns-002.ttl> ;
+    ] ;
+    mf:result <exists-patterns-002-result.ttl> ;
+    mf:status srt:approved .
+
+:exists-patterns-003 a srt:RulesEvalTest ;
+    mf:name "exists-complex" ;
+    rdfs:comment "EXISTS with multiple conditions" ;
+    mf:action [
+        srt:ruleset <exists-patterns-003.srl> ;
+        srt:data <exists-patterns-003.ttl> ;
+    ] ;
+    mf:result <exists-patterns-003-result.ttl> ;
+    mf:status srt:approved .
+
+:exists-patterns-004 a srt:RulesEvalTest ;
+    mf:name "in-expression" ;
+    rdfs:comment "Check if value is in a list of options" ;
+    mf:action [
+        srt:ruleset <exists-patterns-004.srl> ;
+        srt:data <exists-patterns-004.ttl> ;
+    ] ;
+    mf:result <exists-patterns-004-result.ttl> ;
+    mf:status srt:approved .
+
+:exists-patterns-005 a srt:RulesEvalTest ;
+    mf:name "not-in-expression" ;
+    rdfs:comment "Exclude values from a list" ;
+    mf:action [
+        srt:ruleset <exists-patterns-005.srl> ;
+        srt:data <exists-patterns-005.ttl> ;
+    ] ;
+    mf:result <exists-patterns-005-result.ttl> ;
+    mf:status srt:approved .

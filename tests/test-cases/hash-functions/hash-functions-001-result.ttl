@@ -1,0 +1,10 @@
+@prefix ns1: <http://example.org/> .
+
+ns1:doc1 ns1:fingerprint "0a0a9f2a6772942557ab5355d76af442f8f65e01" .
+
+ns1:item1 ns1:md5Hash "92f172604fce81fc1af537ecf1099470" ;
+    ns1:sha256Hash "ed74dc2a945e5aca4c95e55d102871a708b1eef7864a641f76211287c40001a3" .
+
+ns1:item2 ns1:md5Hash "9a9ef347cb971e1dec254867abc11893" ;
+    ns1:sha256Hash "456b483cb9258cedf65d32a1ca4a64dce74f9ba5aec53b0831ac016534d8bbfc" .
+
