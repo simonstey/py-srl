@@ -12,16 +12,14 @@ from rich.table import Table
 from rich.tree import Tree
 
 from ..ast.nodes import (
-    RuleSet,
+    IRI,
+    Assignment,
+    ConditionExpression,
+    NegationElement,
     Rule,
+    RuleSet,
     TriplePattern,
     TripleTemplate,
-    ConditionExpression,
-    Assignment,
-    NegationElement,
-    Variable,
-    IRI,
-    Literal,
 )
 
 console = Console()
@@ -29,17 +27,11 @@ error_console = Console(stderr=True)
 
 
 def format_term(term: Any) -> str:
-    """Format an RDF term for display."""
-    if isinstance(term, Variable):
-        return f"?{term.name}"
-    elif isinstance(term, IRI):
-        return f"<{term.value}>"
-    elif isinstance(term, Literal):
-        if term.language:
-            return f'"{term.value}"@{term.language}'
-        elif term.datatype:
-            return f'"{term.value}"^^<{term.datatype.value}>'
-        return f'"{term.value}"'
+    """Format an RDF term for display.
+
+    The AST term nodes (Variable, IRI, Literal, ...) all implement ``__str__``
+    in this exact concrete syntax, so defer to it.
+    """
     return str(term)
 
 
@@ -58,7 +50,9 @@ def print_warning(message: str) -> None:
     console.print(f"[yellow]⚠[/yellow] {message}")
 
 
-def print_error(title: str, message: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
+def print_error(
+    title: str, message: str, line: Optional[int] = None, column: Optional[int] = None
+) -> None:
     """Print an error panel with optional location info."""
     error_text = message
     if line is not None:
@@ -67,10 +61,14 @@ def print_error(title: str, message: str, line: Optional[int] = None, column: Op
             error_text += f", column {column}"
         error_text += "[/dim]"
 
-    error_console.print(Panel(error_text, title=f"[bold red]{title}[/bold red]", border_style="red", padding=(1, 2)))
+    error_console.print(
+        Panel(error_text, title=f"[bold red]{title}[/bold red]", border_style="red", padding=(1, 2))
+    )
 
 
-def print_parse_error(message: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
+def print_parse_error(
+    message: str, line: Optional[int] = None, column: Optional[int] = None
+) -> None:
     """Print a parse error panel."""
     print_error("Parse Error", message, line, column)
 
@@ -178,7 +176,9 @@ def format_body_element(element: Any) -> str:
     elif isinstance(element, Assignment):
         return f"[green]SET:[/green] (?{element.variable.name} := {element.expression})"
     elif isinstance(element, NegationElement):
-        patterns = ", ".join(format_triple_pattern(p) for p in element.body_patterns if isinstance(p, TriplePattern))
+        patterns = ", ".join(
+            format_triple_pattern(p) for p in element.body_patterns if isinstance(p, TriplePattern)
+        )
         return f"[red]NOT:[/red] {{ {patterns} }}"
     return str(element)
 
@@ -194,7 +194,9 @@ def display_strata(strata: List[List[int]], rules: List[Rule], verbose: bool = F
     tree = Tree("[bold]Stratification Layers[/bold]")
 
     for stratum_idx, rule_indices in enumerate(strata):
-        stratum_branch = tree.add(f"[bold cyan]Stratum {stratum_idx}[/bold cyan] ({len(rule_indices)} rule(s))")
+        stratum_branch = tree.add(
+            f"[bold cyan]Stratum {stratum_idx}[/bold cyan] ({len(rule_indices)} rule(s))"
+        )
 
         for rule_idx in rule_indices:
             rule = rules[rule_idx]
@@ -283,9 +285,7 @@ def display_focus_nodes(rule_set: Any, result_graph: Any, shapes_graph: Any) -> 
             shape = load_shape(shapes_graph, URIRef(tr.shape.value))
             candidates = focus_nodes(shape, result_graph, shapes_graph)
             conforming = sorted(
-                str(n)
-                for n in candidates
-                if conforms(n, shape, result_graph, shapes_graph)
+                str(n) for n in candidates if conforms(n, shape, result_graph, shapes_graph)
             )
             nodes_str = "\n".join(conforming) if conforming else "[dim](none)[/dim]"
         except Exception as e:  # pragma: no cover - defensive verbose path

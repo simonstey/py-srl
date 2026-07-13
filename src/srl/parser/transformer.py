@@ -8,38 +8,38 @@ following the Shape Rules abstract syntax and the 2026-07 grammar restructuring.
 import uuid
 from typing import Dict
 
-from lark import Transformer, Token
+from lark import Token, Transformer
 
 from ..ast.nodes import (
-    RuleSet,
+    IRI,
+    Assignment,
+    BinaryOp,
+    BinaryOperator,
+    BlankNode,
+    BuiltInCall,
+    ConditionExpression,
+    DataBlock,
+    Declaration,
+    FunctionCall,
+    InverseDeclaration,
+    InversePath,
+    Literal,
+    NegationElement,
+    PathSequence,
     Prologue,
     Rule,
-    TargetedRule,
-    RuleHead,
     RuleBody,
-    DataBlock,
-    Variable,
-    IRI,
-    Literal,
-    BlankNode,
-    TripleTerm,
-    InversePath,
-    PathSequence,
+    RuleHead,
+    RuleSet,
+    SymmetricDeclaration,
+    TargetedRule,
+    TransitiveDeclaration,
     TriplePattern,
     TripleTemplate,
-    ConditionExpression,
-    NegationElement,
-    Assignment,
-    TransitiveDeclaration,
-    SymmetricDeclaration,
-    InverseDeclaration,
-    Declaration,
-    BinaryOp,
+    TripleTerm,
     UnaryOp,
-    FunctionCall,
-    BuiltInCall,
-    BinaryOperator,
     UnaryOperator,
+    Variable,
 )
 
 RDF_TYPE = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
@@ -66,6 +66,17 @@ class SRLTransformer(Transformer):
         super().__init__()
         self._prefixes: Dict[str, str] = dict(STANDARD_PREFIXES)
         self.extensions = extensions
+        # Bind the trivial built-in rules (name -> BuiltInCall(name, items)).
+        for rule_name, bic_name in self._TRIVIAL_BUILTINS.items():
+            setattr(self, rule_name, self._make_trivial_builtin(bic_name))
+
+    def _make_trivial_builtin(self, bic_name: str):
+        """Return a rule handler emitting ``BuiltInCall(bic_name, items)``."""
+
+        def handler(items):
+            return self._bic(bic_name, items)
+
+        return handler
 
     # ------------------------------------------------------------------
     # Top-level structure
@@ -88,7 +99,9 @@ class SRLTransformer(Transformer):
                 rules.append(item)
             elif isinstance(item, DataBlock):
                 data_blocks.append(item)
-            elif isinstance(item, (TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration)):
+            elif isinstance(
+                item, (TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration)
+            ):
                 declarations.append(item)
 
         return RuleSet(
@@ -309,8 +322,7 @@ class SRLTransformer(Transformer):
         return self._nil_or_first(items)
 
     def triple_term_data(self, items):
-        subj, verb, obj = items
-        return TripleTerm(subject=subj, predicate=verb, object=obj)
+        return self._triple_term(items)
 
     def triple_term_subject_data(self, items):
         return items[0]
@@ -386,8 +398,7 @@ class SRLTransformer(Transformer):
     # ------------------------------------------------------------------
 
     def triple_term(self, items):
-        subj, verb, obj = items
-        return TripleTerm(subject=subj, predicate=verb, object=obj)
+        return self._triple_term(items)
 
     def triple_term_subject(self, items):
         return items[0]
@@ -396,8 +407,7 @@ class SRLTransformer(Transformer):
         return items[0]
 
     def expr_triple_term(self, items):
-        subj, verb, obj = items
-        return TripleTerm(subject=subj, predicate=verb, object=obj)
+        return self._triple_term(items)
 
     def expr_triple_term_subject(self, items):
         return items[0]
@@ -657,105 +667,71 @@ class SRLTransformer(Transformer):
     def _bic(self, name, items):
         return BuiltInCall(function_name=name, arguments=list(items))
 
-    def builtin_str(self, items):
-        return self._bic("STR", items)
-
-    def builtin_lang(self, items):
-        return self._bic("LANG", items)
-
-    def builtin_langmatches(self, items):
-        return self._bic("LANGMATCHES", items)
-
-    def builtin_langdir(self, items):
-        return self._bic("LANGDIR", items)
-
-    def builtin_datatype(self, items):
-        return self._bic("DATATYPE", items)
-
-    def builtin_iri(self, items):
-        return self._bic("IRI", items)
-
-    def builtin_uri(self, items):
-        return self._bic("URI", items)
+    # Trivial built-in rules: grammar-rule name -> emitted BuiltInCall name.
+    # These map a parse-tree node straight to ``BuiltInCall(name, items)`` with
+    # no extra logic. The transformer methods are generated in ``__init__`` via
+    # ``setattr``. Rules needing real logic (bnode/concat/now/uuid/struuid) keep
+    # their own methods below.
+    _TRIVIAL_BUILTINS: Dict[str, str] = {
+        "builtin_str": "STR",
+        "builtin_lang": "LANG",
+        "builtin_langmatches": "LANGMATCHES",
+        "builtin_langdir": "LANGDIR",
+        "builtin_datatype": "DATATYPE",
+        "builtin_iri": "IRI",
+        "builtin_uri": "URI",
+        "builtin_abs": "ABS",
+        "builtin_ceil": "CEIL",
+        "builtin_floor": "FLOOR",
+        "builtin_round": "ROUND",
+        "builtin_substr": "SUBSTR",
+        "builtin_strlen": "STRLEN",
+        "builtin_replace": "REPLACE",
+        "builtin_ucase": "UCASE",
+        "builtin_lcase": "LCASE",
+        "builtin_encode_for_uri": "ENCODE_FOR_URI",
+        "builtin_contains": "CONTAINS",
+        "builtin_strstarts": "STRSTARTS",
+        "builtin_strends": "STRENDS",
+        "builtin_strbefore": "STRBEFORE",
+        "builtin_strafter": "STRAFTER",
+        "builtin_year": "YEAR",
+        "builtin_month": "MONTH",
+        "builtin_day": "DAY",
+        "builtin_hours": "HOURS",
+        "builtin_minutes": "MINUTES",
+        "builtin_seconds": "SECONDS",
+        "builtin_timezone": "TIMEZONE",
+        "builtin_tz": "TZ",
+        "builtin_if": "IF",
+        "builtin_strlang": "STRLANG",
+        "builtin_strlangdir": "STRLANGDIR",
+        "builtin_strdt": "STRDT",
+        "builtin_sameterm": "sameTerm",
+        "builtin_isiri": "isIRI",
+        "builtin_isuri": "isURI",
+        "builtin_isblank": "isBLANK",
+        "builtin_isliteral": "isLITERAL",
+        "builtin_isnumeric": "isNUMERIC",
+        "builtin_haslang": "hasLANG",
+        "builtin_haslangdir": "hasLANGDIR",
+        "builtin_regex": "REGEX",
+        "builtin_istriple": "isTRIPLE",
+        "builtin_triple": "TRIPLE",
+        "builtin_subject": "SUBJECT",
+        "builtin_predicate": "PREDICATE",
+        "builtin_object": "OBJECT",
+    }
 
     def builtin_bnode(self, items):
         # BNODE ( expr ) | BNODE NIL  ->  drop NIL token to an empty arg list.
         args = [i for i in items if not (isinstance(i, Token) and i.type == "NIL")]
         return self._bic("BNODE", args)
 
-    def builtin_abs(self, items):
-        return self._bic("ABS", items)
-
-    def builtin_ceil(self, items):
-        return self._bic("CEIL", items)
-
-    def builtin_floor(self, items):
-        return self._bic("FLOOR", items)
-
-    def builtin_round(self, items):
-        return self._bic("ROUND", items)
-
     def builtin_concat(self, items):
         if len(items) == 1 and isinstance(items[0], list):
             items = items[0]
         return self._bic("CONCAT", items)
-
-    def builtin_substr(self, items):
-        return self._bic("SUBSTR", items)
-
-    def builtin_strlen(self, items):
-        return self._bic("STRLEN", items)
-
-    def builtin_replace(self, items):
-        return self._bic("REPLACE", items)
-
-    def builtin_ucase(self, items):
-        return self._bic("UCASE", items)
-
-    def builtin_lcase(self, items):
-        return self._bic("LCASE", items)
-
-    def builtin_encode_for_uri(self, items):
-        return self._bic("ENCODE_FOR_URI", items)
-
-    def builtin_contains(self, items):
-        return self._bic("CONTAINS", items)
-
-    def builtin_strstarts(self, items):
-        return self._bic("STRSTARTS", items)
-
-    def builtin_strends(self, items):
-        return self._bic("STRENDS", items)
-
-    def builtin_strbefore(self, items):
-        return self._bic("STRBEFORE", items)
-
-    def builtin_strafter(self, items):
-        return self._bic("STRAFTER", items)
-
-    def builtin_year(self, items):
-        return self._bic("YEAR", items)
-
-    def builtin_month(self, items):
-        return self._bic("MONTH", items)
-
-    def builtin_day(self, items):
-        return self._bic("DAY", items)
-
-    def builtin_hours(self, items):
-        return self._bic("HOURS", items)
-
-    def builtin_minutes(self, items):
-        return self._bic("MINUTES", items)
-
-    def builtin_seconds(self, items):
-        return self._bic("SECONDS", items)
-
-    def builtin_timezone(self, items):
-        return self._bic("TIMEZONE", items)
-
-    def builtin_tz(self, items):
-        return self._bic("TZ", items)
 
     def builtin_now(self, items):
         return self._bic("NOW", [])
@@ -765,60 +741,6 @@ class SRLTransformer(Transformer):
 
     def builtin_struuid(self, items):
         return self._bic("STRUUID", [])
-
-    def builtin_if(self, items):
-        return self._bic("IF", items)
-
-    def builtin_strlang(self, items):
-        return self._bic("STRLANG", items)
-
-    def builtin_strlangdir(self, items):
-        return self._bic("STRLANGDIR", items)
-
-    def builtin_strdt(self, items):
-        return self._bic("STRDT", items)
-
-    def builtin_sameterm(self, items):
-        return self._bic("sameTerm", items)
-
-    def builtin_isiri(self, items):
-        return self._bic("isIRI", items)
-
-    def builtin_isuri(self, items):
-        return self._bic("isURI", items)
-
-    def builtin_isblank(self, items):
-        return self._bic("isBLANK", items)
-
-    def builtin_isliteral(self, items):
-        return self._bic("isLITERAL", items)
-
-    def builtin_isnumeric(self, items):
-        return self._bic("isNUMERIC", items)
-
-    def builtin_haslang(self, items):
-        return self._bic("hasLANG", items)
-
-    def builtin_haslangdir(self, items):
-        return self._bic("hasLANGDIR", items)
-
-    def builtin_regex(self, items):
-        return self._bic("REGEX", items)
-
-    def builtin_istriple(self, items):
-        return self._bic("isTRIPLE", items)
-
-    def builtin_triple(self, items):
-        return self._bic("TRIPLE", items)
-
-    def builtin_subject(self, items):
-        return self._bic("SUBJECT", items)
-
-    def builtin_predicate(self, items):
-        return self._bic("PREDICATE", items)
-
-    def builtin_object(self, items):
-        return self._bic("OBJECT", items)
 
     # ------------------------------------------------------------------
     # Shared helpers
@@ -847,6 +769,13 @@ class SRLTransformer(Transformer):
                 else:
                     pairs.append((verb, objects))
         return pairs
+
+    @staticmethod
+    def _triple_term(items):
+        """Build a TripleTerm from a [subject, predicate, object] item list.
+        Shared by the data, template/pattern, and expression triple-term rules."""
+        subj, verb, obj = items
+        return TripleTerm(subject=subj, predicate=verb, object=obj)
 
     @staticmethod
     def _flatten_triples(items, kind):
