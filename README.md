@@ -137,9 +137,12 @@ This implementation tracks the current (2026-07) [W3C SHACL 1.2 Rules](https://w
 - **RDF 1.2 collection & reification syntax in the grammar.** The SRL text parser does not yet accept blank-node property lists `[ … ]`, RDF collections `( … )`, reified triples `<< s p o >>` / reified-triple blocks, annotation blocks `{| … |}`, or reifiers `~`. Only the triple-term form `<<( s p o )>>` is supported. These productions are normative in the spec grammar; rules using them will fail to parse.
 - **Base-direction language literals.** `LANGDIR`, `STRLANGDIR`, and `hasLANGDIR` are dispatched but effectively no-ops because the pinned rdflib (7.6.0) exposes no literal base-direction API. `hasLANG` and language tags work normally. Full support needs an rdflib release with base-direction literals (or a shim).
 - **Triple terms in the data graph.** With the installed rdflib, triple terms materialize as plain Python tuples rather than first-class RDF-star terms, so full RDF-star graph round-tripping is limited by the dependency.
-- **SRL/RDF concrete syntax coverage.** The `srl.rdf` reader parses the `srl:RuleSet` RDF encoding (rules, data, filters, assignments, negation, `sparql:*` operators), but there is no serializer (AST → RDF), and RDF-side triple terms / collections mirror the text-syntax gaps above.
-- **`srl shacl` CLI command.** SHACL-shapes integration is a placeholder stub (see the CLI section below).
+- **SRL/RDF concrete syntax coverage.** The `srl.rdf` reader parses the `srl:RuleSet` RDF encoding (rules, data, filters, assignments, negation, `sparql:*` operators) and a serializer (`srl.rdf.to_rdf_graph` / `serialize`) inverts it; RDF-side triple terms / collections mirror the text-syntax gaps above.
 - **Minor SPARQL-fidelity edges.** A few evaluation corners still diverge from strict SPARQL semantics: relational comparison of incomparable operand types falls back to string ordering instead of raising a type error, and `xsd:float ÷ xsd:float` yields `xsd:decimal` rather than `xsd:float`.
+
+### Opt-in rule-to-shape targeting extension (`--extensions`)
+
+Beyond the spec, this project ships an **opt-in** rule-to-shape targeting feature (the `FOR ?v IN <shape>` clause, the `srl shacl` command, and an in-house SHACL 1.2 Core subset). It is **not part of the SRL spec** and is reachable only behind the `--extensions`/`-x` CLI flag (or `SRLParser(extensions=True)` / `RuleEngine(..., extensions=True)`). With the flag off, the parser and engine remain byte-for-byte spec-conformant. Exactly which SHACL constraints and targets the subset supports — and what it deliberately does not — is documented in the [SHACL Core support matrix](docs/shacl-core-support-matrix.md).
 
 **Unsupported property paths** (also deferred, and *not* in the current spec): alternative `|`, transitive `+`/`*`, optional `?`, and negated property sets. Only sequence `a/b` and inverse `^a` paths are supported. Test cases exercising the unsupported forms are marked `xfail`.
 
@@ -152,7 +155,7 @@ Basic CLI commands:
 - `srl parse RULES_FILE` — Parse and validate a rules file and display an overview
 - `srl analyze RULES_FILE [--show-layers]` — Analyze rules for stratification and dependencies
 - `srl eval RULES_FILE DATA_FILE [-o OUTPUT] [--format FORMAT]` — Evaluate rules on an RDF data file and optionally write results
-- `srl shacl` — Placeholder: SHACL shapes integration (not implemented yet)
+- `srl shacl RULES_FILE DATA_FILE --shapes SHAPES_FILE [-o OUTPUT]` — Evaluate rule-to-shape targeting (opt-in extension; see the [support matrix](docs/shacl-core-support-matrix.md))
 
 Examples (PowerShell / pwsh):
 
