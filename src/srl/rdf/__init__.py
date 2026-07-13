@@ -7,6 +7,8 @@ using rdflib as the underlying implementation.
 
 from .namespace import NamespaceManager
 from .nodes import IRINode, LiteralNode, BlankNode, RDFNode
+from . import vocab
+from .reader import parse_rdf_rule_set, parse_rdf_file, RDFSyntaxError
 
 __all__ = [
     "NamespaceManager",
@@ -14,4 +16,8 @@ __all__ = [
     "LiteralNode",
     "BlankNode",
     "RDFNode",
+    "vocab",
+    "parse_rdf_rule_set",
+    "parse_rdf_file",
+    "RDFSyntaxError",
 ]

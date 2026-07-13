@@ -38,7 +38,7 @@ def eval_rule(
        - Triple patterns: Join with graphMatch results
        - Filters: Remove mappings that don't satisfy the condition
        - Negation (NOT): Remove mappings compatible with negation results
-       - Assignments (BIND): Extend mappings with new variable bindings
+       - Assignments (SET): Extend mappings with new variable bindings
     3. Return final set of solution mappings
     
     Args:
@@ -139,32 +139,35 @@ def eval_filter(
 ) -> List[SolutionMapping]:
     """
     Evaluate a FILTER by removing solution mappings that don't satisfy it.
-    
-    From Section 5.3:
-    "For a filter expression, only solution mappings μ where the effective
-    boolean value of eval(expr, μ, G) is true are retained."
-    
+
+    From #eval-rule (condition element):
+    "for each solution μ in SEQ: let x = evalFunction(F, μ);
+     if EBV(x) is true: add μ to SEQ1."
+
     Algorithm: Ω' = { μ ∈ Ω | EBV(eval(expr, μ, G)) = true }
-    
+
     Args:
         filter_expr: Filter condition expression
         omega: Current solution mappings
-        graph: RDF graph
-        active_graph: Optional active graph
-        
+        graph: the evaluation graph G
+        active_graph: Optional active graph (defaults to G)
+
     Returns:
         Filtered solution mappings
     """
+    # The spec evaluates expressions against the evaluation graph G; thread it
+    # through so graph-dependent forms can consult it.
+    eval_graph = active_graph if active_graph is not None else graph
     result = []
-    
+
     for mu in omega:
         # Evaluate the filter expression
-        value = eval_expr(filter_expr.expression, mu, active_graph)
-        
+        value = eval_expr(filter_expr.expression, mu, eval_graph)
+
         # Keep mapping if effective boolean value is true
         if effective_boolean_value(value):
             result.append(mu)
-    
+
     return result
 
 
@@ -194,24 +197,20 @@ def eval_negation(
     Returns:
         Solution mappings after negation
     """
-    # Evaluate the negated body pattern
-    # Start with each current mapping as seed
-    negation_results = []
-    
+    # Per #eval-rule: for each μ, seed the negation body with the single
+    # solution {μ} and evaluate it; keep μ iff that yields NO solutions.
+    # This is a per-μ empty-check, not a global set-minus.
+    result = []
+
     for mu in omega:
-        # Evaluate negated pattern starting from this mapping
         omega_neg = [mu]
-        
         for pattern in negation.body_patterns:
             omega_neg = eval_body_element(pattern, omega_neg, graph, active_graph)
             if not omega_neg:
                 break
-        
-        negation_results.extend(omega_neg)
-    
-    # Remove mappings compatible with negation results
-    result = minus(omega, negation_results)
-    
+        if not omega_neg:
+            result.append(mu)
+
     return result
 
 
@@ -222,13 +221,13 @@ def eval_assignment(
     active_graph: Optional[Graph] = None
 ) -> List[SolutionMapping]:
     """
-    Evaluate an assignment (BIND) by extending mappings with new variable.
-    
-    From Section 5.3:
-    "For an assignment BIND(expr AS ?var), each solution mapping μ is
-    extended with a binding ?var → eval(expr, μ, G)."
-    
-    Algorithm: Ω' = { extend(μ, var, eval(expr, μ, G)) | μ ∈ Ω }
+    Evaluate an assignment (SET) by extending mappings with a new variable.
+
+    From #eval-rule (assignment element):
+    "for each μ: x = evalFunction(expr, μ); if x is not an error, add
+    μ ∪ {(V, x)}; else drop μ."
+
+    Algorithm: Ω' = { extend(μ, var, eval(expr, μ, G)) | μ ∈ Ω, eval not error }
     
     Args:
         assignment: Assignment with expression and variable
@@ -239,26 +238,22 @@ def eval_assignment(
     Returns:
         Extended solution mappings
     """
+    # Expressions are evaluated against the evaluation graph G.
+    eval_graph = active_graph if active_graph is not None else graph
     result = []
-    
+
     for mu in omega:
-        # Evaluate the expression
-        value = eval_expr(assignment.expression, mu, active_graph)
-        
-        # Skip if expression evaluation failed
+        # Evaluate the expression.
+        value = eval_expr(assignment.expression, mu, eval_graph)
+
+        # Per #eval-rule: on an error, drop the solution μ; otherwise add
+        # μ ∪ {(V, x)}. Well-formedness guarantees V is not already bound.
         if value is None:
             continue
-        
-        # Check if variable is already bound (would be an error)
-        if assignment.variable.name in mu:
-            # In SPARQL, BIND to an already-bound variable is an error
-            # Skip this mapping
-            continue
-        
-        # Extend the mapping with new binding
+
         extended = extend(mu, assignment.variable, value)
         result.append(extended)
-    
+
     return result
 
 

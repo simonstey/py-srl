@@ -11,6 +11,11 @@ from typing import Union, Optional
 from rdflib import Literal as RDFLiteral, URIRef, BNode, Namespace
 from rdflib.term import Node as RDFNode
 
+try:  # RDF-star triple term (rdflib >= 7)
+    from rdflib.term import Triple as RDFTripleTerm  # type: ignore
+except Exception:  # pragma: no cover
+    RDFTripleTerm = None
+
 from .solutions import SolutionMapping, substitute_term
 from ..ast.nodes import (
     Expression, BinaryOp, UnaryOp, FunctionCall, BuiltInCall,
@@ -101,20 +106,21 @@ def effective_boolean_value(term: Optional[RDFNode]) -> bool:
                 return term.value
             else:
                 return str(term.value).lower() in ('true', '1')
-        
-        # String literal
-        if term.datatype == XSD.string or term.datatype is None:
-            return len(str(term)) > 0
-        
-        # Numeric types
-        if term.datatype in (XSD.integer, XSD.decimal, XSD.double, XSD.float):
+
+        # Numeric types (including datatypes derived from a numeric type, e.g.
+        # xsd:int, xsd:long, xsd:positiveInteger): false iff zero or NaN.
+        if is_numeric(term):
             try:
                 num_val = float(term.value)
                 return num_val != 0.0 and not (num_val != num_val)  # not NaN
-            except:
+            except Exception:
                 return False
-    
-    # For other types, return False
+
+        # Simple (plain or xsd:string) literal: false iff empty.
+        if term.datatype == XSD.string or term.datatype is None:
+            return len(str(term)) > 0
+
+    # For other types (IRIs, blank nodes, ill-typed literals), EBV is an error.
     return False
 
 
@@ -129,22 +135,39 @@ def eval_binary_op(
 ) -> Optional[RDFNode]:
     """Evaluate binary operation."""
     left_val = eval_expr(expr.left, mu, active_graph)
-    
-    # Short-circuit evaluation for logical operators
+
+    # Logical connectives use SPARQL three-valued logic: an error operand is
+    # NOT simply false. A value of None here denotes an error.
+    #   true  || X     = true
+    #   false || X     = X's EBV, but false||error = error
+    #   false && X     = false
+    #   true  && X     = X's EBV, but true&&error  = error
     if expr.operator == BinaryOperator.OR:
-        if effective_boolean_value(left_val):
+        left_true = left_val is not None and effective_boolean_value(left_val)
+        if left_true:
             return RDFLiteral(True)
         right_val = eval_expr(expr.right, mu, active_graph)
-        result = effective_boolean_value(right_val)
-        return RDFLiteral(result)
-    
+        right_true = right_val is not None and effective_boolean_value(right_val)
+        if right_true:
+            return RDFLiteral(True)
+        # Both sides false-or-error: error if either operand errored.
+        if left_val is None or right_val is None:
+            return None
+        return RDFLiteral(False)
+
     elif expr.operator == BinaryOperator.AND:
-        if not effective_boolean_value(left_val):
+        left_false = left_val is not None and not effective_boolean_value(left_val)
+        if left_false:
             return RDFLiteral(False)
         right_val = eval_expr(expr.right, mu, active_graph)
-        result = effective_boolean_value(right_val)
-        return RDFLiteral(result)
-    
+        right_false = right_val is not None and not effective_boolean_value(right_val)
+        if right_false:
+            return RDFLiteral(False)
+        # Both sides true-or-error: error if either operand errored.
+        if left_val is None or right_val is None:
+            return None
+        return RDFLiteral(True)
+
     # For other operators, evaluate both sides
     right_val = eval_expr(expr.right, mu, active_graph)
     
@@ -232,21 +255,29 @@ def eval_builtin(
         arg_val = eval_expr(arg_expr, mu, active_graph)
         args.append(arg_val)
     
-    # Dispatch to specific built-in
+    # Functional forms (IF) evaluate their arguments lazily; handle before the
+    # eager-argument dispatch below.
+    if func_name == "IF":
+        if len(call.arguments) == 3:
+            cond = eval_expr(call.arguments[0], mu, active_graph)
+            if cond is None:
+                return None  # error condition -> error
+            if effective_boolean_value(cond):
+                return eval_expr(call.arguments[1], mu, active_graph)
+            return eval_expr(call.arguments[2], mu, active_graph)
+        return None
+
+    # Dispatch to specific built-in (spec [121] set + IN from RelationalExpr).
     if func_name == "STR":
         return builtin_str(args)
     elif func_name == "LANG":
         return builtin_lang(args)
     elif func_name == "LANGMATCHES":
         return builtin_langmatches(args)
+    elif func_name == "LANGDIR":
+        return builtin_langdir(args)
     elif func_name == "DATATYPE":
         return builtin_datatype(args)
-    elif func_name == "BOUND":
-        # Special: BOUND doesn't evaluate its argument
-        if len(call.arguments) == 1 and isinstance(call.arguments[0], Variable):
-            var = call.arguments[0]
-            return RDFLiteral(var.name in mu)
-        return RDFLiteral(False)
     elif func_name == "IRI" or func_name == "URI":
         return builtin_iri(args)
     elif func_name == "BNODE":
@@ -255,6 +286,8 @@ def eval_builtin(
         return builtin_strdt(args)
     elif func_name == "STRLANG":
         return builtin_strlang(args)
+    elif func_name == "STRLANGDIR":
+        return builtin_strlangdir(args)
     elif func_name == "UUID":
         return builtin_uuid(args)
     elif func_name == "STRUUID":
@@ -291,8 +324,6 @@ def eval_builtin(
         return builtin_ceil(args)
     elif func_name == "FLOOR":
         return builtin_floor(args)
-    elif func_name == "RAND":
-        return builtin_rand(args)
     elif func_name == "NOW":
         return builtin_now(args)
     elif func_name == "YEAR":
@@ -311,16 +342,8 @@ def eval_builtin(
         return builtin_timezone(args)
     elif func_name == "TZ":
         return builtin_tz(args)
-    elif func_name == "MD5":
-        return builtin_md5(args)
-    elif func_name == "SHA1":
-        return builtin_sha1(args)
-    elif func_name == "SHA256":
-        return builtin_sha256(args)
-    elif func_name == "SHA384":
-        return builtin_sha384(args)
-    elif func_name == "SHA512":
-        return builtin_sha512(args)
+    elif func_name == "SAMETERM":
+        return builtin_sameterm(args)
     elif func_name == "ISIRI" or func_name == "ISURI":
         return builtin_isiri(args)
     elif func_name == "ISBLANK":
@@ -329,26 +352,24 @@ def eval_builtin(
         return builtin_isliteral(args)
     elif func_name == "ISNUMERIC":
         return builtin_isnumeric(args)
+    elif func_name == "HASLANG":
+        return builtin_haslang(args)
+    elif func_name == "HASLANGDIR":
+        return builtin_haslangdir(args)
     elif func_name == "REGEX":
         return builtin_regex(args)
-    elif func_name == "IF":
-        # Special: IF has conditional evaluation
-        if len(call.arguments) == 3:
-            cond = eval_expr(call.arguments[0], mu, active_graph)
-            if effective_boolean_value(cond):
-                return eval_expr(call.arguments[1], mu, active_graph)
-            else:
-                return eval_expr(call.arguments[2], mu, active_graph)
-        return None
-    elif func_name == "COALESCE":
-        # Special: COALESCE returns first non-error value
-        for arg_expr in call.arguments:
-            val = eval_expr(arg_expr, mu, active_graph)
-            if val is not None:
-                return val
-        return None
+    elif func_name == "ISTRIPLE":
+        return builtin_istriple(args)
+    elif func_name == "TRIPLE":
+        return builtin_triple(args)
+    elif func_name == "SUBJECT":
+        return builtin_triple_subject(args)
+    elif func_name == "PREDICATE":
+        return builtin_triple_predicate(args)
+    elif func_name == "OBJECT":
+        return builtin_triple_object(args)
     elif func_name == "IN":
-        # Special: IN checks membership
+        # From RelationalExpression: IN checks membership.
         if len(call.arguments) < 1:
             return RDFLiteral(False)
         test_val = eval_expr(call.arguments[0], mu, active_graph)
@@ -412,12 +433,15 @@ def builtin_langmatches(args) -> Optional[RDFNode]:
     
     tag = str(args[0]).lower()
     range_val = str(args[1]).lower()
-    
+
     if range_val == "*":
         return RDFLiteral(len(tag) > 0)
-    
-    # Simple prefix matching (simplified from RFC 4647)
-    return RDFLiteral(tag.startswith(range_val))
+
+    # RFC 4647 basic filtering: the range matches the tag, or a prefix of the
+    # tag ending on a subtag boundary ('-'). So 'en' matches 'en' and 'en-US'
+    # but not 'english'.
+    matches = tag == range_val or tag.startswith(range_val + "-")
+    return RDFLiteral(matches)
 
 
 def builtin_datatype(args) -> Optional[RDFNode]:
@@ -505,33 +529,45 @@ def builtin_strlen(args) -> Optional[RDFNode]:
     return RDFLiteral(len(s), datatype=XSD.integer)
 
 
+def _string_literal_like(source, text: str) -> RDFNode:
+    """Build a string literal carrying the source literal's language tag or
+    xsd:string datatype, per SPARQL string-function return semantics."""
+    if isinstance(source, RDFLiteral):
+        if source.language:
+            return RDFLiteral(text, lang=source.language)
+        if source.datatype == XSD.string:
+            return RDFLiteral(text, datatype=XSD.string)
+    return RDFLiteral(text)
+
+
 def builtin_substr(args) -> Optional[RDFNode]:
-    """SUBSTR(string, start[, length]) - substring."""
+    """SUBSTR(string, start[, length]) - substring (preserves lang/datatype)."""
     if len(args) < 2 or args[0] is None or args[1] is None:
         return None
-    
+
     s = str(args[0])
     start = int(str(args[1])) - 1  # 1-indexed in SPARQL
-    
+
     if len(args) >= 3 and args[2] is not None:
         length = int(str(args[2]))
-        return RDFLiteral(s[start:start+length])
+        result = s[start:start + length]
     else:
-        return RDFLiteral(s[start:])
+        result = s[start:]
+    return _string_literal_like(args[0], result)
 
 
 def builtin_ucase(args) -> Optional[RDFNode]:
-    """UCASE(string) - uppercase."""
+    """UCASE(string) - uppercase (preserves lang/datatype)."""
     if len(args) != 1 or args[0] is None:
         return None
-    return RDFLiteral(str(args[0]).upper())
+    return _string_literal_like(args[0], str(args[0]).upper())
 
 
 def builtin_lcase(args) -> Optional[RDFNode]:
-    """LCASE(string) - lowercase."""
+    """LCASE(string) - lowercase (preserves lang/datatype)."""
     if len(args) != 1 or args[0] is None:
         return None
-    return RDFLiteral(str(args[0]).lower())
+    return _string_literal_like(args[0], str(args[0]).lower())
 
 
 def builtin_strstarts(args) -> Optional[RDFNode]:
@@ -574,7 +610,7 @@ def builtin_strbefore(args) -> Optional[RDFNode]:
     
     idx = s.find(substring)
     if idx >= 0:
-        return RDFLiteral(s[:idx])
+        return _string_literal_like(args[0], s[:idx])
     else:
         return RDFLiteral("")
 
@@ -583,13 +619,13 @@ def builtin_strafter(args) -> Optional[RDFNode]:
     """STRAFTER(string, substring) - part after first occurrence."""
     if len(args) != 2 or args[0] is None or args[1] is None:
         return None
-    
+
     s = str(args[0])
     substring = str(args[1])
-    
+
     idx = s.find(substring)
     if idx >= 0:
-        return RDFLiteral(s[idx+len(substring):])
+        return _string_literal_like(args[0], s[idx + len(substring):])
     else:
         return RDFLiteral("")
 
@@ -605,11 +641,26 @@ def builtin_encode_for_uri(args) -> Optional[RDFNode]:
 
 
 def builtin_concat(args) -> Optional[RDFNode]:
-    """CONCAT(string...) - concatenate strings."""
+    """CONCAT(string...) - concatenate strings.
+
+    Per SPARQL: if all arguments share a common language tag, the result keeps
+    it; if all are xsd:string, the result is xsd:string; otherwise a plain
+    literal.
+    """
     if any(arg is None for arg in args):
         return None
-    
+
     result = "".join(str(arg) for arg in args)
+    if not args:
+        return RDFLiteral(result)
+
+    langs = {a.language for a in args if isinstance(a, RDFLiteral)}
+    non_literal = any(not isinstance(a, RDFLiteral) for a in args)
+    if not non_literal and len(langs) == 1 and next(iter(langs)):
+        return RDFLiteral(result, lang=next(iter(langs)))
+    dts = {a.datatype for a in args if isinstance(a, RDFLiteral)}
+    if not non_literal and langs == {None} and dts == {XSD.string}:
+        return RDFLiteral(result, datatype=XSD.string)
     return RDFLiteral(result)
 
 
@@ -633,7 +684,7 @@ def builtin_replace(args) -> Optional[RDFNode]:
     
     try:
         result = re.sub(pattern, replacement, s, flags=regex_flags)
-        return RDFLiteral(result)
+        return _string_literal_like(args[0], result)
     except:
         return None
 
@@ -650,48 +701,44 @@ def builtin_abs(args) -> Optional[RDFNode]:
     return None
 
 
-def builtin_round(args) -> Optional[RDFNode]:
-    """ROUND(numeric) - round to nearest integer."""
+def _round_like(args, fn) -> Optional[RDFNode]:
+    """Shared ROUND/CEIL/FLOOR body: apply fn, preserving the argument's
+    numeric datatype (per XPath fn:round/ceiling/floor return types)."""
     if len(args) != 1 or args[0] is None:
         return None
-    
     if isinstance(args[0], RDFLiteral) and is_numeric(args[0]):
         val = numeric_value(args[0])
-        result = round(val)
-        return RDFLiteral(int(result), datatype=XSD.integer)
+        result = fn(val)
+        dt = args[0].datatype or XSD.integer
+        if dt in (XSD.integer,) or (isinstance(val, int) and dt not in (XSD.decimal, XSD.double, XSD.float)):
+            return RDFLiteral(int(result), datatype=dt if dt else XSD.integer)
+        # decimal/double/float keep their type.
+        return RDFLiteral(type(val)(result), datatype=dt)
     return None
+
+
+def _round_half_up(val):
+    """SPARQL/XPath fn:round: round half toward positive infinity."""
+    import math
+
+    return math.floor(val + 0.5)
+
+
+def builtin_round(args) -> Optional[RDFNode]:
+    """ROUND(numeric) - round half up, preserving numeric datatype."""
+    return _round_like(args, _round_half_up)
 
 
 def builtin_ceil(args) -> Optional[RDFNode]:
-    """CEIL(numeric) - ceiling (round up)."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    if isinstance(args[0], RDFLiteral) and is_numeric(args[0]):
-        import math
-        val = numeric_value(args[0])
-        result = math.ceil(val)
-        return RDFLiteral(int(result), datatype=XSD.integer)
-    return None
+    """CEIL(numeric) - ceiling, preserving numeric datatype."""
+    import math
+    return _round_like(args, math.ceil)
 
 
 def builtin_floor(args) -> Optional[RDFNode]:
-    """FLOOR(numeric) - floor (round down)."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    if isinstance(args[0], RDFLiteral) and is_numeric(args[0]):
-        import math
-        val = numeric_value(args[0])
-        result = math.floor(val)
-        return RDFLiteral(int(result), datatype=XSD.integer)
-    return None
-
-
-def builtin_rand(args) -> Optional[RDFNode]:
-    """RAND() - random number between 0 and 1."""
-    import random
-    return RDFLiteral(random.random(), datatype=XSD.double)
+    """FLOOR(numeric) - floor, preserving numeric datatype."""
+    import math
+    return _round_like(args, math.floor)
 
 
 def builtin_now(args) -> Optional[RDFNode]:
@@ -701,55 +748,109 @@ def builtin_now(args) -> Optional[RDFNode]:
     return RDFLiteral(now.isoformat(), datatype=XSD.dateTime)
 
 
+def _parse_datetime(arg):
+    """Parse an xsd:dateTime/date literal into a datetime, or None on error."""
+    from datetime import datetime, date
+
+    if arg is None:
+        return None
+    # rdflib may already expose a datetime/date via .toPython().
+    if isinstance(arg, RDFLiteral):
+        py = arg.toPython()
+        if isinstance(py, (datetime, date)):
+            return py
+    s = str(arg)
+    # Normalise a trailing 'Z' to +00:00 for fromisoformat.
+    iso = s[:-1] + "+00:00" if s.endswith("Z") else s
+    for parse in (datetime.fromisoformat,):
+        try:
+            return parse(iso)
+        except Exception:
+            pass
+    try:
+        return date.fromisoformat(s)
+    except Exception:
+        return None
+
+
 def builtin_year(args) -> Optional[RDFNode]:
     """YEAR(datetime) - extract year."""
-    # Simplified implementation
-    if len(args) != 1 or args[0] is None:
-        return None
-    # TODO: Parse datetime and extract year
-    return None
+    dt = _parse_datetime(args[0] if args else None)
+    return RDFLiteral(dt.year, datatype=XSD.integer) if dt else None
 
 
 def builtin_month(args) -> Optional[RDFNode]:
     """MONTH(datetime) - extract month."""
-    # Simplified implementation
-    return None
+    dt = _parse_datetime(args[0] if args else None)
+    return RDFLiteral(dt.month, datatype=XSD.integer) if dt else None
 
 
 def builtin_day(args) -> Optional[RDFNode]:
     """DAY(datetime) - extract day."""
-    # Simplified implementation
-    return None
+    dt = _parse_datetime(args[0] if args else None)
+    return RDFLiteral(dt.day, datatype=XSD.integer) if dt else None
 
 
 def builtin_hours(args) -> Optional[RDFNode]:
     """HOURS(datetime) - extract hours."""
-    # Simplified implementation
-    return None
+    dt = _parse_datetime(args[0] if args else None)
+    return RDFLiteral(getattr(dt, "hour", None), datatype=XSD.integer) if dt is not None and hasattr(dt, "hour") else None
 
 
 def builtin_minutes(args) -> Optional[RDFNode]:
     """MINUTES(datetime) - extract minutes."""
-    # Simplified implementation
-    return None
+    dt = _parse_datetime(args[0] if args else None)
+    return RDFLiteral(dt.minute, datatype=XSD.integer) if dt is not None and hasattr(dt, "minute") else None
 
 
 def builtin_seconds(args) -> Optional[RDFNode]:
-    """SECONDS(datetime) - extract seconds."""
-    # Simplified implementation
-    return None
+    """SECONDS(datetime) - extract seconds (as xsd:decimal, including fraction)."""
+    dt = _parse_datetime(args[0] if args else None)
+    if dt is None or not hasattr(dt, "second"):
+        return None
+    secs = dt.second + (dt.microsecond / 1_000_000 if dt.microsecond else 0)
+    return RDFLiteral(str(secs), datatype=XSD.decimal)
 
 
 def builtin_timezone(args) -> Optional[RDFNode]:
-    """TIMEZONE(datetime) - extract timezone."""
-    # Simplified implementation
-    return None
+    """TIMEZONE(datetime) - timezone as an xsd:dayTimeDuration."""
+    from datetime import timedelta
+
+    dt = _parse_datetime(args[0] if args else None)
+    if dt is None or getattr(dt, "tzinfo", None) is None:
+        return None
+    offset = dt.utcoffset()
+    if offset is None:
+        return None
+    total = int(offset.total_seconds())
+    sign = "-" if total < 0 else ""
+    total = abs(total)
+    hours, rem = divmod(total, 3600)
+    minutes, seconds = divmod(rem, 60)
+    if total == 0:
+        dur = "PT0S"
+    else:
+        dur = f"{sign}PT" + (f"{hours}H" if hours else "") + (f"{minutes}M" if minutes else "") + (f"{seconds}S" if seconds else "")
+    return RDFLiteral(dur, datatype=URIRef(str(XSD) + "dayTimeDuration"))
 
 
 def builtin_tz(args) -> Optional[RDFNode]:
-    """TZ(datetime) - timezone as string."""
-    # Simplified implementation
-    return None
+    """TZ(datetime) - timezone as a simple string ('Z', '+01:00', '' if none)."""
+    dt = _parse_datetime(args[0] if args else None)
+    if dt is None or not hasattr(dt, "second"):
+        return None
+    tz = getattr(dt, "tzinfo", None)
+    if tz is None:
+        return RDFLiteral("")
+    offset = dt.utcoffset()
+    if offset is None or offset.total_seconds() == 0:
+        return RDFLiteral("Z")
+    total = int(offset.total_seconds())
+    sign = "-" if total < 0 else "+"
+    total = abs(total)
+    hours, rem = divmod(total, 3600)
+    minutes = rem // 60
+    return RDFLiteral(f"{sign}{hours:02d}:{minutes:02d}")
 
 
 def builtin_md5(args) -> Optional[RDFNode]:
@@ -860,6 +961,120 @@ def builtin_regex(args) -> Optional[RDFNode]:
 
 
 # ===========================================================================
+# Directional language / language-tag built-ins (RDF 1.2)
+# ===========================================================================
+
+def _literal_direction(term) -> Optional[str]:
+    """Return the base direction ('ltr'/'rtl') of a dir-language literal, if any."""
+    # rdflib may expose the direction as an attribute on the literal.
+    return getattr(term, "direction", None) if isinstance(term, RDFLiteral) else None
+
+
+def builtin_langdir(args) -> Optional[RDFNode]:
+    """LANGDIR(literal) - base direction of a directional language literal."""
+    if len(args) != 1 or args[0] is None:
+        return None
+    direction = _literal_direction(args[0])
+    return RDFLiteral(direction if direction else "")
+
+
+def builtin_strlangdir(args) -> Optional[RDFNode]:
+    """STRLANGDIR(lex, lang, dir) - construct a directional language literal."""
+    if len(args) != 3 or any(a is None for a in args):
+        return None
+    lex, lang, direction = str(args[0]), str(args[1]), str(args[2])
+    try:
+        return RDFLiteral(lex, lang=lang, direction=direction)  # rdflib >= 7
+    except TypeError:
+        # Older rdflib without direction support: fall back to language literal.
+        return RDFLiteral(lex, lang=lang)
+
+
+def builtin_haslang(args) -> Optional[RDFNode]:
+    """hasLANG(literal) - true if the literal has a (non-empty) language tag."""
+    if len(args) != 1 or args[0] is None:
+        return None
+    return RDFLiteral(isinstance(args[0], RDFLiteral) and bool(args[0].language))
+
+
+def builtin_haslangdir(args) -> Optional[RDFNode]:
+    """hasLANGDIR(literal) - true if the literal has a base direction."""
+    if len(args) != 1 or args[0] is None:
+        return None
+    return RDFLiteral(bool(_literal_direction(args[0])))
+
+
+def builtin_sameterm(args) -> Optional[RDFNode]:
+    """sameTerm(a, b) - RDF term identity (not value equality)."""
+    if len(args) != 2 or args[0] is None or args[1] is None:
+        return None
+    a, b = args[0], args[1]
+    # Term identity: same Python/RDF term, including datatype and language.
+    if isinstance(a, RDFLiteral) and isinstance(b, RDFLiteral):
+        same = (
+            str(a) == str(b)
+            and a.datatype == b.datatype
+            and a.language == b.language
+        )
+        return RDFLiteral(same)
+    return RDFLiteral(a == b and type(a) == type(b))
+
+
+# ===========================================================================
+# RDF-star triple-term built-ins
+# ===========================================================================
+
+def _as_triple_parts(term):
+    """Return (s, p, o) if term is a triple term, else None."""
+    if RDFTripleTerm is not None and isinstance(term, RDFTripleTerm):
+        return term[0], term[1], term[2]
+    if isinstance(term, tuple) and len(term) == 3:
+        return term
+    return None
+
+
+def builtin_istriple(args) -> Optional[RDFNode]:
+    """isTRIPLE(term) - true if term is a triple term."""
+    if len(args) != 1 or args[0] is None:
+        return RDFLiteral(False)
+    return RDFLiteral(_as_triple_parts(args[0]) is not None)
+
+
+def builtin_triple(args) -> Optional[RDFNode]:
+    """TRIPLE(s, p, o) - construct a triple term."""
+    if len(args) != 3 or any(a is None for a in args):
+        return None
+    s, p, o = args
+    if RDFTripleTerm is not None:
+        return RDFTripleTerm((s, p, o))
+    return (s, p, o)
+
+
+def builtin_triple_subject(args) -> Optional[RDFNode]:
+    """SUBJECT(triple) - subject of a triple term."""
+    if len(args) != 1 or args[0] is None:
+        return None
+    parts = _as_triple_parts(args[0])
+    return parts[0] if parts else None
+
+
+def builtin_triple_predicate(args) -> Optional[RDFNode]:
+    """PREDICATE(triple) - predicate of a triple term."""
+    if len(args) != 1 or args[0] is None:
+        return None
+    parts = _as_triple_parts(args[0])
+    return parts[1] if parts else None
+
+
+def builtin_triple_object(args) -> Optional[RDFNode]:
+    """OBJECT(triple) - object of a triple term."""
+    if len(args) != 1 or args[0] is None:
+        return None
+    parts = _as_triple_parts(args[0])
+    return parts[2] if parts else None
+
+
+# ===========================================================================
 # Helper functions
 # ===========================================================================
 
@@ -903,12 +1118,20 @@ def rdf_equal(term1: RDFNode, term2: RDFNode) -> bool:
                 return numeric_value(term1) == numeric_value(term2)
             except:
                 return False
-        
-        # String comparison
-        if (term1.datatype == term2.datatype or 
+
+        # Language-tagged literals: equal only if both lexical form AND
+        # language tag match. A lang-tagged literal is never value-equal to a
+        # plain/typed string.
+        lang1 = term1.language
+        lang2 = term2.language
+        if lang1 or lang2:
+            return lang1 == lang2 and str(term1) == str(term2)
+
+        # Simple/typed string comparison (no language tags involved).
+        if (term1.datatype == term2.datatype or
             (term1.datatype in (None, XSD.string) and term2.datatype in (None, XSD.string))):
             return str(term1) == str(term2)
-    
+
     return False
 
 

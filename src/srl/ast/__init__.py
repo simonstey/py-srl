@@ -14,7 +14,6 @@ from .nodes import (
     ConditionExpression,
     NegationElement,
     Assignment,
-    AggregationElement,
     Annotation,
     RuleBodyElement,
     RuleHead,
@@ -37,6 +36,7 @@ from .nodes import (
     IRI,
     Literal,
     BlankNode,
+    TripleTerm,
     # Operators and built-ins
     BinaryOp,
     UnaryOp,
@@ -47,6 +47,7 @@ from .nodes import (
     # Validation
     WellFormednessError,
     validate_rule_well_formedness,
+    validate_rule_set_well_formedness,
 )
 
 __all__ = [
@@ -57,7 +58,6 @@ __all__ = [
     "ConditionExpression",
     "NegationElement",
     "Assignment",
-    "AggregationElement",
     "Annotation",
     "RuleBodyElement",
     "RuleHead",
@@ -77,6 +77,7 @@ __all__ = [
     "IRI",
     "Literal",
     "BlankNode",
+    "TripleTerm",
     "BinaryOp",
     "UnaryOp",
     "FunctionCall",
@@ -85,4 +86,5 @@ __all__ = [
     "UnaryOperator",
     "WellFormednessError",
     "validate_rule_well_formedness",
+    "validate_rule_set_well_formedness",
 ]

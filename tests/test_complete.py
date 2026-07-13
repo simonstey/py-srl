@@ -148,9 +148,9 @@ def test_filter_condition():
 
 
 def test_bind_assignment():
-    """Test 4: Rule with BIND (assignment)"""
-    logger.info("Starting Test 4: Rule with BIND (assignment)")
-    
+    """Test 4: Rule with SET (assignment)"""
+    logger.info("Starting Test 4: Rule with SET (assignment)")
+
     srl_text = """
     PREFIX ex: <http://example.org/>
 
@@ -159,7 +159,7 @@ def test_bind_assignment():
     } WHERE {
         ?person ex:firstName ?first .
         ?person ex:lastName ?last .
-        BIND(CONCAT(?first, " ", ?last) AS ?fullName)
+        SET(?fullName := CONCAT(?first, " ", ?last))
     }
     """
     
@@ -183,7 +183,7 @@ def test_bind_assignment():
     
     logger.info(f"Result graph: {len(result_graph)} triple(s)")
     
-    # Verify BIND worked
+    # Verify SET worked
     assert (EX.Person1, EX.fullName, Literal("John Doe")) in result_graph
     assert (EX.Person2, EX.fullName, Literal("Jane Smith")) in result_graph
-    logger.info("BIND expression evaluated correctly!")
+    logger.info("SET expression evaluated correctly!")

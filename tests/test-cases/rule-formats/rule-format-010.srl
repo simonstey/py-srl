@@ -10,5 +10,5 @@ RULE {
 } WHERE {
     ?rectangle ex:width ?width .
     ?rectangle ex:height ?height .
-    BIND(?width * ?height AS ?area)
+    SET(?area := ?width * ?height)
 }

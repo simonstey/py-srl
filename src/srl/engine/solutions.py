@@ -15,11 +15,17 @@ from ..ast.nodes import (
     IRI,
     Literal,
     BlankNode,
+    TripleTerm,
     TriplePattern,
     TripleTemplate,
     InversePath,
     PathSequence,
 )
+
+try:  # rdflib >= 7 exposes Triple terms via rdflib.term.Triple (RDF-star)
+    from rdflib.term import Triple as RDFTripleTerm  # type: ignore
+except Exception:  # pragma: no cover - older rdflib
+    RDFTripleTerm = None
 
 # Type aliases for RDF terms
 RDFTerm = Union[URIRef, RDFLiteral, BNode]
@@ -129,6 +135,14 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
         else:
             # Variable not bound - in evaluation context this is typically an error
             raise ValueError(f"Variable {term.name} not bound in solution mapping")
+    elif isinstance(term, TripleTerm):
+        s = substitute_term(term.subject, mu)
+        p = substitute_term(term.predicate, mu)
+        o = substitute_term(term.object, mu)
+        if RDFTripleTerm is not None:
+            return RDFTripleTerm((s, p, o))
+        # Fallback: represent the triple term as a plain (s, p, o) tuple.
+        return (s, p, o)
     elif isinstance(term, IRI):
         return URIRef(term.value)
     elif isinstance(term, Literal):
@@ -196,6 +210,22 @@ def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Grap
                 return RDFLiteral(term.value)
         elif isinstance(term, BlankNode):
             return BNode(term.label) if term.label else BNode()
+        elif isinstance(term, TripleTerm):
+            # RDF-star triple term: substitute (no variables to bind at match
+            # time here means treat it as ground); build the rdflib term if
+            # available, else a plain tuple. Unbound variables inside make it a
+            # wildcard we cannot match structurally, so fall back to None.
+            try:
+                s = pattern_term(term.subject)
+                p = pattern_term(term.predicate)
+                o = pattern_term(term.object)
+                if None in (s, p, o):
+                    return None
+                if RDFTripleTerm is not None:
+                    return RDFTripleTerm((s, p, o))
+                return (s, p, o)
+            except TypeError:
+                return None
         elif isinstance(term, (InversePath, PathSequence)):
             # Property paths need special evaluation
             return term
@@ -213,22 +243,30 @@ def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Grap
     # Query the graph
     target_graph = active_graph if active_graph is not None else graph
 
+    positions = (
+        (pattern.subject, "s"),
+        (pattern.predicate, "p"),
+        (pattern.object, "o"),
+    )
+
     for s, p, o in target_graph.triples((subj, pred, obj)):
-        bindings = {}
+        matched = {"s": s, "p": p, "o": o}
+        bindings: dict = {}
+        consistent = True
 
-        # Bind subject if it's a variable
-        if isinstance(pattern.subject, Variable):
-            bindings[pattern.subject.name] = s
+        # Bind each variable; if the same variable occurs in more than one
+        # position, every occurrence must match the same RDF term (spec:
+        # graphMatch returns only mu such that subst(mu, TP) is a triple in G).
+        for term, key in positions:
+            if isinstance(term, Variable):
+                value = matched[key]
+                if term.name in bindings and bindings[term.name] != value:
+                    consistent = False
+                    break
+                bindings[term.name] = value
 
-        # Bind predicate if it's a variable
-        if isinstance(pattern.predicate, Variable):
-            bindings[pattern.predicate.name] = p
-
-        # Bind object if it's a variable
-        if isinstance(pattern.object, Variable):
-            bindings[pattern.object.name] = o
-
-        solutions.append(SolutionMapping(bindings=bindings))
+        if consistent:
+            solutions.append(SolutionMapping(bindings=bindings))
 
     return solutions
 
@@ -273,6 +311,10 @@ def graphMatchWithPath(
 
         # Check if object matches
         if isinstance(object_pattern, Variable):
+            # Repeated-variable consistency: if the object variable is the same
+            # as the subject variable, both endpoints must be the same term.
+            if object_pattern.name in bindings and bindings[object_pattern.name] != end_node:
+                continue
             bindings[object_pattern.name] = end_node
         else:
             # Object is a constant - check if it matches
@@ -355,8 +397,27 @@ def evaluate_path(graph: Graph, path) -> Set[tuple]:
         raise TypeError(f"Unknown path type: {type(path)}")
 
 
+def _subst_with_bnodes(term, mu, bnode_map):
+    """Substitute a term, minting a fresh BNode for each distinct blank-node
+    label within one instantiation (shared across the triple, fresh per call)."""
+    if isinstance(term, BlankNode):
+        if bnode_map is None:
+            return substitute_term(term, mu)
+        if term.label not in bnode_map:
+            bnode_map[term.label] = BNode()
+        return bnode_map[term.label]
+    if isinstance(term, TripleTerm):
+        s = _subst_with_bnodes(term.subject, mu, bnode_map)
+        p = _subst_with_bnodes(term.predicate, mu, bnode_map)
+        o = _subst_with_bnodes(term.object, mu, bnode_map)
+        if RDFTripleTerm is not None:
+            return RDFTripleTerm((s, p, o))
+        return (s, p, o)
+    return substitute_term(term, mu)
+
+
 def substitute_triple_template(
-    template: TripleTemplate, mu: SolutionMapping
+    template: TripleTemplate, mu: SolutionMapping, bnode_map: Optional[Dict] = None
 ) -> Optional[tuple[RDFTerm, RDFTerm, RDFTerm]]:
     """
     Apply substitution to a triple template.
@@ -367,14 +428,20 @@ def substitute_triple_template(
     Args:
         template: Triple template from rule head
         mu: Solution mapping
+        bnode_map: Per-instantiation map from blank-node label to a fresh BNode.
+            The engine passes a fresh dict for each solution mapping so that a
+            head blank node is fresh per generated triple (spec requirement),
+            while multiple occurrences of the same label within one
+            instantiation refer to the same node. If None, blank nodes reuse
+            their (parse-time) label deterministically.
 
     Returns:
         Tuple of (subject, predicate, object) RDF terms, or None
     """
     try:
-        subj = substitute_term(template.subject, mu)
-        pred = substitute_term(template.predicate, mu)
-        obj = substitute_term(template.object, mu)
+        subj = _subst_with_bnodes(template.subject, mu, bnode_map)
+        pred = _subst_with_bnodes(template.predicate, mu, bnode_map)
+        obj = _subst_with_bnodes(template.object, mu, bnode_map)
         return (subj, pred, obj)
     except ValueError:
         # Variable not bound

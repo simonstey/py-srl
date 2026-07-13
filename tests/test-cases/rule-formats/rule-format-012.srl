@@ -8,5 +8,5 @@ RULE {
     ?person ex:emailDomain ?domain .
 } WHERE {
     ?person ex:email ?email .
-    BIND(STRAFTER(?email, "@") AS ?domain)
+    SET(?domain := STRAFTER(?email, "@"))
 }

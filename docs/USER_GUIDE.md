@@ -6,7 +6,8 @@ The Shape Rule Language (SRL) is a declarative rule language for deriving new RD
 
 ## Rule Syntax
 
-SRL supports three equivalent syntax forms:
+SRL supports two equivalent syntax forms. (The Datalog `head :- body` form of
+earlier drafts has been removed and no longer parses.)
 
 ### 1. RULE/WHERE Form
 
@@ -14,6 +15,16 @@ SRL supports three equivalent syntax forms:
 PREFIX ex: <http://example.org/>
 
 RULE {
+    ?x ex:ancestor ?y .
+} WHERE {
+    ?x ex:parent ?y .
+}
+```
+
+`RULE` optionally accepts an IRI that names the rule:
+
+```sparql
+RULE ex:AncestorRule {
     ?x ex:ancestor ?y .
 } WHERE {
     ?x ex:parent ?y .
@@ -28,12 +39,6 @@ IF {
 } THEN {
     ?x ex:ancestor ?y .
 }
-```
-
-### 3. Datalog Form
-
-```sparql
-?x ex:ancestor ?y :- ?x ex:parent ?y .
 ```
 
 ## Basic Usage
@@ -124,9 +129,10 @@ RULE {
 - Logical: `&&` (AND), `||` (OR), `!` (NOT)
 - Arithmetic: `+`, `-`, `*`, `/`
 
-### BIND Expressions
+### SET Assignments
 
-Create new variables with computed values:
+Assign new variables with computed values. (The old `BIND(expr AS ?var)` syntax
+has been replaced by `SET(?var := expr)`.)
 
 ```sparql
 PREFIX ex: <http://example.org/>
@@ -136,9 +142,16 @@ RULE {
 } WHERE {
     ?person ex:firstName ?first .
     ?person ex:lastName ?last .
-    BIND(CONCAT(?first, " ", ?last) AS ?fullName)
+    SET(?fullName := CONCAT(?first, " ", ?last))
 }
 ```
+
+The assignment variable must be **new** (not already bound), and every variable
+used in the expression must already be bound by an earlier body element.
+
+Built-in functions are exactly the SHACL 1.2 Rules spec list (production [121]).
+Notably, `BOUND`, `RAND`, `MD5`, `SHA1`, `SHA256`, `SHA384`, `SHA512`,
+`COALESCE`, and `EXISTS`/`NOT EXISTS` are **not** included and do not parse.
 
 ### Negation (NOT)
 
@@ -294,38 +307,48 @@ Develop rules on small test graphs before running on large datasets.
 
 ```sparql
 # Base case
-?x ex:connected ?y :- ?x ex:directLink ?y .
+RULE { ?x ex:connected ?y } WHERE { ?x ex:directLink ?y }
 
 # Transitive case
-?x ex:connected ?z :- ?x ex:connected ?y , ?y ex:connected ?z .
+RULE { ?x ex:connected ?z } WHERE {
+    ?x ex:connected ?y .
+    ?y ex:connected ?z .
+}
 ```
+
+Transitivity can also be declared directly: `TRANSITIVE(ex:connected)`.
 
 ### Property Symmetry
 
 ```sparql
-?y ex:knows ?x :- ?x ex:knows ?y .
+RULE { ?y ex:knows ?x } WHERE { ?x ex:knows ?y }
 ```
+
+Symmetry can also be declared directly (postfix): `(ex:knows) SYMMETRIC`.
 
 ### Property Inversion
 
 ```sparql
-?child ex:hasParent ?parent :- ?parent ex:hasChild ?child .
+RULE { ?child ex:hasParent ?parent } WHERE { ?parent ex:hasChild ?child }
 ```
+
+Inversion can also be declared directly: `INVERSE(ex:hasChild, ex:hasParent)`.
 
 ### Class Subsumption
 
 ```sparql
-?x a ex:Animal :- ?x a ex:Dog .
-?x a ex:LivingThing :- ?x a ex:Animal .
+RULE { ?x a ex:Animal } WHERE { ?x a ex:Dog }
+RULE { ?x a ex:LivingThing } WHERE { ?x a ex:Animal }
 ```
 
 ### Conditional Classification
 
 ```sparql
-?person a ex:Senior :- 
-    ?person a ex:Person ,
-    ?person ex:age ?age ,
-    FILTER (?age >= 65) .
+RULE { ?person a ex:Senior } WHERE {
+    ?person a ex:Person .
+    ?person ex:age ?age .
+    FILTER (?age >= 65)
+}
 ```
 
 ## Troubleshooting
@@ -347,11 +370,18 @@ Develop rules on small test graphs before running on large datasets.
 
 ### Stratification Errors
 
-**Error:** `Cannot stratify rules: unsafe negation`
+**Error:** `Stratification condition violated: a recursive dependency involves a closed dependency`
+
+The stratification condition forbids any recursive (cyclic) dependency that
+involves a **closed** dependency. A dependency is closed when it arises through
+a `NOT { ... }` negation element, an assignment (`SET`), or a blank node in the
+rule head. In practice this means a rule must not negate (nor assign from) a
+predicate that it, transitively, also produces.
 
 - Ensure variables in NOT appear in positive patterns first
+- Avoid negating a rule's own head predicate (use a distinct predicate)
 - Break complex rules into multiple simpler rules
-- Check for circular dependencies through negation
+- Check for circular dependencies through negation or assignment
 
 ### Performance Issues
 
@@ -367,4 +397,4 @@ See the `examples/` directory for complete working examples:
 - `01_simple_inference.py` - Basic rule inference
 - `02_transitive_closure.py` - Recursive rules
 - `03_filter_conditions.py` - FILTER usage
-- `04_bind_concat.py` - BIND and string operations
+- `04_bind_concat.py` - SET assignment and string operations

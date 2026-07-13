@@ -1,14 +1,17 @@
 PREFIX : <http://example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
+# EXISTS is not a built-in in SHACL 1.2 Rules. A positive existence check is
+# expressed by simply including the triple pattern in the body.
+
 # Find people who have at least one child
 RULE { ?person :isParent true } WHERE {
     ?person rdf:type :Person .
-    FILTER EXISTS { ?person :parentOf ?child }
+    ?person :parentOf ?child .
 }
 
 # Find companies with employees
 RULE { ?company :hasEmployees true } WHERE {
     ?company rdf:type :Company .
-    FILTER EXISTS { ?emp :worksFor ?company }
+    ?emp :worksFor ?company .
 }

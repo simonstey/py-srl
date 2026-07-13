@@ -38,7 +38,7 @@ python examples/02_transitive_closure.py
 # Run FILTER example
 python examples/03_filter_conditions.py
 
-# Run BIND/CONCAT example
+# Run SET/CONCAT example
 python examples/04_bind_concat.py
 
 # Run complete test suite
@@ -88,10 +88,13 @@ for s, p, o in result_graph:
 
 ### Rule Syntax Forms
 
+SHACL 1.2 Rules provides two rule forms. (The Datalog `head :- body` form of
+earlier drafts has been removed and no longer parses.)
+
 ```sparql
 PREFIX ex: <http://example.org/>
 
-# RULE/WHERE form
+# RULE/WHERE form (an optional IRI may name the rule: RULE ex:AdultRule { ... } WHERE { ... })
 RULE {
     ?person ex:isAdult true .
 } WHERE {
@@ -107,21 +110,16 @@ IF {
     ?x ex:grandparent ?z .
 }
 
-# Datalog form
-?x ex:ancestor ?z :- 
-    ?x ex:parent ?y ,
-    ?y ex:parent ?z .
-
-# BIND expressions
+# SET assignment (BIND(expr AS ?var) has been replaced by SET(?var := expr))
 RULE {
     ?person ex:fullName ?fullName .
 } WHERE {
     ?person ex:firstName ?first .
     ?person ex:lastName ?last .
-    BIND(CONCAT(?first, " ", ?last) AS ?fullName)
+    SET(?fullName := CONCAT(?first, " ", ?last))
 }
 
-# Negation
+# Negation (NOT { ... } is the only negation construct; EXISTS/NOT EXISTS are removed)
 RULE {
     ?person ex:hasNoChildren true .
 } WHERE {

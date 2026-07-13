@@ -1,7 +1,8 @@
 """
 AST Node definitions for SHACL 1.2 Rules (Shape Rule Language).
 
-Based on Section 3: Shape Rules Abstract Syntax from the W3C specification.
+Based on the "Shape Rules Abstract Syntax" and grammar of the W3C SHACL 1.2
+Rules specification (gh-pages, 2026-07-07 restructuring).
 """
 
 from dataclasses import dataclass, field
@@ -55,7 +56,6 @@ class Variable:
     """
     A variable representing a possible RDF term in a triple pattern.
 
-    Variables are used in triple patterns (body) and expressions.
     From spec: "A variable represents a possible RDF term in a triple pattern.
     Variables are also used in expressions."
     """
@@ -66,21 +66,39 @@ class Variable:
         return f"?{self.name}"
 
 
-# Union type for RDF terms
-RDFTerm = Union[IRI, Literal, BlankNode, Variable]
+@dataclass(frozen=True)
+class TripleTerm:
+    """
+    An RDF 1.2 triple term ``<<( s p o )>>``.
+
+    From the abstract syntax: an element of a triple template or triple pattern
+    "might be a triple term". Triple terms may nest in the object position.
+    Grammar productions [83]-[85] (TripleTerm / TripleTermSubject / Object) and
+    [47]-[49] (the variable-free TripleTermData used inside DATA blocks).
+
+    The second (predicate) element must be an IRI or a Variable.
+    """
+
+    subject: "RDFTerm"
+    predicate: Union[IRI, Variable]
+    object: "RDFTerm"
+
+    def __str__(self) -> str:
+        return f"<<( {self.subject} {self.predicate} {self.object} )>>"
+
+
+# Union type for RDF terms (includes triple terms, per the abstract syntax).
+RDFTerm = Union[IRI, Literal, BlankNode, Variable, TripleTerm]
 
 
 # ============================================================================
-# Property Paths
+# Property Paths (body patterns only)
 # ============================================================================
 
 
 @dataclass(frozen=True)
 class InversePath:
-    """Inverse property path (^property).
-
-    From production [49]: PathEltOrInverse ::= PathElt | '^' PathElt
-    """
+    """Inverse property path (``^property``). Grammar [90]."""
 
     path: Union[IRI, "PropertyPath"]
 
@@ -90,10 +108,7 @@ class InversePath:
 
 @dataclass(frozen=True)
 class PathSequence:
-    """Sequence property path (path1/path2).
-
-    From production [48]: PathSequence ::= PathEltOrInverse ( '/' PathEltOrInverse )*
-    """
+    """Sequence property path (``path1/path2``). Grammar [89]."""
 
     elements: List[Union[IRI, "PropertyPath"]]
 
@@ -101,12 +116,7 @@ class PathSequence:
         return "/".join(str(e) for e in self.elements)
 
 
-# Union type for property paths
-PropertyPath = Union[
-    IRI,
-    InversePath,
-    PathSequence,
-]
+PropertyPath = Union[IRI, InversePath, PathSequence]
 
 
 # ============================================================================
@@ -146,11 +156,7 @@ class UnaryOperator(Enum):
 
 @dataclass(frozen=True)
 class BinaryOp:
-    """
-    Binary operation expression.
-
-    Part of the expression hierarchy from productions [76]-[83].
-    """
+    """Binary operation expression. Grammar [107]-[113]."""
 
     operator: BinaryOperator
     left: "Expression"
@@ -159,11 +165,7 @@ class BinaryOp:
 
 @dataclass(frozen=True)
 class UnaryOp:
-    """
-    Unary operation expression.
-
-    From production [84]: UnaryExpression
-    """
+    """Unary operation expression. Grammar [114]."""
 
     operator: UnaryOperator
     operand: "Expression"
@@ -171,11 +173,7 @@ class UnaryOp:
 
 @dataclass(frozen=True)
 class FunctionCall:
-    """
-    Function call expression.
-
-    From production [31]: FunctionCall ::= iri ArgList
-    """
+    """Function call expression. Grammar [20] FunctionCall / [116] iriOrFunction."""
 
     function: IRI
     arguments: List["Expression"]
@@ -183,41 +181,19 @@ class FunctionCall:
 
 @dataclass(frozen=True)
 class BuiltInCall:
-    """
-    Built-in SPARQL function call.
-
-    From production [90]: BuiltInCall (STR, LANG, DATATYPE, BOUND, etc.)
-    """
+    """Built-in function call. Grammar [121] BuiltInCall."""
 
     function_name: str
     arguments: List["Expression"]
 
 
-@dataclass(frozen=True)
-class ExistsExpression:
-    """
-    EXISTS or NOT EXISTS expression.
-    
-    Evaluates to true if the pattern matches (or doesn't match for NOT EXISTS).
-    """
-    
-    patterns: List["RuleBodyElement"]
-    negated: bool = False
-    
-    def __str__(self) -> str:
-        prefix = "NOT " if self.negated else ""
-        patterns_str = " ".join(str(p) for p in self.patterns)
-        return f"{prefix}EXISTS {{ {patterns_str} }}"
-
-
-# Expression can be a term, variable, operation, or function call
+# Expression can be a term, variable, operation, or function call.
 Expression = Union[
     RDFTerm,
     BinaryOp,
     UnaryOp,
     FunctionCall,
     BuiltInCall,
-    ExistsExpression,
 ]
 
 
@@ -229,19 +205,15 @@ Expression = Union[
 @dataclass(frozen=True)
 class TriplePattern:
     """
-    A triple pattern is a 3-tuple where each element is either a variable or an RDF term.
+    A triple pattern is a 3-tuple where each element is a variable or an RDF
+    term (which might be a triple term). The predicate (position 2) is an IRI,
+    a Variable, or a property path (paths appear only in rule bodies).
 
-    From spec: "A triple pattern is 3-tuple where each element is either a variable,
-    or an RDF term (which might be a triple term). The second element of the tuple
-    must be an IRI. Triple patterns appear in the body of a rule."
-
-    Position 1: subject
-    Position 2: predicate (must be IRI or Variable)
-    Position 3: object
+    Appears in rule bodies. Grammar family [64]-[91].
     """
 
     subject: RDFTerm
-    predicate: Union[IRI, Variable]
+    predicate: Union[IRI, Variable, PropertyPath]
     object: RDFTerm
 
     def __str__(self) -> str:
@@ -251,15 +223,11 @@ class TriplePattern:
 @dataclass(frozen=True)
 class TripleTemplate:
     """
-    A triple template is a 3-tuple where each element is either a variable or an RDF term.
+    A triple template is a 3-tuple where each element is a variable or an RDF
+    term (which might be a triple term). The predicate (position 2) is an IRI
+    or a Variable. Templates have NO property paths.
 
-    From spec: "A triple template is 3-tuple where each element is either a variable
-    or an RDF term (which might be a triple term). The second element of the tuple
-    must be an IRI or a variable. Triple templates appear in the head of a rule."
-
-    Position 1: subject
-    Position 2: predicate (must be IRI or Variable)
-    Position 3: object
+    Appears in rule heads and (variable-free) in data blocks. Grammar [50]-[63].
     """
 
     subject: RDFTerm
@@ -278,12 +246,9 @@ class TripleTemplate:
 @dataclass(frozen=True)
 class ConditionExpression:
     """
-    A condition expression (FILTER) that evaluates to true or false.
+    A filter element: an expression used to restrict variable values.
 
-    From spec: "A condition expression is a function, or functional form,
-    that evaluates to true or false. Condition expressions appear in the body of a rule."
-
-    From production [29]: Filter ::= 'FILTER' Constraint
+    Grammar [18] Filter ::= 'FILTER' Constraint.
     """
 
     expression: Expression
@@ -295,11 +260,10 @@ class ConditionExpression:
 @dataclass(frozen=True)
 class NegationElement:
     """
-    A negation element (NOT { ... }).
+    A negation element (``NOT { ... }``). Its *negation element body* is a
+    sequence of triple pattern elements and filter elements (BodyBasic).
 
-    From spec: "A negation element is ..@@.. . Negation elements appear in the body of a rule."
-
-    From production [19]: Negation ::= 'NOT' '{' BodyBasic '}'
+    Grammar [23] Negation ::= 'NOT' '{' BodyBasic '}'.
     """
 
     body_patterns: List[Union[TriplePattern, ConditionExpression]]
@@ -312,57 +276,36 @@ class NegationElement:
 @dataclass(frozen=True)
 class Assignment:
     """
-    An assignment (BIND expression).
+    An assignment element: a pair of an *assignment variable* and an
+    *assignment expression*.
 
-    From spec: "An assignment is a pair of a variable, called the assignment variable,
-    and an expression, called the assignment expression. Assignments appear in the body of a rule."
-
-    From production [26]: Assignment ::= 'BIND' '(' Expression 'AS' Var ')'
+    Grammar [26] Assignment ::= 'SET' '(' Var ':=' Expression ')'.
     """
 
     variable: Variable  # assignment variable
     expression: Expression  # assignment expression
 
     def __str__(self) -> str:
-        return f"BIND ({self.expression} AS {self.variable})"
-
-
-@dataclass(frozen=True)
-class AggregationElement:
-    """
-    An aggregation element.
-
-    From spec: "An aggregation element is ..@@.. . Aggregation elements appear in the body of a rule."
-
-    Note: Specification is incomplete for aggregation. Placeholder for future implementation.
-    """
-
-    pass
+        return f"SET ({self.variable} := {self.expression})"
 
 
 @dataclass(frozen=True)
 class Annotation:
-    """RDF-star annotation on a triple.
+    """RDF-star annotation on a triple. Grammar AnnotationBlock ``{| ... |}``."""
 
-    From productions [60]-[61]:
-    Annotation ::= ( Reifier | AnnotationBlock )*
-    AnnotationBlock ::= '{|' PropertyListNotEmpty '|}'
-    """
-
-    properties: List[tuple[Union[IRI, Variable], RDFTerm]]
+    properties: List[tuple]
 
     def __str__(self) -> str:
         props = "; ".join(f"{p} {o}" for p, o in self.properties)
         return f"{{| {props} |}}"
 
 
-# Union type for rule body elements
+# Union type for rule body elements (the four spec rule-element kinds).
 RuleBodyElement = Union[
     TriplePattern,
     ConditionExpression,
     NegationElement,
     Assignment,
-    AggregationElement,
 ]
 
 
@@ -373,11 +316,7 @@ RuleBodyElement = Union[
 
 @dataclass(frozen=True)
 class RuleHead:
-    """
-    A rule head is a sequence of triple templates.
-
-    From spec: "A rule head is a sequence where each element of the sequence is a triple template."
-    """
+    """A rule head is a sequence of triple templates."""
 
     templates: List[TripleTemplate]
 
@@ -387,11 +326,7 @@ class RuleHead:
 
 @dataclass(frozen=True)
 class RuleBody:
-    """
-    A rule body is a sequence of rule body elements.
-
-    From spec: "A rule body is a sequence of rule body elements."
-    """
+    """A rule body is a sequence of rule body elements."""
 
     elements: List[RuleBodyElement]
 
@@ -399,29 +334,60 @@ class RuleBody:
         return " ".join(str(e) for e in self.elements)
 
 
+def _term_contains_blank_node(term: object) -> bool:
+    """Recursively test whether an RDF term is/contains a blank node."""
+    if isinstance(term, BlankNode):
+        return True
+    if isinstance(term, TripleTerm):
+        return (
+            _term_contains_blank_node(term.subject)
+            or _term_contains_blank_node(term.predicate)
+            or _term_contains_blank_node(term.object)
+        )
+    return False
+
+
 @dataclass
 class Rule:
     """
-    A rule is a pair of a rule head and a rule body.
-
-    From spec: "A rule is a pair of a rule head (often just 'head') and
-    a rule body (often just 'body')."
-
-    The rule can be written in three forms:
-    - RULE head WHERE body
-    - IF body THEN head
-    - head :- body
+    A rule is a pair of a rule head and a rule body, optionally identified by
+    a URI. Written either ``RULE iri? { head } WHERE { body }`` (Rule1) or
+    ``IF { body } THEN { head }`` (Rule2).
     """
 
     head: RuleHead
     body: RuleBody
+    iri: Optional[IRI] = None  # optional rule identifier (Rule1 only)
 
     # Stratification metadata (computed during analysis)
     layer: Optional[int] = None
     depends_on: List["Rule"] = field(default_factory=list)
 
+    def has_assignment(self) -> bool:
+        """True if the body contains an assignment element."""
+        return any(isinstance(e, Assignment) for e in self.body.elements)
+
+    def head_has_blank_node(self) -> bool:
+        """True if any head triple template contains a blank node."""
+        for t in self.head.templates:
+            if (
+                _term_contains_blank_node(t.subject)
+                or _term_contains_blank_node(t.predicate)
+                or _term_contains_blank_node(t.object)
+            ):
+                return True
+        return False
+
+    def is_run_once(self) -> bool:
+        """
+        A run-once rule uses an assignment element OR produces a blank node in
+        the rule head; such rules are evaluated exactly once per stratum.
+        """
+        return self.has_assignment() or self.head_has_blank_node()
+
     def __str__(self) -> str:
-        return f"RULE {{ {self.head} }} WHERE {{ {self.body} }}"
+        prefix = f"RULE {self.iri} " if self.iri else "RULE "
+        return f"{prefix}{{ {self.head} }} WHERE {{ {self.body} }}"
 
     def __hash__(self) -> int:
         return id(self)
@@ -430,12 +396,10 @@ class Rule:
 @dataclass(frozen=True)
 class DataBlock:
     """
-    A data block is a set of triples.
+    A data block is a set of ground triples (no variables, no paths) added to
+    the inference graph as additional facts.
 
-    From spec: "A data block is a set of triples. These form extra facts
-    that are included in the inference process."
-
-    From production [13]: Data ::= 'DATA' TriplesTemplateBlock
+    Grammar [14] Data ::= 'DATA' '{' DataTriplesBlock? '}'.
     """
 
     triples: List[TripleTemplate]
@@ -446,16 +410,13 @@ class DataBlock:
 
 
 # ============================================================================
-# Declarations (TRANSITIVE, SYMMETRIC, INVERSE)
+# Declarations (TRANSITIVE, SYMMETRIC, INVERSE)  -- grammar [27]
 # ============================================================================
 
 
 @dataclass(frozen=True)
 class TransitiveDeclaration:
-    """Declaration that a predicate is transitive.
-
-    From production [12]: 'TRANSITIVE' '(' iri ')'
-    """
+    """``TRANSITIVE( iri )``."""
 
     predicate: IRI
 
@@ -465,23 +426,17 @@ class TransitiveDeclaration:
 
 @dataclass(frozen=True)
 class SymmetricDeclaration:
-    """Declaration that a predicate is symmetric.
-
-    From production [12]: 'SYMMETRIC' '(' iri ')'
-    """
+    """``( iri ) SYMMETRIC`` (postfix form)."""
 
     predicate: IRI
 
     def __str__(self) -> str:
-        return f"SYMMETRIC({self.predicate})"
+        return f"({self.predicate}) SYMMETRIC"
 
 
 @dataclass(frozen=True)
 class InverseDeclaration:
-    """Declaration that two predicates are inverses of each other.
-
-    From production [12]: 'INVERSE' '(' iri ',' iri ')'
-    """
+    """``INVERSE( iri, iri )``."""
 
     predicate1: IRI
     predicate2: IRI
@@ -490,21 +445,7 @@ class InverseDeclaration:
         return f"INVERSE({self.predicate1}, {self.predicate2})"
 
 
-@dataclass(frozen=True)
-class ReflexiveDeclaration:
-    """Declaration that a predicate is reflexive.
-
-    From production [12]: 'REFLEXIVE' '(' iri ')'
-    """
-
-    predicate: IRI
-
-    def __str__(self) -> str:
-        return f"REFLEXIVE({self.predicate})"
-
-
-# Union type for declarations
-Declaration = Union[TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration, ReflexiveDeclaration]
+Declaration = Union[TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration]
 
 
 @dataclass
@@ -512,11 +453,11 @@ class Prologue:
     """
     Prologue declarations (BASE, PREFIX, VERSION, IMPORTS).
 
-    From production [2]: Prologue ::= ( BaseDecl | PrefixDecl | VersionDecl | ImportsDecl )*
+    Grammar [4]-[5]. May be interspersed between rules/data blocks.
     """
 
     base: Optional[IRI] = None
-    prefixes: dict[str, IRI] = field(default_factory=dict)
+    prefixes: dict = field(default_factory=dict)
     version: Optional[str] = None
     imports: List[IRI] = field(default_factory=list)
 
@@ -524,12 +465,11 @@ class Prologue:
 @dataclass
 class RuleSet:
     """
-    A rule set is a collection of zero or more rules and zero or more data blocks.
+    A rule set is a collection of zero or more rules, zero or more data blocks,
+    and zero or more rule imports. A *resolved rule set* is a rule set whose
+    imports have been resolved away (``is_resolved`` is True).
 
-    From spec: "A rule set is a collection of zero or more rules and
-    a collection of zero or more data blocks."
-
-    From production [1]: RuleSet ::= ( Prologue ( Rule | Data ) )*
+    Grammar [1] RuleSet.
     """
 
     prologue: Prologue
@@ -539,6 +479,16 @@ class RuleSet:
 
     # Stratification metadata (computed during analysis)
     layers: Optional[List[List[Rule]]] = None
+
+    @property
+    def imports(self) -> List[IRI]:
+        """Rule imports (a first-class rule-set collection, stored on the prologue)."""
+        return self.prologue.imports
+
+    @property
+    def is_resolved(self) -> bool:
+        """A resolved rule set has no imports."""
+        return not self.prologue.imports
 
     def __str__(self) -> str:
         parts = []
@@ -554,7 +504,7 @@ class RuleSet:
 
 
 # ============================================================================
-# Well-formedness Validation
+# Well-formedness Validation  (spec section #wellformed)
 # ============================================================================
 
 
@@ -564,93 +514,131 @@ class WellFormednessError(Exception):
     pass
 
 
-def validate_rule_well_formedness(rule: Rule) -> None:
-    """
-    Validate that a rule meets all well-formedness conditions from Section 3.2.
-
-    Conditions:
-    1. Every variable in head templates appears in body patterns or assignments
-    2. Every variable in expressions appears earlier in the body
-    3. Each assignment variable is used only once
-    4. Assignment variables don't appear in triple patterns after assignment
-    5. Variables in assignment expressions appear before the assignment
-
-    Raises:
-        WellFormednessError: If any condition is violated
-    """
-    # Collect all variables from head
-    head_vars = set()
-    for template in rule.head.templates:
-        if isinstance(template.subject, Variable):
-            head_vars.add(template.subject)
-        if isinstance(template.predicate, Variable):
-            head_vars.add(template.predicate)
-        if isinstance(template.object, Variable):
-            head_vars.add(template.object)
-
-    # Track variables defined in body (from triple patterns and assignments)
-    defined_vars = set()
-    assignment_vars = set()
-
-    # Process body elements in order
-    for i, element in enumerate(rule.body.elements):
-        if isinstance(element, TriplePattern):
-            # Variables in triple pattern become defined
-            if isinstance(element.subject, Variable):
-                defined_vars.add(element.subject)
-            if isinstance(element.predicate, Variable):
-                defined_vars.add(element.predicate)
-            if isinstance(element.object, Variable):
-                defined_vars.add(element.object)
-
-            # Check condition 4: assignment variable shouldn't appear here after assignment
-            for var in [element.subject, element.predicate, element.object]:
-                if isinstance(var, Variable) and var in assignment_vars:
-                    raise WellFormednessError(f"Assignment variable {var} appears in triple pattern at position {i}")
-
-        elif isinstance(element, Assignment):
-            # Check condition 3: assignment variable used only once
-            if element.variable in assignment_vars:
-                raise WellFormednessError(f"Assignment variable {element.variable} is assigned multiple times")
-
-            # Check condition 5: variables in assignment expression must be defined
-            expr_vars = _extract_variables_from_expression(element.expression)
-            undefined = expr_vars - defined_vars - assignment_vars
-            if undefined:
-                raise WellFormednessError(f"Variables {undefined} in assignment expression are not yet defined")
-
-            # Mark assignment variable as defined
-            assignment_vars.add(element.variable)
-            defined_vars.add(element.variable)
-
-        elif isinstance(element, ConditionExpression):
-            # Check condition 2: variables in filter must be defined
-            expr_vars = _extract_variables_from_expression(element.expression)
-            undefined = expr_vars - defined_vars
-            if undefined:
-                raise WellFormednessError(
-                    f"Variables {undefined} in filter expression are not yet defined at position {i}"
-                )
-
-    # Check condition 1: all head variables must be defined in body
-    undefined_head = head_vars - defined_vars
-    if undefined_head:
-        raise WellFormednessError(f"Variables {undefined_head} in rule head are not defined in body")
+def _variables_in_term(term: object) -> set:
+    """Collect variables occurring in an RDF term (including triple terms)."""
+    if isinstance(term, Variable):
+        return {term}
+    if isinstance(term, TripleTerm):
+        return (
+            _variables_in_term(term.subject)
+            | _variables_in_term(term.predicate)
+            | _variables_in_term(term.object)
+        )
+    return set()
 
 
-def _extract_variables_from_expression(expr: Expression) -> set[Variable]:
+def _variables_in_pattern(pattern: Union[TriplePattern, TripleTemplate]) -> set:
+    """Collect variables occurring in a triple pattern/template (all positions)."""
+    result: set = set()
+    result |= _variables_in_term(pattern.subject)
+    if isinstance(pattern.predicate, Variable):
+        result.add(pattern.predicate)
+    result |= _variables_in_term(pattern.object)
+    return result
+
+
+def _extract_variables_from_expression(expr: Expression) -> set:
     """Extract all variables from an expression recursively."""
     if isinstance(expr, Variable):
         return {expr}
-    elif isinstance(expr, (IRI, Literal, BlankNode)):
+    if isinstance(expr, TripleTerm):
+        return _variables_in_term(expr)
+    if isinstance(expr, (IRI, Literal, BlankNode)):
         return set()
-    elif isinstance(expr, BinaryOp):
-        return _extract_variables_from_expression(expr.left) | _extract_variables_from_expression(expr.right)
-    elif isinstance(expr, UnaryOp):
+    if isinstance(expr, BinaryOp):
+        return _extract_variables_from_expression(expr.left) | _extract_variables_from_expression(
+            expr.right
+        )
+    if isinstance(expr, UnaryOp):
         return _extract_variables_from_expression(expr.operand)
-    elif isinstance(expr, (FunctionCall, BuiltInCall)):
-        result = set()
+    if isinstance(expr, (FunctionCall, BuiltInCall)):
+        result: set = set()
         for arg in expr.arguments:
             result |= _extract_variables_from_expression(arg)
         return result
     return set()
+
+
+def _check_well_formed_sequence(elements: List[RuleBodyElement], v0: set) -> set:
+    """
+    Verify a sequence of rule elements is a *well-formed sequence* given the
+    initial variable set ``v0``, and return ``V_all`` (v0 plus every variable
+    defined by the sequence).
+
+    Implements the conditions from spec section #wellformed:
+      * filter element:     every variable it mentions is in V_{i-1}
+      * assignment element: expression variables are in V_{i-1}, and the
+                            assignment variable is NOT in V_{i-1}
+      * negation element:   its body is a well-formed sequence given V_{i-1}
+
+    where V_{i-1} = v0 ∪ (variables defined by elements strictly before i).
+    """
+    v_prev = set(v0)  # V_{i-1}
+
+    for element in elements:
+        if isinstance(element, TriplePattern):
+            # vars_i = variables occurring in the triple pattern element.
+            v_prev = v_prev | _variables_in_pattern(element)
+
+        elif isinstance(element, ConditionExpression):
+            expr_vars = _extract_variables_from_expression(element.expression)
+            undefined = expr_vars - v_prev
+            if undefined:
+                names = ", ".join(sorted(str(v) for v in undefined))
+                raise WellFormednessError(
+                    f"Filter references variable(s) not yet defined: {names}"
+                )
+            # A filter defines no variables (vars_i = empty).
+
+        elif isinstance(element, Assignment):
+            expr_vars = _extract_variables_from_expression(element.expression)
+            undefined = expr_vars - v_prev
+            if undefined:
+                names = ", ".join(sorted(str(v) for v in undefined))
+                raise WellFormednessError(
+                    f"Assignment expression references variable(s) not yet defined: {names}"
+                )
+            if element.variable in v_prev:
+                raise WellFormednessError(
+                    f"Assignment variable {element.variable} is already defined "
+                    f"earlier in the body (assignments must introduce a new variable)"
+                )
+            # vars_i = { assignment variable }.
+            v_prev = v_prev | {element.variable}
+
+        elif isinstance(element, NegationElement):
+            # The negation element body must itself be well-formed given V_{i-1}.
+            _check_well_formed_sequence(list(element.body_patterns), v_prev)
+            # A negation element defines no variables in the outer scope.
+
+    return v_prev
+
+
+def validate_rule_well_formedness(rule: Rule) -> None:
+    """
+    Validate that a rule is a *well-formed rule* per spec section #wellformed:
+
+      * the rule body is a well-formed sequence given V_0 = ∅, and
+      * every variable in a head triple template is an element of V_all.
+
+    Raises:
+        WellFormednessError: if any condition is violated.
+    """
+    v_all = _check_well_formed_sequence(list(rule.body.elements), set())
+
+    head_vars: set = set()
+    for template in rule.head.templates:
+        head_vars |= _variables_in_pattern(template)
+
+    undefined_head = head_vars - v_all
+    if undefined_head:
+        names = ", ".join(sorted(str(v) for v in undefined_head))
+        raise WellFormednessError(
+            f"Head template variable(s) not defined in body: {names}"
+        )
+
+
+def validate_rule_set_well_formedness(rule_set: RuleSet) -> None:
+    """A rule set is well-formed iff all of its rules are well-formed rules."""
+    for rule in rule_set.rules:
+        validate_rule_well_formedness(rule)

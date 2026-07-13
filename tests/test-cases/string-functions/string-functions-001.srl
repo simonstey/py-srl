@@ -3,11 +3,11 @@ PREFIX : <http://example.org/>
 # Extract username from email
 RULE{ ?person :username ?user } WHERE {
     ?person :email ?email .
-    BIND(STRBEFORE(?email, "@") AS ?user)
+    SET(?user := STRBEFORE(?email, "@"))
 }
 
 # Extract domain from email
 RULE { ?person :emailDomain ?domain } WHERE {
     ?person :email ?email .
-    BIND(STRAFTER(?email, "@") AS ?domain)
+    SET(?domain := STRAFTER(?email, "@"))
 }

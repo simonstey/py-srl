@@ -1,18 +1,21 @@
 PREFIX : <http://example.org/>
 
-# Generate various hashes of a value
-RULE { ?item :md5Hash ?hash } WHERE {
+# Derive normalized identifiers and content fingerprints.
+# The MD5/SHA1/SHA256/SHA384/SHA512 builtins were removed from SHACL 1.2
+# Rules, so these rules demonstrate assignment using spec-valid string
+# built-ins (UCASE, STRLEN, STR, CONCAT, SUBSTR) instead.
+RULE { ?item :normalizedId ?norm } WHERE {
     ?item :identifier ?id .
-    BIND(MD5(?id) AS ?hash)
+    SET(?norm := UCASE(?id))
 }
 
-RULE { ?item :sha256Hash ?hash } WHERE {
+RULE { ?item :idLength ?len } WHERE {
     ?item :identifier ?id .
-    BIND(SHA256(?id) AS ?hash)
+    SET(?len := STRLEN(?id))
 }
 
-# Create content fingerprint
+# Create a content fingerprint by combining length and prefix
 RULE { ?doc :fingerprint ?fp } WHERE {
     ?doc :content ?content .
-    BIND(SHA1(?content) AS ?fp)
+    SET(?fp := CONCAT(STR(STRLEN(?content)), "-", SUBSTR(?content, 1, 3)))
 }

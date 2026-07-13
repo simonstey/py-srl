@@ -1,5 +1,6 @@
 # Rule Format Example 11: Mixed Format - Multiple Rules
-# Demonstrates all three rule formats in one file
+# Demonstrates both rule formats (RULE/WHERE and IF/THEN) in one file.
+# (The former Datalog `:-` form has been removed from SHACL 1.2 Rules.)
 
 PREFIX ex: <http://example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -19,5 +20,9 @@ IF {
     ?x ex:indirectlyKnows ?z .
 }
 
-# Rule 3: Datalog form
-?x ex:knows ?y :- ?y ex:friend ?x .
+# Rule 3: RULE/WHERE form (symmetric knows via friend)
+RULE {
+    ?x ex:knows ?y .
+} WHERE {
+    ?y ex:friend ?x .
+}

@@ -29,6 +29,9 @@ class NamespaceManager:
         self.register("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
         self.register("xsd", "http://www.w3.org/2001/XMLSchema#")
         self.register("sh", "http://www.w3.org/ns/shacl#")
+        # SHACL Rules vocabulary and SPARQL function namespace (SRL/RDF syntax).
+        self.register("srl", "http://www.w3.org/ns/shacl-rules#")
+        self.register("sparql", "http://www.w3.org/ns/sparql#")
     
     def register(self, prefix: str, namespace: str) -> None:
         """

@@ -170,3 +170,12 @@ src/srl/_version.py
 /tests/shacl12-test-suite
 /tests/report.ttl
 /tests/run_shacl_rules_tests.py
+
+# Spec compliance audit artifacts (local reference snapshot of the W3C spec)
+/.spec-snapshot/
+
+# Generated example outputs
+examples/*-out.ttl
+/*-out.ttl
+/[0-9].ttl
+/[0-9]-out.ttl

@@ -1,7 +1,7 @@
 """
-Example 4: BIND and String Operations
+Example 4: SET and String Operations
 
-This example shows using BIND to create new variables
+This example shows using SET to assign new variables
 with computed values, including string concatenation.
 """
 
@@ -25,7 +25,7 @@ print("Input data:")
 for s, p, o in sorted(graph):
     print(f"  {s.n3(graph.namespace_manager)} {p.n3(graph.namespace_manager)} {o}")
 
-# Define rule with BIND and CONCAT
+# Define rule with SET and CONCAT
 rule_text = """
 PREFIX ex: <http://example.org/>
 
@@ -34,7 +34,7 @@ RULE {
 } WHERE {
     ?person ex:firstName ?first .
     ?person ex:lastName ?last .
-    BIND(CONCAT(?first, " ", ?last) AS ?fullName)
+    SET(?fullName := CONCAT(?first, " ", ?last))
 }
 """
 

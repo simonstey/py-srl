@@ -176,7 +176,7 @@ def format_body_element(element: Any) -> str:
     elif isinstance(element, ConditionExpression):
         return f"[magenta]FILTER:[/magenta] {element.expression}"
     elif isinstance(element, Assignment):
-        return f"[green]BIND:[/green] ({element.expression} AS ?{element.variable.name})"
+        return f"[green]SET:[/green] (?{element.variable.name} := {element.expression})"
     elif isinstance(element, NegationElement):
         patterns = ", ".join(format_triple_pattern(p) for p in element.body_patterns if isinstance(p, TriplePattern))
         return f"[red]NOT:[/red] {{ {patterns} }}"

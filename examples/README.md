@@ -65,12 +65,12 @@ Demonstrates how to:
 
 **FILTER:** Only people with age >= 18 are marked as adults.
 
-### 4. BIND and String Operations (`04_bind_concat.py`)
+### 4. SET and String Operations (`04_bind_concat.py`)
 
-**Concept:** Computed values with BIND expressions
+**Concept:** Computed values with SET assignments
 
 Demonstrates how to:
-- Use BIND to create new variables
+- Use SET to assign new variables
 - Call built-in functions (CONCAT)
 - Generate derived data
 
@@ -150,16 +150,19 @@ for s, p, o in result:
 
 ### Add More Built-in Functions
 
-Available functions include:
-- String: STRLEN, SUBSTR, UCASE, LCASE, STRSTARTS, STRENDS, CONTAINS
-- Numeric: ABS, ROUND, CEIL, FLOOR, RAND
+Available functions (the spec [121] built-in list) include:
+- String: STRLEN, SUBSTR, UCASE, LCASE, STRSTARTS, STRENDS, CONTAINS, CONCAT, REPLACE, ENCODE_FOR_URI
+- Numeric: ABS, ROUND, CEIL, FLOOR
 - Date/Time: NOW, YEAR, MONTH, DAY
-- Hash: MD5, SHA1, SHA256
+- Identifiers: UUID, STRUUID
+
+Note: MD5/SHA1/SHA256/SHA384/SHA512, RAND, BOUND, COALESCE, and EXISTS/NOT EXISTS
+are **not** part of the SHACL 1.2 Rules built-in list and do not parse.
 
 Example:
 ```sparql
-BIND(UCASE(?name) AS ?upperName)
-BIND(STRLEN(?text) AS ?length)
+SET(?upperName := UCASE(?name))
+SET(?length := STRLEN(?text))
 ```
 
 ### Combine Multiple Conditions
