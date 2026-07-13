@@ -130,6 +130,19 @@ RULE {
 }
 ```
 
+## Known Limitations (Deferred)
+
+This implementation tracks the current (2026-07) [W3C SHACL 1.2 Rules](https://w3c.github.io/data-shapes/shacl12-rules/) spec. The following parts of the spec are **not yet implemented** and are deferred for a later iteration. They are known gaps, not bugs — a full audit and remediation record is in [SPEC-COMPLIANCE-AUDIT.md](SPEC-COMPLIANCE-AUDIT.md) (§6).
+
+- **RDF 1.2 collection & reification syntax in the grammar.** The SRL text parser does not yet accept blank-node property lists `[ … ]`, RDF collections `( … )`, reified triples `<< s p o >>` / reified-triple blocks, annotation blocks `{| … |}`, or reifiers `~`. Only the triple-term form `<<( s p o )>>` is supported. These productions are normative in the spec grammar; rules using them will fail to parse.
+- **Base-direction language literals.** `LANGDIR`, `STRLANGDIR`, and `hasLANGDIR` are dispatched but effectively no-ops because the pinned rdflib (7.6.0) exposes no literal base-direction API. `hasLANG` and language tags work normally. Full support needs an rdflib release with base-direction literals (or a shim).
+- **Triple terms in the data graph.** With the installed rdflib, triple terms materialize as plain Python tuples rather than first-class RDF-star terms, so full RDF-star graph round-tripping is limited by the dependency.
+- **SRL/RDF concrete syntax coverage.** The `srl.rdf` reader parses the `srl:RuleSet` RDF encoding (rules, data, filters, assignments, negation, `sparql:*` operators), but there is no serializer (AST → RDF), and RDF-side triple terms / collections mirror the text-syntax gaps above.
+- **`srl shacl` CLI command.** SHACL-shapes integration is a placeholder stub (see the CLI section below).
+- **Minor SPARQL-fidelity edges.** A few evaluation corners still diverge from strict SPARQL semantics: relational comparison of incomparable operand types falls back to string ordering instead of raising a type error, and `xsd:float ÷ xsd:float` yields `xsd:decimal` rather than `xsd:float`.
+
+**Unsupported property paths** (also deferred, and *not* in the current spec): alternative `|`, transitive `+`/`*`, optional `?`, and negated property sets. Only sequence `a/b` and inverse `^a` paths are supported. Test cases exercising the unsupported forms are marked `xfail`.
+
 ## CLI Usage and Sample Output
 
 This project provides a command-line interface (CLI) for parsing, analyzing, and evaluating SRL rules. The CLI is installed as the `srl` command when the package is installed (e.g. `pip install -e .`).
