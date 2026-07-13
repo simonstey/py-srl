@@ -41,6 +41,8 @@ from ..ast.nodes import (
     BinaryOp,
     BinaryOperator,
     BuiltInCall,
+    UnaryOp,
+    UnaryOperator,
 )
 from . import vocab as V
 
@@ -70,6 +72,14 @@ _SPARQL_BINOP = {
     str(V.SPARQL["subtract"]): BinaryOperator.SUB,
     str(V.SPARQL["multiply"]): BinaryOperator.MUL,
     str(V.SPARQL["divide"]): BinaryOperator.DIV,
+}
+
+
+# SPARQL function IRI -> UnaryOperator (for unary logical/arithmetic ops).
+_SPARQL_UNOP = {
+    str(V.SPARQL["logical-not"]): UnaryOperator.NOT,
+    str(V.SPARQL["unary-minus"]): UnaryOperator.MINUS,
+    str(V.SPARQL["unary-plus"]): UnaryOperator.PLUS,
 }
 
 
@@ -104,6 +114,8 @@ def _expr_to_ast(graph: Graph, node):
         if pred_str.startswith(str(V.SPARQL)):
             args_nodes = _rdf_list(graph, obj)
             args = [_expr_to_ast(graph, a) for a in args_nodes]
+            if pred_str in _SPARQL_UNOP and len(args) == 1:
+                return UnaryOp(operator=_SPARQL_UNOP[pred_str], operand=args[0])
             if pred_str in _SPARQL_BINOP and len(args) == 2:
                 return BinaryOp(operator=_SPARQL_BINOP[pred_str], left=args[0], right=args[1])
             # Otherwise a named built-in: local name of the sparql: term.
