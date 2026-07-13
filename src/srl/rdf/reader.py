@@ -26,6 +26,7 @@ from ..ast.nodes import (
     RuleSet,
     Prologue,
     Rule,
+    TargetedRule,
     RuleHead,
     RuleBody,
     DataBlock,
@@ -197,9 +198,25 @@ def _data_triple(graph, node) -> TripleTemplate:
     return TripleTemplate(subject=triple[0], predicate=triple[1], object=triple[2])
 
 
-def parse_rdf_rule_set(graph: Graph) -> RuleSet:
+def _build_rule(graph: Graph, rule_node) -> Rule:
+    body_nodes = _rdf_list(graph, graph.value(rule_node, V.body))
+    head_nodes = _rdf_list(graph, graph.value(rule_node, V.head))
+    body = RuleBody(elements=[_body_element(graph, n) for n in body_nodes])
+    head = RuleHead(templates=[_head_template(graph, n) for n in head_nodes])
+    rule_iri = IRI(str(rule_node)) if isinstance(rule_node, URIRef) else None
+    return Rule(head=head, body=body, iri=rule_iri)
+
+
+def parse_rdf_rule_set(graph: Graph, extensions: bool = False) -> RuleSet:
     """
     Parse an RDF graph containing exactly one ``srl:RuleSet`` into an AST RuleSet.
+
+    When ``extensions`` is true, the opt-in rule-to-shape targeting attachment is
+    recognised: a rule node carrying ``srl:targetShape`` (with an optional
+    ``srl:focusVar``) becomes a ``TargetedRule`` (direction ``rule-to-shape``),
+    and a shape node carrying ``sh:rule``/``srl:rule`` pointing at a rule node
+    becomes a ``TargetedRule`` (direction ``shape-to-rule``). Without the flag,
+    these attachments are ignored (the wrapped rule is treated as a plain rule).
     """
     from rdflib.namespace import RDF as _RDF
 
@@ -210,13 +227,40 @@ def parse_rdf_rule_set(graph: Graph) -> RuleSet:
 
     # Rules.
     rules: List[Rule] = []
+    targeted_rules: List[TargetedRule] = []
     for rule_node in _rdf_list(graph, graph.value(rs_node, V.rules)):
-        body_nodes = _rdf_list(graph, graph.value(rule_node, V.body))
-        head_nodes = _rdf_list(graph, graph.value(rule_node, V.head))
-        body = RuleBody(elements=[_body_element(graph, n) for n in body_nodes])
-        head = RuleHead(templates=[_head_template(graph, n) for n in head_nodes])
-        rule_iri = IRI(str(rule_node)) if isinstance(rule_node, URIRef) else None
-        rules.append(Rule(head=head, body=body, iri=rule_iri))
+        rule = _build_rule(graph, rule_node)
+        target_shape = graph.value(rule_node, V.targetShape) if extensions else None
+        if target_shape is not None:
+            focus_lit = graph.value(rule_node, V.focusVar)
+            focus_name = str(focus_lit) if focus_lit is not None else "this"
+            targeted_rules.append(
+                TargetedRule(
+                    rule=rule,
+                    focus_var=Variable(name=focus_name),
+                    shape=IRI(str(target_shape)),
+                    direction="rule-to-shape",
+                )
+            )
+        else:
+            rules.append(rule)
+
+    # Shape-to-rule attachment: a shape node with sh:rule/srl:rule -> rule node.
+    if extensions:
+        sh_rule = V.SH.rule
+        for pred in (sh_rule, V.rule):
+            for shape_node, rule_node in graph.subject_objects(pred):
+                rule = _build_rule(graph, rule_node)
+                focus_lit = graph.value(rule_node, V.focusVar)
+                focus_name = str(focus_lit) if focus_lit is not None else "this"
+                targeted_rules.append(
+                    TargetedRule(
+                        rule=rule,
+                        focus_var=Variable(name=focus_name),
+                        shape=IRI(str(shape_node)),
+                        direction="shape-to-rule",
+                    )
+                )
 
     # Data blocks.
     data_triples = [
@@ -224,11 +268,16 @@ def parse_rdf_rule_set(graph: Graph) -> RuleSet:
     ]
     data_blocks = [DataBlock(triples=data_triples)] if data_triples else []
 
-    return RuleSet(prologue=Prologue(), rules=rules, data_blocks=data_blocks)
+    return RuleSet(
+        prologue=Prologue(),
+        rules=rules,
+        data_blocks=data_blocks,
+        targeted_rules=targeted_rules,
+    )
 
 
-def parse_rdf_file(path: str, fmt: Optional[str] = None) -> RuleSet:
+def parse_rdf_file(path: str, fmt: Optional[str] = None, extensions: bool = False) -> RuleSet:
     """Parse an SRL/RDF file (Turtle by default) into an AST RuleSet."""
     graph = Graph()
     graph.parse(path, format=fmt or "turtle")
-    return parse_rdf_rule_set(graph)
+    return parse_rdf_rule_set(graph, extensions=extensions)

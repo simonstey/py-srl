@@ -45,6 +45,11 @@ assignVar = SRL.assignVar
 assignValue = SRL.assignValue
 not_ = getattr(SRL, "not")  # srl:not
 
+# Rule-to-shape targeting (opt-in extension; not part of the SRL spec)
+targetShape = SRL.targetShape
+focusVar = SRL.focusVar
+rule = SRL.rule
+
 __all__ = [
     "SRL",
     "SPARQL",
@@ -69,4 +74,7 @@ __all__ = [
     "assignVar",
     "assignValue",
     "not_",
+    "targetShape",
+    "focusVar",
+    "rule",
 ]

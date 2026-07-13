@@ -11,6 +11,7 @@ from rdflib.plugins.serializers.turtle import TurtleSerializer
 from ..ast.nodes import (
     RuleSet,
     Rule,
+    TargetedRule,
     DataBlock,
     Variable,
     IRI,
@@ -148,18 +149,27 @@ def _write_body_element(g: Graph, elt) -> object:
     raise TypeError(f"Cannot write body element: {elt!r}")
 
 
+def _write_rule(g: Graph, rule: Rule) -> object:
+    rn = URIRef(rule.iri.value) if rule.iri else BNode()
+    g.add((rn, RDF.type, V.Rule))
+    g.add((rn, V.body, _write_list(g, [_write_body_element(g, e) for e in rule.body.elements])))
+    g.add((rn, V.head, _write_list(g, [_write_triple(g, t) for t in rule.head.templates])))
+    return rn
+
+
 def to_rdf_graph(rule_set: RuleSet) -> Graph:
     g = Graph()
     rs_node = BNode()
     g.add((rs_node, RDF.type, V.RuleSet))
 
-    rule_nodes = []
-    for rule in rule_set.rules:
-        rn = URIRef(rule.iri.value) if rule.iri else BNode()
-        g.add((rn, RDF.type, V.Rule))
-        g.add((rn, V.body, _write_list(g, [_write_body_element(g, e) for e in rule.body.elements])))
-        g.add((rn, V.head, _write_list(g, [_write_triple(g, t) for t in rule.head.templates])))
+    rule_nodes = [_write_rule(g, rule) for rule in rule_set.rules]
+
+    for tr in rule_set.targeted_rules:
+        rn = _write_rule(g, tr.rule)
+        g.add((rn, V.targetShape, URIRef(tr.shape.value)))
+        g.add((rn, V.focusVar, RDFLiteral(tr.focus_var.name)))
         rule_nodes.append(rn)
+
     g.add((rs_node, V.rules, _write_list(g, rule_nodes)))
 
     data_triples = [t for block in rule_set.data_blocks for t in block.triples]

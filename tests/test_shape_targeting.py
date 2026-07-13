@@ -92,3 +92,17 @@ ex:AdultShape a sh:NodeShape ; sh:targetClass ex:Person ;
     out = RuleEngine(rs, extensions=True, shapes_graph=sg).evaluate(g, inplace=False)
     assert (EX.Erin, EX.age, Literal(40)) in out
     assert (EX.Erin, EX.status, EX.adult) in out  # r2's gate saw r1's inferred age
+
+
+def test_targeted_rule_rdf_roundtrip():
+    src = ("PREFIX ex: <http://example.org/>\n"
+           "RULE ex:r FOR ?this IN ex:AdultShape { ?this ex:status ex:adult } WHERE { ?this ex:age ?a }")
+    rs = SRLParser(extensions=True).parse(src)
+    from srl.rdf.writer import to_rdf_graph
+    from srl.rdf import parse_rdf_rule_set
+    g = to_rdf_graph(rs)
+    rs2 = parse_rdf_rule_set(g, extensions=True)
+    assert len(rs2.targeted_rules) == 1
+    tr = rs2.targeted_rules[0]
+    assert tr.shape.value == "http://example.org/AdultShape"
+    assert tr.focus_var.name == "this"
