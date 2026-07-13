@@ -33,3 +33,31 @@ def test_reader_reconstructs_unary_not():
     assert isinstance(expr, UnaryOp)
     assert expr.operator == UnaryOperator.NOT
     assert isinstance(expr.operand, BinaryOp)
+
+
+from rdflib import Graph, Literal as RDFLit, URIRef
+from srl.ast import IRI, Literal, Variable, BinaryOp, BinaryOperator
+from srl.rdf import vocab as V
+
+
+def test_write_term_variable_and_iri():
+    from srl.rdf.writer import _write_term
+    g = Graph()
+    var_node = _write_term(g, Variable("x"))
+    assert (var_node, V.varName, RDFLit("x")) in g
+    iri_node = _write_term(g, IRI("http://example/p"))
+    assert iri_node == URIRef("http://example/p")
+
+
+def test_write_expr_binaryop():
+    from srl.rdf.writer import _write_expr
+    from rdflib.collection import Collection
+    g = Graph()
+    expr = BinaryOp(operator=BinaryOperator.LT, left=Variable("v"), right=Literal("18", datatype=IRI("http://www.w3.org/2001/XMLSchema#integer")))
+    node = _write_expr(g, expr)
+    # node has exactly one sparql:less-than edge to a 2-item list
+    lt = URIRef(str(V.SPARQL) + "less-than")
+    objs = list(g.objects(node, lt))
+    assert len(objs) == 1
+    members = list(Collection(g, objs[0]))
+    assert len(members) == 2
