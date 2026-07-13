@@ -22,16 +22,17 @@ from ..ast.nodes import (
 def eval_rule(
     rule: Rule,
     graph: Graph,
-    active_graph: Optional[Graph] = None
+    active_graph: Optional[Graph] = None,
+    seed: Optional[SolutionMapping] = None,
 ) -> List[SolutionMapping]:
     """
     Evaluate a rule body to produce solution mappings.
-    
+
     From Section 5.3:
     "The evaluation of a rule body produces a set of solution mappings.
     Each solution mapping represents a way to instantiate the variables
     in the rule body such that the body pattern matches the data graph."
-    
+
     Algorithm:
     1. Start with a single empty solution mapping Ω = {μ₀} where μ₀ = {}
     2. For each element in the body pattern:
@@ -40,18 +41,23 @@ def eval_rule(
        - Negation (NOT): Remove mappings compatible with negation results
        - Assignments (SET): Extend mappings with new variable bindings
     3. Return final set of solution mappings
-    
+
     Args:
         rule: Rule to evaluate
         graph: RDF graph to evaluate against
         active_graph: Optional active graph for dataset queries
-        
+        seed: Optional pre-bound solution mapping. When given, Ω starts as
+            ``[seed]`` instead of the empty mapping (used by the opt-in
+            rule-to-shape targeting extension to pre-bind a focus variable).
+
     Returns:
         List of solution mappings satisfying the rule body
     """
-    # Start with single empty mapping
-    omega: List[SolutionMapping] = [SolutionMapping(bindings={})]
-    
+    # Start with the seed mapping if provided, else a single empty mapping.
+    omega: List[SolutionMapping] = (
+        [seed] if seed is not None else [SolutionMapping(bindings={})]
+    )
+
     # Process each body element in sequence
     for element in rule.body.elements:
         omega = eval_body_element(element, omega, graph, active_graph)

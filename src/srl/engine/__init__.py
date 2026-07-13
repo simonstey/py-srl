@@ -5,7 +5,7 @@ This module provides rule evaluation functionality including solution mappings,
 expression evaluation, and fixpoint iteration.
 """
 
-from .engine import RuleEngine, evaluate_rules
+from .engine import RuleEngine, evaluate_rules, ExtensionError
 from .expressions import eval_expr, effective_boolean_value, EvaluationError
 from .rules import eval_rule
 from .solutions import SolutionMapping, compatible, merge, graphMatch
@@ -40,4 +40,5 @@ __all__ = [
     # Main engine
     "RuleEngine",
     "evaluate_rules",
+    "ExtensionError",
 ]

@@ -14,12 +14,21 @@ Implements spec section #rule-set-evaluation (Rule Set Evaluation):
 import warnings
 from typing import List, Optional, Set, Tuple
 
-from rdflib import Graph
+from rdflib import Graph, URIRef
 
 from .rules import eval_rule
-from .solutions import substitute_triple_template
+from .solutions import SolutionMapping, substitute_triple_template
 from .stratification import StratificationLayer, stratify
-from ..ast.nodes import RuleSet, Rule, IRI
+from ..ast.nodes import RuleSet, Rule, IRI, TargetedRule
+
+
+class ExtensionError(Exception):
+    """Raised when a non-spec extension feature is used without opting in.
+
+    Rule-to-shape targeting (``RuleSet.targeted_rules``) is an opt-in extension;
+    evaluating a rule set containing targeted rules requires
+    ``RuleEngine(..., extensions=True)`` and a ``shapes_graph``.
+    """
 
 
 class RuleEngine:
@@ -33,6 +42,8 @@ class RuleEngine:
         resolve_imports: bool = True,
         base_location: Optional[str] = None,
         import_loader=None,
+        extensions: bool = False,
+        shapes_graph: Optional[Graph] = None,
     ):
         """
         Args:
@@ -42,6 +53,11 @@ class RuleEngine:
                 into a combined rule set before evaluation (#process-imports).
             base_location: location of the rule set (to avoid self-import).
             import_loader: optional callable mapping an import URL to SRL text.
+            extensions: if True, enable the opt-in rule-to-shape targeting
+                extension. When False (the spec-conformant default), a rule set
+                containing targeted rules raises :class:`ExtensionError`.
+            shapes_graph: the SHACL shapes graph used to resolve targeted rules'
+                shapes (required when evaluating a rule set with targeted rules).
         """
         if resolve_imports and rule_set.prologue.imports:
             from .imports import resolve_imports as _resolve
@@ -51,7 +67,18 @@ class RuleEngine:
             )
         self.rule_set = rule_set
         self.max_iterations = max_iterations
+        self.extensions = extensions
+        self.shapes_graph = shapes_graph
         self.layers: List[StratificationLayer] = []
+
+        # Targeted rules are a non-spec, opt-in extension. Reject them on the
+        # default (spec-conformant) path so behaviour stays byte-for-byte.
+        if rule_set.targeted_rules and not extensions:
+            raise ExtensionError(
+                "Rule set contains targeted rules (rule-to-shape targeting), "
+                "which is an opt-in extension. Construct the engine with "
+                "extensions=True and a shapes_graph to evaluate them."
+            )
 
     # ------------------------------------------------------------------
     # Preparation
@@ -119,6 +146,12 @@ class RuleEngine:
         for stratum_num, layer in enumerate(self.layers):
             self._evaluate_layer(stratum_num, layer, eval_graph, inferred)
 
+        # Opt-in extension: evaluate targeted (rule-to-shape) rules. For now
+        # this is a trailing single pass after the normal strata; B7 refines it
+        # into proper per-stratum placement.
+        if self.extensions and self.rule_set.targeted_rules:
+            self._evaluate_targeted_rules(self.rule_set.targeted_rules, eval_graph, inferred)
+
         if results_only:
             result = Graph()
             for t in inferred:
@@ -167,9 +200,16 @@ class RuleEngine:
                 f"{self.max_iterations} iterations. Rules may not terminate."
             )
 
-    def _evaluate_single_rule(self, rule: Rule, graph: Graph) -> Set[Tuple]:
-        """Evaluate a rule body and instantiate its head, returning new triples."""
-        solution_mappings = eval_rule(rule, graph)
+    def _evaluate_single_rule(
+        self, rule: Rule, graph: Graph, seed: Optional[SolutionMapping] = None
+    ) -> Set[Tuple]:
+        """Evaluate a rule body and instantiate its head, returning new triples.
+
+        When ``seed`` is given, the rule body is evaluated with that solution
+        mapping pre-bound (used by the rule-to-shape targeting extension to
+        pre-bind a focus node to the focus variable).
+        """
+        solution_mappings = eval_rule(rule, graph, seed=seed)
 
         new_triples: Set[Tuple] = set()
         for mu in solution_mappings:
@@ -182,6 +222,42 @@ class RuleEngine:
                 if triple is not None:
                     new_triples.add(triple)
         return new_triples
+
+    # ------------------------------------------------------------------
+    # Targeted rules (opt-in extension)
+    # ------------------------------------------------------------------
+
+    def _evaluate_targeted_rules(
+        self,
+        targeted_rules: List[TargetedRule],
+        eval_graph: Graph,
+        inferred: Set[Tuple],
+    ) -> None:
+        """Evaluate rule-to-shape targeted rules (opt-in extension).
+
+        For each targeted rule: select the shape's focus nodes, keep those that
+        conform to the shape, and evaluate the wrapped rule once per conforming
+        focus node with the focus variable pre-bound to that node.
+        """
+        if self.shapes_graph is None:
+            raise ExtensionError(
+                "Evaluating targeted rules requires a shapes_graph; construct "
+                "the engine with RuleEngine(..., extensions=True, shapes_graph=...)."
+            )
+
+        from ..shapes import conforms, focus_nodes, load_shape
+
+        for tr in targeted_rules:
+            shape = load_shape(self.shapes_graph, URIRef(tr.shape.value))
+            candidates = focus_nodes(shape, eval_graph, self.shapes_graph)
+            for node in candidates:
+                if not conforms(node, shape, eval_graph, self.shapes_graph):
+                    continue
+                seed = SolutionMapping(bindings={tr.focus_var.name: node})
+                for triple in self._evaluate_single_rule(tr.rule, eval_graph, seed):
+                    if triple not in eval_graph:
+                        inferred.add(triple)
+                        eval_graph.add(triple)
 
     # ------------------------------------------------------------------
     # Provenance
