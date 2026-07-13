@@ -8,6 +8,7 @@ from .model import (
     UnsupportedShapeFeatureError,
     load_shape,
 )
+from .targets import focus_nodes
 from .validate import conforms
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "load_shape",
     "UnsupportedShapeFeatureError",
     "conforms",
+    "focus_nodes",
 ]
