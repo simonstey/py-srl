@@ -6,20 +6,22 @@ substitution, compatibility, merging, and graph matching.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
-from rdflib import Graph, URIRef, Literal as RDFLiteral, BNode
+from rdflib import BNode, Graph
+from rdflib import Literal as RDFLiteral
+from rdflib import URIRef
 
 from ..ast.nodes import (
-    Variable,
     IRI,
-    Literal,
     BlankNode,
-    TripleTerm,
+    InversePath,
+    Literal,
+    PathSequence,
     TriplePattern,
     TripleTemplate,
-    InversePath,
-    PathSequence,
+    TripleTerm,
+    Variable,
 )
 
 try:  # rdflib >= 7 exposes Triple terms via rdflib.term.Triple (RDF-star)
@@ -163,7 +165,9 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
         raise TypeError(f"Unknown term type: {type(term)}")
 
 
-def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Graph] = None) -> List[SolutionMapping]:
+def graphMatch(
+    graph: Graph, pattern: TriplePattern, active_graph: Optional[Graph] = None
+) -> List[SolutionMapping]:
     """
     Find all solution mappings that match a triple pattern against a graph.
 
@@ -443,6 +447,14 @@ def join(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[S
     From SPARQL semantics:
     "Join(Ω₁, Ω₂) = { μ₁ ∪ μ₂ | μ₁ ∈ Ω₁, μ₂ ∈ Ω₂, and μ₁ and μ₂ are compatible }"
 
+    Implemented as a hash join on the shared variables. Within a single rule-body
+    evaluation each Ω is *domain-homogeneous* (every mapping binds the same
+    variables — see ``eval_rule``), so the shared-variable set computed from
+    representative mappings applies to all, and mappings that agree on the shared
+    variables are necessarily compatible. If that invariant does not hold the
+    code falls back to the O(n·m) nested-loop join, so the result is identical
+    either way.
+
     Args:
         omega1: First set of solution mappings
         omega2: Second set of solution mappings
@@ -450,13 +462,53 @@ def join(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[S
     Returns:
         List of joined solution mappings
     """
-    result = []
+    if not omega1 or not omega2:
+        return []
 
+    dom1 = omega1[0].domain()
+    dom2 = omega2[0].domain()
+    homogeneous = all(mu.domain() == dom1 for mu in omega1) and all(
+        mu.domain() == dom2 for mu in omega2
+    )
+
+    if not homogeneous:
+        # Defensive fallback: heterogeneous domains are not produced by normal
+        # rule evaluation, but keep the general (correct) semantics if they occur.
+        result = []
+        for mu1 in omega1:
+            for mu2 in omega2:
+                merged = merge(mu1, mu2)
+                if merged is not None:
+                    result.append(merged)
+        return result
+
+    shared = tuple(dom1 & dom2)
+
+    # No shared variables: every pair is compatible → cartesian product.
+    if not shared:
+        return [
+            SolutionMapping(bindings={**mu1.bindings, **mu2.bindings})
+            for mu1 in omega1
+            for mu2 in omega2
+        ]
+
+    # Index omega2 by the tuple of its shared-variable values.
+    index: Dict[tuple, List[SolutionMapping]] = {}
+    for mu2 in omega2:
+        key = tuple(mu2.bindings[v] for v in shared)
+        index.setdefault(key, []).append(mu2)
+
+    result = []
     for mu1 in omega1:
-        for mu2 in omega2:
-            merged = merge(mu1, mu2)
-            if merged is not None:
-                result.append(merged)
+        key = tuple(mu1.bindings[v] for v in shared)
+        bucket = index.get(key)
+        if not bucket:
+            continue
+        for mu2 in bucket:
+            # mu1 and mu2 agree on every shared variable (same key) and their
+            # remaining domains are disjoint, so they are compatible: merge
+            # directly without re-running the compatibility check.
+            result.append(SolutionMapping(bindings={**mu1.bindings, **mu2.bindings}))
 
     return result
 

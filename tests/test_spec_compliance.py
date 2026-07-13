@@ -8,34 +8,36 @@ that a future change cannot silently reintroduce it.
 import warnings
 
 import pytest
-from rdflib import Graph, Namespace, Literal as RDFLiteral, URIRef
+from rdflib import Graph
+from rdflib import Literal as RDFLiteral
+from rdflib import Namespace, URIRef
 from rdflib.namespace import RDF, XSD
 
-from srl.parser import SRLParser, ParseError
-from srl.engine import RuleEngine, stratify, StratificationError
-from srl.engine.solutions import graphMatch, SolutionMapping
-from srl.engine.expressions import (
-    eval_expr,
-    effective_boolean_value,
-    builtin_year,
-    builtin_month,
-    builtin_hours,
-    builtin_round,
-    builtin_ucase,
-    builtin_concat,
-    builtin_langmatches,
-    rdf_equal,
-)
 from srl.ast import (
+    IRI,
     Assignment,
+    PathSequence,
     TriplePattern,
     TripleTerm,
     Variable,
-    IRI,
-    PathSequence,
     WellFormednessError,
     validate_rule_well_formedness,
 )
+from srl.engine import RuleEngine, StratificationError, stratify
+from srl.engine.expressions import (
+    builtin_concat,
+    builtin_hours,
+    builtin_langmatches,
+    builtin_month,
+    builtin_round,
+    builtin_ucase,
+    builtin_year,
+    effective_boolean_value,
+    eval_expr,
+    rdf_equal,
+)
+from srl.engine.solutions import SolutionMapping, graphMatch, join, merge
+from srl.parser import ParseError, SRLParser
 
 EX = Namespace("http://example.org/")
 XSD_INT = URIRef(str(XSD) + "int")
@@ -111,21 +113,29 @@ def test_interspersed_prologue():
 
 def test_optional_dot_after_filter():
     """M-dot: an optional '.' may follow a FILTER element."""
-    parse("PREFIX : <http://example/>\nRULE { ?x :q :o } WHERE { ?x :p ?o . FILTER (?o < 18) . ?x :r ?o }")
+    parse(
+        "PREFIX : <http://example/>\nRULE { ?x :q :o } WHERE { ?x :p ?o . FILTER (?o < 18) . ?x :r ?o }"
+    )
 
 
 def test_excluded_builtins_rejected():
     """M-excluded-builtins / M-exists-builtin: removed builtins do not parse."""
     for fn in ["BOUND(?x)", "RAND()", "MD5(?x)", "SHA1(?x)", "SHA256(?x)", "COALESCE(?x,?y)"]:
         with pytest.raises(ParseError):
-            parse(f"PREFIX : <http://example/>\nRULE {{ ?x :q :o }} WHERE {{ ?x :p ?y . FILTER({fn}) }}")
+            parse(
+                f"PREFIX : <http://example/>\nRULE {{ ?x :q :o }} WHERE {{ ?x :p ?y . FILTER({fn}) }}"
+            )
     with pytest.raises(ParseError):
-        parse("PREFIX : <http://example/>\nRULE { ?x :q :o } WHERE { ?x :p ?y . FILTER(EXISTS { ?s :p ?o }) }")
+        parse(
+            "PREFIX : <http://example/>\nRULE { ?x :q :o } WHERE { ?x :p ?y . FILTER(EXISTS { ?s :p ?o }) }"
+        )
 
 
 def test_triple_term_parses():
     """M-tripleterm: triple terms parse in subject/object position."""
-    rs = parse("PREFIX : <http://example/>\nRULE { <<( ?s :p ?o )>> :saidBy :x } WHERE { ?s :p ?o }")
+    rs = parse(
+        "PREFIX : <http://example/>\nRULE { <<( ?s :p ?o )>> :saidBy :x } WHERE { ?s :p ?o }"
+    )
     assert isinstance(rs.rules[0].head.templates[0].subject, TripleTerm)
 
 
@@ -136,7 +146,9 @@ def test_triple_term_parses():
 
 def test_negation_body_wellformedness():
     """H12: a filter over an undefined variable inside NOT is rejected."""
-    rs = parse("PREFIX : <http://example/>\nRULE { ?a :q :o } WHERE { ?a :p ?b . NOT { FILTER(?z > 1) } }")
+    rs = parse(
+        "PREFIX : <http://example/>\nRULE { ?a :q :o } WHERE { ?a :p ?b . NOT { FILTER(?z > 1) } }"
+    )
     with pytest.raises(WellFormednessError):
         validate_rule_well_formedness(rs.rules[0])
 
@@ -150,7 +162,9 @@ def test_assignment_novelty_against_triple_var():
 
 def test_assignment_var_reused_later_is_wellformed():
     """M-wf-strict: an assignment var may appear in a LATER triple pattern."""
-    rs = parse("PREFIX : <http://example/>\nRULE { ?x :q ?y } WHERE { ?a :p ?y . SET(?x := ?y) . ?x :r ?y }")
+    rs = parse(
+        "PREFIX : <http://example/>\nRULE { ?x :q ?y } WHERE { ?a :p ?y . SET(?x := ?y) . ?x :r ?y }"
+    )
     validate_rule_well_formedness(rs.rules[0])  # must not raise
 
 
@@ -209,7 +223,9 @@ def test_graphmatch_repeated_variable_plain():
     """H1: ?x p ?x binds x once; no spurious match on distinct terms."""
     g = Graph()
     g.add((EX.a, EX.knows, EX.b))
-    pat = TriplePattern(subject=Variable("x"), predicate=IRI("http://example.org/knows"), object=Variable("x"))
+    pat = TriplePattern(
+        subject=Variable("x"), predicate=IRI("http://example.org/knows"), object=Variable("x")
+    )
     assert graphMatch(g, pat) == []
     g.add((EX.c, EX.knows, EX.c))
     assert len(graphMatch(g, pat)) == 1
@@ -232,7 +248,9 @@ def test_graphmatch_repeated_variable_path():
 
 def test_head_blank_nodes_fresh_per_solution():
     """Head blank nodes are fresh per generated triple (not collapsed to one)."""
-    rs = parse("PREFIX : <http://example.org/>\nRULE { [] a :Person ; :name ?n } WHERE { ?x :fullName ?n }")
+    rs = parse(
+        "PREFIX : <http://example.org/>\nRULE { [] a :Person ; :name ?n } WHERE { ?x :fullName ?n }"
+    )
     g = Graph()
     for who in ("Alice", "Bob", "Carol"):
         g.add((getattr(EX, who), EX.fullName, RDFLiteral(who)))
@@ -280,10 +298,15 @@ def test_ebv_derived_numeric():
 
 def test_three_valued_logic_error_propagation():
     """M-3valued: false || error is error (None), not false."""
-    from srl.ast import BinaryOp, BinaryOperator, Literal as Lit
+    from srl.ast import BinaryOp, BinaryOperator
+    from srl.ast import Literal as Lit
 
     false_lit = Lit(value="false", datatype=IRI(str(XSD) + "boolean"))
-    err = BinaryOp(operator=BinaryOperator.GT, left=Variable("unbound"), right=Lit(value="5", datatype=IRI(str(XSD) + "integer")))
+    err = BinaryOp(
+        operator=BinaryOperator.GT,
+        left=Variable("unbound"),
+        right=Lit(value="5", datatype=IRI(str(XSD) + "integer")),
+    )
     expr = BinaryOp(operator=BinaryOperator.OR, left=false_lit, right=err)
     assert eval_expr(expr, _mu()) is None
 
@@ -381,7 +404,11 @@ def test_srl_rdf_equals_operator():
     data = Graph()
     data.parse(data="PREFIX : <http://example/>\n:x :p 0 .", format="turtle")
     gi = RuleEngine(rs).evaluate(data, inplace=False, results_only=True)
-    assert (EX.x if False else URIRef("http://example/x"), URIRef("http://example/oneIsZero"), RDFLiteral(True)) in gi
+    assert (
+        EX.x if False else URIRef("http://example/x"),
+        URIRef("http://example/oneIsZero"),
+        RDFLiteral(True),
+    ) in gi
 
 
 def test_namespaces_registered():
@@ -413,3 +440,68 @@ def test_imports_resolved(tmp_path):
     rs = parse(main)
     engine = RuleEngine(rs)  # resolves imports in __init__
     assert len(engine.rule_set.rules) == 2
+
+
+# --------------------------------------------------------------------------
+# Hash-join equivalence (efficiency refactor, simplify Tier-3 #3)
+# --------------------------------------------------------------------------
+
+
+def _nested_loop_join(omega1, omega2):
+    """Reference O(n·m) join used to cross-check the optimized hash join."""
+    out = []
+    for a in omega1:
+        for b in omega2:
+            m = merge(a, b)
+            if m is not None:
+                out.append(m)
+    return out
+
+
+def test_hash_join_matches_nested_loop():
+    """The optimized join() must equal the nested-loop join, order included."""
+    from rdflib import URIRef as U
+
+    cases = [
+        # shared variable, partial match
+        (
+            [SolutionMapping({"x": U("a")}), SolutionMapping({"x": U("b")})],
+            [
+                SolutionMapping({"x": U("a"), "y": U("1")}),
+                SolutionMapping({"x": U("c"), "y": U("2")}),
+            ],
+        ),
+        # no shared variables -> cartesian product
+        (
+            [SolutionMapping({"x": U("a")}), SolutionMapping({"x": U("b")})],
+            [SolutionMapping({"y": U("1")}), SolutionMapping({"y": U("2")})],
+        ),
+        # identical single-variable domains
+        (
+            [SolutionMapping({"x": U("a")}), SolutionMapping({"x": U("b")})],
+            [SolutionMapping({"x": U("a")}), SolutionMapping({"x": U("b")})],
+        ),
+        # empty inputs
+        ([], [SolutionMapping({"x": U("a")})]),
+        ([SolutionMapping({"x": U("a")})], []),
+        # multiple shared variables
+        (
+            [SolutionMapping({"x": U("a"), "y": U("1")})],
+            [
+                SolutionMapping({"x": U("a"), "y": U("1"), "z": U("Z")}),
+                SolutionMapping({"x": U("a"), "y": U("9"), "z": U("Q")}),
+            ],
+        ),
+        # heterogeneous domains exercise the defensive fallback path
+        (
+            [
+                SolutionMapping({"x": U("a")}),
+                SolutionMapping({"x": U("b"), "y": U("k")}),
+            ],
+            [SolutionMapping({"x": U("a")})],
+        ),
+    ]
+    for omega1, omega2 in cases:
+        got = [dict(m.bindings) for m in join(omega1, omega2)]
+        expected = [dict(m.bindings) for m in _nested_loop_join(omega1, omega2)]
+        assert got == expected

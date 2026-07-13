@@ -25,19 +25,19 @@ from rdflib import Graph, URIRef
 from rdflib.namespace import RDF, RDFS
 
 from ..ast.nodes import (
+    IRI,
+    BlankNode,
+    InversePath,
+    Literal,
+    NegationElement,
+    PathSequence,
     Rule,
     RuleSet,
     TargetedRule,
-    Variable,
-    IRI,
-    Literal,
-    BlankNode,
-    TripleTerm,
     TriplePattern,
     TripleTemplate,
-    NegationElement,
-    InversePath,
-    PathSequence,
+    TripleTerm,
+    Variable,
 )
 
 OPEN = "open"
@@ -237,12 +237,70 @@ def _body_pattern_dependencies(rule: Rule) -> List[Tuple[TriplePattern, str]]:
     return deps
 
 
+def _head_predicate_index(
+    rules: List[Rule],
+) -> Tuple[Dict[str, Set[int]], Set[int]]:
+    """Index rules by the predicate IRIs their head templates can assert.
+
+    Returns ``(by_iri, wildcard)`` where ``by_iri[p]`` is the set of rule
+    indices with a head template whose predicate is the IRI ``p``, and
+    ``wildcard`` is the set of rule indices with any head template whose
+    predicate is a variable (which can match any pattern predicate).
+    """
+    by_iri: Dict[str, Set[int]] = {}
+    wildcard: Set[int] = set()
+    for j, r in enumerate(rules):
+        for t in r.head.templates:
+            pred = t.predicate
+            if isinstance(pred, IRI):
+                by_iri.setdefault(pred.value, set()).add(j)
+            elif isinstance(pred, Variable):
+                wildcard.add(j)
+    return by_iri, wildcard
+
+
+def _candidate_rule_indices(
+    pattern: TriplePattern,
+    n: int,
+    by_iri: Dict[str, Set[int]],
+    wildcard: Set[int],
+) -> Set[int]:
+    """Rules whose head *could* match ``pattern`` on its predicate position.
+
+    A sound over-approximation: any rule that ``possibly_matches`` could accept
+    is included. A variable pattern predicate matches every rule; an IRI or path
+    predicate matches only rules asserting one of those IRIs, plus wildcard
+    (variable-predicate-head) rules.
+    """
+    pred = pattern.predicate
+    if isinstance(pred, Variable):
+        return set(range(n))  # matches any head predicate; cannot prune
+    if isinstance(pred, IRI):
+        keys = {pred.value}
+    elif isinstance(pred, (InversePath, PathSequence)):
+        keys = _path_predicate_iris(pred)
+    else:
+        return set(range(n))  # unknown predicate form: be safe, test all
+
+    candidates = set(wildcard)
+    for k in keys:
+        candidates |= by_iri.get(k, set())
+    return candidates
+
+
 def build_dependency_graph(rules: List[Rule]) -> Dict[Tuple[int, int], str]:
     """
     Build the dependency graph as a map (R1_index, R2_index) -> label.
     Implements the buildDependencyGraph algorithm.
+
+    Rules are indexed by head-template predicate so each body pattern is only
+    tested against rules whose head could plausibly match it, rather than all
+    rules; ``possibly_matches`` still runs on every candidate, so the result is
+    identical to the naive O(rules²) construction.
     """
     edge_labels: Dict[Tuple[int, int], str] = {}
+    n = len(rules)
+    by_iri, wildcard = _head_predicate_index(rules)
 
     for i, r1 in enumerate(rules):
         body_deps = _body_pattern_dependencies(r1)
@@ -253,8 +311,8 @@ def build_dependency_graph(rules: List[Rule]) -> Dict[Tuple[int, int], str]:
 
         for pattern, dep_label in body_deps:
             label = CLOSED if force_closed else dep_label
-            for j, r2 in enumerate(rules):
-                if pattern_depends_on_rule(pattern, r2):
+            for j in _candidate_rule_indices(pattern, n, by_iri, wildcard):
+                if pattern_depends_on_rule(pattern, rules[j]):
                     key = (i, j)
                     if key in edge_labels:
                         edge_labels[key] = _merge_label(edge_labels[key], label)
@@ -269,16 +327,14 @@ def build_dependency_graph(rules: List[Rule]) -> Dict[Tuple[int, int], str]:
 # ---------------------------------------------------------------------------
 
 
-def _has_recursive_closed_dependency(
-    n: int, edges: Dict[Tuple[int, int], str]
-) -> bool:
+def _has_recursive_closed_dependency(n: int, edges: Dict[Tuple[int, int], str]) -> bool:
     """
     True if some cycle in the dependency graph involves a closed edge, i.e.
     there is a recursive dependency involving a closed dependency.
     """
     # Build adjacency for reachability.
     adj: Dict[int, List[int]] = {i: [] for i in range(n)}
-    for (a, b) in edges:
+    for a, b in edges:
         adj[a].append(b)
 
     # Precompute reachability (transitive closure) via DFS from each node.
@@ -302,9 +358,7 @@ def _has_recursive_closed_dependency(
     return False
 
 
-def check_stratification_condition(
-    rules: List[Rule], edges: Dict[Tuple[int, int], str]
-) -> None:
+def check_stratification_condition(rules: List[Rule], edges: Dict[Tuple[int, int], str]) -> None:
     """Raise StratificationError if the stratification condition is violated."""
     if _has_recursive_closed_dependency(len(rules), edges):
         raise StratificationError(
@@ -318,9 +372,7 @@ def check_stratification_condition(
 # ---------------------------------------------------------------------------
 
 
-def _assign_stratum_numbers(
-    n: int, edges: Dict[Tuple[int, int], str]
-) -> List[int]:
+def _assign_stratum_numbers(n: int, edges: Dict[Tuple[int, int], str]) -> List[int]:
     """
     Assign a stratum number to each rule:
       * open edge  p -> q : stratum(p) >= stratum(q)
@@ -433,9 +485,7 @@ def _build_combined_edges(
     return edges
 
 
-def stratify(
-    rule_set: RuleSet, shapes_graph: Optional[Graph] = None
-) -> List[StratificationLayer]:
+def stratify(rule_set: RuleSet, shapes_graph: Optional[Graph] = None) -> List[StratificationLayer]:
     """
     Stratify a rule set into an ordered sequence of (once, general[, targeted])
     layers.
