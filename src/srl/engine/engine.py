@@ -85,8 +85,13 @@ class RuleEngine:
     # ------------------------------------------------------------------
 
     def stratify(self) -> None:
-        """Compute the stratification (once/general layers)."""
-        self.layers = stratify(self.rule_set)
+        """Compute the stratification (once/general/targeted layers)."""
+        shapes_graph = (
+            self.shapes_graph
+            if self.extensions and self.rule_set.targeted_rules
+            else None
+        )
+        self.layers = stratify(self.rule_set, shapes_graph=shapes_graph)
 
     def _data_triples(self) -> Set[Tuple]:
         """Materialize all DATA-block triples of the rule set as RDF triples."""
@@ -146,12 +151,6 @@ class RuleEngine:
         for stratum_num, layer in enumerate(self.layers):
             self._evaluate_layer(stratum_num, layer, eval_graph, inferred)
 
-        # Opt-in extension: evaluate targeted (rule-to-shape) rules. For now
-        # this is a trailing single pass after the normal strata; B7 refines it
-        # into proper per-stratum placement.
-        if self.extensions and self.rule_set.targeted_rules:
-            self._evaluate_targeted_rules(self.rule_set.targeted_rules, eval_graph, inferred)
-
         if results_only:
             result = Graph()
             for t in inferred:
@@ -166,7 +165,19 @@ class RuleEngine:
         eval_graph: Graph,
         inferred: Set[Tuple],
     ) -> None:
-        """Evaluate one stratum: run-once rules once, then general to fixpoint."""
+        """Evaluate one stratum: run-once rules once, then general to fixpoint.
+
+        Opt-in targeting extension: the layer's targeted rules are split the same
+        way (run-once if the wrapped rule is run-once, else general) and folded
+        into the same once-pass / fixpoint loop as the plain rules.
+        """
+        # Partition the layer's targeted rules into run-once and general.
+        once_targeted: List[int] = []
+        general_targeted: List[int] = []
+        for t_idx in layer.targeted:
+            tr = self.rule_set.targeted_rules[t_idx]
+            (once_targeted if tr.rule.is_run_once() else general_targeted).append(t_idx)
+
         # Run-once rules: evaluated exactly once, in order.
         for rule_idx in layer.once:
             rule = self.rule_set.rules[rule_idx]
@@ -175,8 +186,16 @@ class RuleEngine:
                     inferred.add(triple)
                     eval_graph.add(triple)
 
-        # General rules: iterate to a fixpoint.
-        if not layer.general:
+        # Run-once targeted rules: evaluated exactly once, in order.
+        for t_idx in once_targeted:
+            tr = self.rule_set.targeted_rules[t_idx]
+            for triple in self._evaluate_single_targeted_rule(tr, eval_graph):
+                if triple not in eval_graph:
+                    inferred.add(triple)
+                    eval_graph.add(triple)
+
+        # General rules (plain + targeted): iterate to a fixpoint.
+        if not layer.general and not general_targeted:
             return
 
         iteration = 0
@@ -186,6 +205,11 @@ class RuleEngine:
             for rule_idx in layer.general:
                 rule = self.rule_set.rules[rule_idx]
                 for triple in self._evaluate_single_rule(rule, eval_graph):
+                    if triple not in eval_graph:
+                        delta.add(triple)
+            for t_idx in general_targeted:
+                tr = self.rule_set.targeted_rules[t_idx]
+                for triple in self._evaluate_single_targeted_rule(tr, eval_graph):
                     if triple not in eval_graph:
                         delta.add(triple)
             if not delta:
@@ -227,17 +251,15 @@ class RuleEngine:
     # Targeted rules (opt-in extension)
     # ------------------------------------------------------------------
 
-    def _evaluate_targeted_rules(
-        self,
-        targeted_rules: List[TargetedRule],
-        eval_graph: Graph,
-        inferred: Set[Tuple],
-    ) -> None:
-        """Evaluate rule-to-shape targeted rules (opt-in extension).
+    def _evaluate_single_targeted_rule(
+        self, tr: TargetedRule, eval_graph: Graph
+    ) -> Set[Tuple]:
+        """Evaluate one rule-to-shape targeted rule against the current graph.
 
-        For each targeted rule: select the shape's focus nodes, keep those that
-        conform to the shape, and evaluate the wrapped rule once per conforming
-        focus node with the focus variable pre-bound to that node.
+        Selects the shape's focus nodes, keeps those that conform to the shape,
+        and evaluates the wrapped rule once per conforming focus node with the
+        focus variable pre-bound to that node. Returns the inferred triples (the
+        caller decides which are new).
         """
         if self.shapes_graph is None:
             raise ExtensionError(
@@ -247,17 +269,15 @@ class RuleEngine:
 
         from ..shapes import conforms, focus_nodes, load_shape
 
-        for tr in targeted_rules:
-            shape = load_shape(self.shapes_graph, URIRef(tr.shape.value))
-            candidates = focus_nodes(shape, eval_graph, self.shapes_graph)
-            for node in candidates:
-                if not conforms(node, shape, eval_graph, self.shapes_graph):
-                    continue
-                seed = SolutionMapping(bindings={tr.focus_var.name: node})
-                for triple in self._evaluate_single_rule(tr.rule, eval_graph, seed):
-                    if triple not in eval_graph:
-                        inferred.add(triple)
-                        eval_graph.add(triple)
+        shape = load_shape(self.shapes_graph, URIRef(tr.shape.value))
+        candidates = focus_nodes(shape, eval_graph, self.shapes_graph)
+        new_triples: Set[Tuple] = set()
+        for node in candidates:
+            if not conforms(node, shape, eval_graph, self.shapes_graph):
+                continue
+            seed = SolutionMapping(bindings={tr.focus_var.name: node})
+            new_triples |= self._evaluate_single_rule(tr.rule, eval_graph, seed)
+        return new_triples
 
     # ------------------------------------------------------------------
     # Provenance

@@ -19,11 +19,15 @@ condition forbids any recursive dependency involving a closed dependency.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
+
+from rdflib import Graph, URIRef
+from rdflib.namespace import RDF, RDFS
 
 from ..ast.nodes import (
     Rule,
     RuleSet,
+    TargetedRule,
     Variable,
     IRI,
     Literal,
@@ -48,10 +52,15 @@ class StratificationError(Exception):
 
 @dataclass
 class StratificationLayer:
-    """A stratification layer: disjoint sets of run-once and general rules."""
+    """A stratification layer: disjoint sets of run-once and general rules.
+
+    ``targeted`` holds indices into ``RuleSet.targeted_rules`` for the opt-in
+    rule-to-shape targeting extension; it is empty on the spec-conformant path.
+    """
 
     once: List[int] = field(default_factory=list)
     general: List[int] = field(default_factory=list)
+    targeted: List[int] = field(default_factory=list)
 
     def all_indices(self) -> List[int]:
         return self.once + self.general
@@ -139,6 +148,64 @@ def possibly_matches(pattern: TriplePattern, template: TripleTemplate) -> bool:
 def pattern_depends_on_rule(pattern: TriplePattern, rule: Rule) -> bool:
     """A triple pattern depends on a rule if it could match any head template."""
     return any(possibly_matches(pattern, t) for t in rule.head.templates)
+
+
+# ---------------------------------------------------------------------------
+# Rule-to-shape targeting gate (opt-in extension, not part of the SRL spec)
+# ---------------------------------------------------------------------------
+
+
+def shape_referenced_predicates(shape) -> Set[str]:
+    """Predicate IRIs a shape reads when selecting/validating its focus nodes.
+
+    Covers the shape's targets (``targetClass``/``class`` read ``rdf:type``;
+    ``targetSubjectsOf``/``targetObjectsOf`` read their predicate) and the
+    predicate IRIs of every property shape's (simple) path plus its value-type
+    ``class`` constraints. Complex (non-``URIRef``) property paths are skipped
+    best-effort. Used to place a targeted rule strictly above any rule whose
+    head could change the shape's conformance verdict.
+    """
+    preds: Set[str] = set()
+
+    def _add_class_read() -> None:
+        preds.add(str(RDF.type))
+
+    for name, obj in shape.targets:
+        if name == "targetClass":
+            _add_class_read()
+        elif name in ("targetSubjectsOf", "targetObjectsOf"):
+            if isinstance(obj, URIRef):
+                preds.add(str(obj))
+
+    for c in shape.constraints:
+        if c.kind == "class":
+            _add_class_read()
+
+    for ps in shape.property_shapes:
+        if isinstance(ps.path, URIRef):
+            preds.add(str(ps.path))
+        for c in ps.constraints:
+            if c.kind == "class":
+                _add_class_read()
+
+    return preds
+
+
+def _head_predicate_iris(rule: Rule) -> Tuple[Set[str], bool]:
+    """Return (IRI predicate strings a rule's head can assert, has_variable_pred).
+
+    A variable in a head predicate position is a wildcard: it could assert any
+    predicate, so callers must treat it as matching any referenced predicate.
+    """
+    iris: Set[str] = set()
+    has_var = False
+    for t in rule.head.templates:
+        pred = t.predicate
+        if isinstance(pred, IRI):
+            iris.add(pred.value)
+        elif isinstance(pred, Variable):
+            has_var = True
+    return iris, has_var
 
 
 # ---------------------------------------------------------------------------
@@ -286,31 +353,139 @@ def _assign_stratum_numbers(
     return stratum
 
 
-def stratify(rule_set: RuleSet) -> List[StratificationLayer]:
+def _add_edge(edges: Dict[Tuple[int, int], str], key: Tuple[int, int], label: str) -> None:
+    """Add/merge an edge label into the edge map (closed overrides open)."""
+    if key in edges:
+        edges[key] = _merge_label(edges[key], label)
+    else:
+        edges[key] = label
+
+
+def _build_combined_edges(
+    rules: List[Rule],
+    targeted_rules: List["TargetedRule"],
+    shapes_graph: Optional[Graph],
+) -> Dict[Tuple[int, int], str]:
+    """Build the dependency graph over plain rules (0..n-1) and targeted rules
+    (vertex ``n + t`` for ``targeted_rules[t]``), for the opt-in targeting
+    extension.
+
+    Adds, on top of the plain-rule dependency graph:
+      * body-pattern dependencies of/onto targeted rules (open/closed as usual);
+      * a **closed** *gate* edge from each targeted rule to any rule (plain or
+        targeted) whose head could assert a predicate the targeted rule's shape
+        reads — so the targeted rule lands strictly above rules that can change
+        its shape's conformance verdict.
     """
-    Stratify a rule set into an ordered sequence of (once, general) layers.
+    n = len(rules)
+    m = len(targeted_rules)
+    edges = build_dependency_graph(rules)
+
+    # (vertex_id, wrapped Rule) for every vertex, plain and targeted.
+    all_vertices: List[Tuple[int, Rule]] = [(i, rules[i]) for i in range(n)]
+    all_vertices += [(n + t, targeted_rules[t].rule) for t in range(m)]
+
+    def _add_body_deps(src_vertex: int, src_rule: Rule) -> None:
+        body_deps = _body_pattern_dependencies(src_rule)
+        force_closed = src_rule.has_assignment() or src_rule.head_has_blank_node()
+        for pattern, dep_label in body_deps:
+            label = CLOSED if force_closed else dep_label
+            for vj, rj in all_vertices:
+                if vj == src_vertex:
+                    continue
+                if pattern_depends_on_rule(pattern, rj):
+                    _add_edge(edges, (src_vertex, vj), label)
+
+    # Targeted rules' bodies may depend on any (plain or targeted) head.
+    for t in range(m):
+        _add_body_deps(n + t, targeted_rules[t].rule)
+
+    # Plain rules' bodies may depend on targeted-rule heads (not covered by the
+    # plain-only build_dependency_graph call above).
+    for i in range(n):
+        r1 = rules[i]
+        body_deps = _body_pattern_dependencies(r1)
+        force_closed = r1.has_assignment() or r1.head_has_blank_node()
+        for pattern, dep_label in body_deps:
+            label = CLOSED if force_closed else dep_label
+            for t in range(m):
+                if pattern_depends_on_rule(pattern, targeted_rules[t].rule):
+                    _add_edge(edges, (i, n + t), label)
+
+    # Gate: a targeted rule depends (closed) on any rule whose head can assert a
+    # predicate its shape reads.
+    if shapes_graph is not None:
+        from ..shapes import load_shape
+
+        for t in range(m):
+            tr = targeted_rules[t]
+            shape = load_shape(shapes_graph, URIRef(tr.shape.value))
+            refs = shape_referenced_predicates(shape)
+            if not refs:
+                continue
+            for vj, rj in all_vertices:
+                if vj == n + t:
+                    continue
+                iris, has_var = _head_predicate_iris(rj)
+                if has_var or (iris & refs):
+                    _add_edge(edges, (n + t, vj), CLOSED)
+
+    return edges
+
+
+def stratify(
+    rule_set: RuleSet, shapes_graph: Optional[Graph] = None
+) -> List[StratificationLayer]:
+    """
+    Stratify a rule set into an ordered sequence of (once, general[, targeted])
+    layers.
+
+    Args:
+        rule_set: the rule set to stratify.
+        shapes_graph: shapes graph for the opt-in rule-to-shape targeting
+            extension. When ``rule_set.targeted_rules`` is non-empty and a
+            shapes graph is given, targeted rules are placed in strata as
+            closed-dependency gate vertices; otherwise targeting is ignored.
 
     Raises:
         StratificationError: if the stratification condition is violated.
     """
     rules = rule_set.rules
+    targeted_rules = rule_set.targeted_rules
     n = len(rules)
-    if n == 0:
+    m = len(targeted_rules)
+
+    if n == 0 and m == 0:
         return []
 
-    edges = build_dependency_graph(rules)
-    check_stratification_condition(rules, edges)
-    stratum = _assign_stratum_numbers(n, edges)
+    if m == 0:
+        edges = build_dependency_graph(rules)
+    else:
+        edges = _build_combined_edges(rules, targeted_rules, shapes_graph)
 
-    max_stratum = max(stratum)
+    total = n + m
+    if _has_recursive_closed_dependency(total, edges):
+        raise StratificationError(
+            "Stratification condition violated: a recursive dependency involves "
+            "a closed dependency (negation, assignment, blank-node head, or a "
+            "shape-targeting gate in a cycle)."
+        )
+    stratum = _assign_stratum_numbers(total, edges)
+
+    max_stratum = max(stratum) if stratum else 0
     layers = [StratificationLayer() for _ in range(max_stratum + 1)]
-    for i, s in enumerate(stratum):
+    for i in range(n):
+        s = stratum[i]
         rule = rules[i]
         rule.layer = s
         if rule.is_run_once():
             layers[s].once.append(i)
         else:
             layers[s].general.append(i)
+    for t in range(m):
+        s = stratum[n + t]
+        targeted_rules[t].layer = s
+        layers[s].targeted.append(t)
 
     return layers
 
