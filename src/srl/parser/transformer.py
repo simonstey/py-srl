@@ -14,6 +14,7 @@ from ..ast.nodes import (
     RuleSet,
     Prologue,
     Rule,
+    TargetedRule,
     RuleHead,
     RuleBody,
     DataBlock,
@@ -61,9 +62,10 @@ STANDARD_PREFIXES: Dict[str, str] = {
 class SRLTransformer(Transformer):
     """Transform a Lark parse tree into an SRL AST."""
 
-    def __init__(self):
+    def __init__(self, extensions: bool = False):
         super().__init__()
         self._prefixes: Dict[str, str] = dict(STANDARD_PREFIXES)
+        self.extensions = extensions
 
     # ------------------------------------------------------------------
     # Top-level structure
@@ -75,10 +77,13 @@ class SRLTransformer(Transformer):
         rules = []
         data_blocks = []
         declarations = []
+        targeted_rules = []
 
         for item in items:
             if isinstance(item, tuple):
                 self._apply_prologue_decl(prologue, item)
+            elif isinstance(item, TargetedRule):
+                targeted_rules.append(item)
             elif isinstance(item, Rule):
                 rules.append(item)
             elif isinstance(item, DataBlock):
@@ -91,6 +96,7 @@ class SRLTransformer(Transformer):
             rules=rules,
             data_blocks=data_blocks,
             declarations=declarations,
+            targeted_rules=targeted_rules,
         )
 
     @staticmethod
@@ -152,19 +158,64 @@ class SRLTransformer(Transformer):
     def inverse_decl(self, items):
         return InverseDeclaration(predicate1=items[0], predicate2=items[1])
 
+    def for_clause(self, items):
+        """Extension: 'FOR' Var 'IN' iri -> (marker, Variable, IRI)."""
+        return ("for", items[0], items[1])
+
+    @staticmethod
+    def _is_for_clause(item) -> bool:
+        return isinstance(item, tuple) and len(item) == 3 and item[0] == "for"
+
+    def _extract_for_clause(self, items):
+        """Split an optional for-clause tuple out of the item list.
+
+        Returns (for_clause_or_None, remaining_items).
+        """
+        for_clause = None
+        rest = []
+        for item in items:
+            if for_clause is None and self._is_for_clause(item):
+                for_clause = item
+            else:
+                rest.append(item)
+        return for_clause, rest
+
+    def _wrap_targeted(self, rule: Rule, for_clause):
+        """Wrap ``rule`` in a TargetedRule using the parsed for-clause."""
+        _, focus_var, shape = for_clause
+        return TargetedRule(
+            rule=rule,
+            focus_var=focus_var,
+            shape=shape,
+            direction="rule-to-shape",
+        )
+
     def rule1(self, items):
-        """[12] Rule1 ::= 'RULE' iri? HeadTemplate 'WHERE' BodyPattern"""
-        # Optional leading iri: items are [iri?, head, body].
-        if len(items) == 3:
-            rule_iri, head, body = items
+        """[12] Rule1 ::= 'RULE' iri? for_clause? HeadTemplate 'WHERE' BodyPattern"""
+        for_clause, rest = self._extract_for_clause(items)
+        # Remaining items are [iri?, head, body].
+        if len(rest) == 3:
+            rule_iri, head, body = rest
         else:
-            rule_iri, (head, body) = None, items
-        return Rule(head=head, body=body, iri=rule_iri)
+            rule_iri, (head, body) = None, rest
+        rule = Rule(head=head, body=body, iri=rule_iri)
+        if for_clause is not None:
+            return self._wrap_targeted(rule, for_clause)
+        return rule
 
     def rule2(self, items):
-        """[13] Rule2 ::= 'IF' BodyPattern 'THEN' HeadTemplate"""
-        body, head = items
-        return Rule(head=head, body=body, iri=None)
+        """[13] Rule2 ::= 'IF' BodyPattern 'THEN' iri? for_clause? HeadTemplate"""
+        for_clause, rest = self._extract_for_clause(items)
+        # Remaining items are [body, iri?, head].
+        if len(rest) == 3:
+            body, rule_iri, head = rest
+        else:
+            body, head = rest
+            rule_iri = None
+        rule = Rule(head=head, body=body, iri=rule_iri)
+        if for_clause is not None:
+            return self._wrap_targeted(rule, for_clause)
+        return rule
 
     def head_template(self, items):
         """[15] HeadTemplate ::= '{' TriplesBlockTemplate? '}'"""
