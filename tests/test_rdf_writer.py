@@ -61,3 +61,32 @@ def test_write_expr_binaryop():
     assert len(objs) == 1
     members = list(Collection(g, objs[0]))
     assert len(members) == 2
+
+
+from srl.parser import SRLParser
+
+
+def test_roundtrip_all_features():
+    src = """PREFIX : <http://example/>
+DATA { :s :p :o }
+RULE { ?x :q :o } WHERE { ?x :p :o }
+RULE { ?x :q ?o } WHERE { ?x :p ?o . FILTER (?o < 18) }
+RULE { ?x :q ?o } WHERE { ?x :p :o . SET (?o := 18) }
+RULE { ?x :q ?o } WHERE { ?x :p :o . NOT { ?s :p ?o } }"""
+    rs = SRLParser().parse(src)
+    from srl.rdf.writer import to_rdf_graph
+    from srl.rdf import parse_rdf_rule_set
+    g = to_rdf_graph(rs)
+    rs2 = parse_rdf_rule_set(g)
+    assert len(rs2.rules) == len(rs.rules) == 4
+    assert len(rs2.data_blocks) == 1 and len(rs2.data_blocks[0].triples) == 1
+    # body element kinds match per rule
+    for r1, r2 in zip(rs.rules, rs2.rules):
+        assert [type(e).__name__ for e in r1.body.elements] == [type(e).__name__ for e in r2.body.elements]
+
+
+def test_serialize_returns_turtle():
+    rs = SRLParser().parse("PREFIX : <http://example/>\nRULE { ?x :q :o } WHERE { ?x :p :o }")
+    from srl.rdf.writer import serialize
+    out = serialize(rs, fmt="turtle")
+    assert "shacl-rules#RuleSet" in out

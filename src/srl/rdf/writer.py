@@ -1,10 +1,12 @@
 """Serializer for the SRL/RDF concrete syntax (AST -> RDF), inverse of reader.py."""
 
+import io
 from typing import Optional
 
 from rdflib import BNode, Graph, Literal as RDFLiteral, URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import RDF
+from rdflib.plugins.serializers.turtle import TurtleSerializer
 
 from ..ast.nodes import (
     RuleSet,
@@ -114,3 +116,82 @@ def _write_expr(g: Graph, expr):
         )
         return n
     raise TypeError(f"Cannot write expression: {expr!r}")
+
+
+def _write_triple(g: Graph, triple) -> object:
+    n = BNode()
+    g.add((n, V.subject, _write_term(g, triple.subject)))
+    g.add((n, V.predicate, _write_term(g, triple.predicate)))
+    g.add((n, V.object_, _write_term(g, triple.object)))
+    return n
+
+
+def _write_body_element(g: Graph, elt) -> object:
+    if isinstance(elt, TriplePattern):
+        return _write_triple(g, elt)
+    if isinstance(elt, ConditionExpression):
+        n = BNode()
+        g.add((n, V.filter_, _write_expr(g, elt.expression)))
+        return n
+    if isinstance(elt, Assignment):
+        n = BNode()
+        asg = BNode()
+        g.add((asg, V.assignVar, _write_term(g, elt.variable)))
+        g.add((asg, V.assignValue, _write_expr(g, elt.expression)))
+        g.add((n, V.assign, asg))
+        return n
+    if isinstance(elt, NegationElement):
+        n = BNode()
+        members = [_write_body_element(g, e) for e in elt.body_patterns]
+        g.add((n, V.not_, _write_list(g, members)))
+        return n
+    raise TypeError(f"Cannot write body element: {elt!r}")
+
+
+def to_rdf_graph(rule_set: RuleSet) -> Graph:
+    g = Graph()
+    rs_node = BNode()
+    g.add((rs_node, RDF.type, V.RuleSet))
+
+    rule_nodes = []
+    for rule in rule_set.rules:
+        rn = URIRef(rule.iri.value) if rule.iri else BNode()
+        g.add((rn, RDF.type, V.Rule))
+        g.add((rn, V.body, _write_list(g, [_write_body_element(g, e) for e in rule.body.elements])))
+        g.add((rn, V.head, _write_list(g, [_write_triple(g, t) for t in rule.head.templates])))
+        rule_nodes.append(rn)
+    g.add((rs_node, V.rules, _write_list(g, rule_nodes)))
+
+    data_triples = [t for block in rule_set.data_blocks for t in block.triples]
+    if data_triples:
+        g.add((rs_node, V.data, _write_list(g, [_write_triple(g, t) for t in data_triples])))
+    return g
+
+
+class _FullIRITurtleSerializer(TurtleSerializer):
+    """Turtle serializer that never coins generated ``ns1:`` prefixes.
+
+    rdflib's default Turtle serializer invents opaque prefixes (``ns1:`` …) for
+    any namespace it meets in a predicate position, which then also abbreviates
+    class IRIs (``srl:RuleSet``). Writing the SRL vocabulary IRIs in full keeps
+    the output unambiguous and self-describing without depending on a prefix map.
+
+    The relevant hook is ``getQName`` on rdflib < 7.6 and ``get_pname`` on
+    rdflib >= 7.6 (renamed there); override both so prefix generation stays off
+    regardless of the installed rdflib version.
+    """
+
+    def get_pname(self, uri: object, gen_prefix: bool = True) -> Optional[str]:
+        return super().get_pname(uri, gen_prefix=False)
+
+    def getQName(self, uri: object, gen_prefix: bool = True) -> Optional[str]:
+        return super().getQName(uri, gen_prefix=False)
+
+
+def serialize(rule_set: RuleSet, fmt: str = "turtle") -> str:
+    g = to_rdf_graph(rule_set)
+    if fmt == "turtle":
+        buf = io.BytesIO()
+        _FullIRITurtleSerializer(g).serialize(buf)
+        return buf.getvalue().decode("utf-8")
+    return g.serialize(format=fmt)
