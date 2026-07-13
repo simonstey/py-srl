@@ -853,61 +853,6 @@ def builtin_tz(args) -> Optional[RDFNode]:
     return RDFLiteral(f"{sign}{hours:02d}:{minutes:02d}")
 
 
-def builtin_md5(args) -> Optional[RDFNode]:
-    """MD5(string) - MD5 hash."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    import hashlib
-    s = str(args[0])
-    result = hashlib.md5(s.encode()).hexdigest()
-    return RDFLiteral(result)
-
-
-def builtin_sha1(args) -> Optional[RDFNode]:
-    """SHA1(string) - SHA1 hash."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    import hashlib
-    s = str(args[0])
-    result = hashlib.sha1(s.encode()).hexdigest()
-    return RDFLiteral(result)
-
-
-def builtin_sha256(args) -> Optional[RDFNode]:
-    """SHA256(string) - SHA256 hash."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    import hashlib
-    s = str(args[0])
-    result = hashlib.sha256(s.encode()).hexdigest()
-    return RDFLiteral(result)
-
-
-def builtin_sha384(args) -> Optional[RDFNode]:
-    """SHA384(string) - SHA384 hash."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    import hashlib
-    s = str(args[0])
-    result = hashlib.sha384(s.encode()).hexdigest()
-    return RDFLiteral(result)
-
-
-def builtin_sha512(args) -> Optional[RDFNode]:
-    """SHA512(string) - SHA512 hash."""
-    if len(args) != 1 or args[0] is None:
-        return None
-    
-    import hashlib
-    s = str(args[0])
-    result = hashlib.sha512(s.encode()).hexdigest()
-    return RDFLiteral(result)
-
-
 def builtin_isiri(args) -> Optional[RDFNode]:
     """ISIRI(term) - test if term is IRI."""
     if len(args) != 1 or args[0] is None:

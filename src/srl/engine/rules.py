@@ -11,10 +11,10 @@ from rdflib import Graph
 
 from .expressions import eval_expr, effective_boolean_value
 from .solutions import (
-    SolutionMapping, graphMatch, join, minus, extend
+    SolutionMapping, graphMatch, join, extend
 )
 from ..ast.nodes import (
-    Rule, RuleBody, RuleBodyElement,
+    Rule, RuleBodyElement,
     TriplePattern, ConditionExpression, NegationElement, Assignment,
 )
 
@@ -186,14 +186,11 @@ def eval_negation(
     """
     Evaluate a negation (NOT {...}) by removing compatible mappings.
     
-    From Section 5.3:
-    "For a negation NOT { P }, solution mappings μ are retained if they
-    are not compatible with any solution mapping from evaluating P."
-    
-    Algorithm:
-    1. Evaluate the negated pattern P to get Ω₂
-    2. Return minus(Ω, Ω₂)
-    
+    Per #eval-rule (negation element): for each solution μ, seed the negation
+    body with the single-solution sequence {μ} and evaluate it; keep μ iff that
+    per-μ evaluation yields NO solutions. This is a per-μ empty-check, not a
+    global set-minus.
+
     Args:
         negation: Negation element with body patterns
         omega: Current solution mappings
@@ -263,27 +260,3 @@ def eval_assignment(
     return result
 
 
-def eval_rule_body(
-    body: RuleBody,
-    graph: Graph,
-    active_graph: Optional[Graph] = None
-) -> List[SolutionMapping]:
-    """
-    Evaluate a rule body (convenience wrapper).
-    
-    Args:
-        body: Rule body to evaluate
-        graph: RDF graph
-        active_graph: Optional active graph
-        
-    Returns:
-        Solution mappings from body evaluation
-    """
-    # Create a temporary rule for evaluation
-    from ..ast.nodes import Rule, RuleHead
-    temp_rule = Rule(
-        head=RuleHead(templates=[]),
-        body=body
-    )
-    
-    return eval_rule(temp_rule, graph, active_graph)

@@ -163,18 +163,6 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
         raise TypeError(f"Unknown term type: {type(term)}")
 
 
-def substitute_term_safe(term: Union[Variable, IRI, Literal, BlankNode], mu: SolutionMapping) -> Optional[RDFTerm]:
-    """
-    Apply substitution with graceful handling of unbound variables.
-
-    Returns None if a variable is not bound, rather than raising an error.
-    """
-    try:
-        return substitute_term(term, mu)
-    except ValueError:
-        return None
-
-
 def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Graph] = None) -> List[SolutionMapping]:
     """
     Find all solution mappings that match a triple pattern against a graph.
@@ -469,37 +457,6 @@ def join(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[S
             merged = merge(mu1, mu2)
             if merged is not None:
                 result.append(merged)
-
-    return result
-
-
-def minus(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[SolutionMapping]:
-    """
-    Set difference for solution mappings (for NOT EXISTS / negation).
-
-    From SPARQL semantics:
-    "Minus(Ω₁, Ω₂) = { μ ∈ Ω₁ | for all μ' ∈ Ω₂, μ and μ' are not compatible }"
-
-    Args:
-        omega1: First set of solution mappings
-        omega2: Second set of solution mappings
-
-    Returns:
-        List of solution mappings from omega1 not compatible with any in omega2
-    """
-    result = []
-
-    for mu1 in omega1:
-        # Check if mu1 is compatible with any mapping in omega2
-        is_compatible_with_any = False
-        for mu2 in omega2:
-            if compatible(mu1, mu2):
-                is_compatible_with_any = True
-                break
-
-        # Only include if NOT compatible with any
-        if not is_compatible_with_any:
-            result.append(mu1)
 
     return result
 
