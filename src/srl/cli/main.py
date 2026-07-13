@@ -21,10 +21,11 @@ from .formatting import (
     display_rule_set_summary,
     display_strata,
     display_evaluation_results,
-    display_shacl_coming_soon,
+    display_focus_nodes,
 )
 from ..engine import RuleEngine, StratificationError
 from ..parser import SRLParser, ParseError
+from ..rdf import parse_rdf_file
 
 click.rich_click.USE_RICH_MARKUP = True
 click.rich_click.USE_MARKDOWN = True
@@ -57,9 +58,15 @@ def detect_format(filepath: str) -> str:
 
 @click.group()
 @click.option("-v", "--verbose", is_flag=True, help="Enable verbose output with detailed information.")
+@click.option(
+    "-x",
+    "--extensions",
+    is_flag=True,
+    help="Enable opt-in extensions (FOR ?v IN <shape> targeting; NOT part of the SRL spec).",
+)
 @click.version_option(package_name="shacl-rules")
 @click.pass_context
-def cli(ctx: click.Context, verbose: bool) -> None:
+def cli(ctx: click.Context, verbose: bool, extensions: bool) -> None:
     """
     **SRL** - SHACL 1.2 Rules command-line interface.
 
@@ -81,6 +88,7 @@ def cli(ctx: click.Context, verbose: bool) -> None:
     """
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
+    ctx.obj["extensions"] = extensions
 
 
 @cli.command()
@@ -103,9 +111,10 @@ def parse(ctx: click.Context, rules_file: str) -> None:
         srl -v parse rules.srl
     """
     verbose = ctx.obj.get("verbose", False)
+    ext = ctx.obj.get("extensions", False)
 
     try:
-        parser = SRLParser()
+        parser = SRLParser(extensions=ext)
         rule_set = parser.parse_file(rules_file)
 
         print_success(f"Successfully parsed [bold]{rules_file}[/bold]")
@@ -170,9 +179,10 @@ def eval(
         srl -v eval rules.srl data.ttl
     """
     verbose = ctx.obj.get("verbose", False)
+    ext = ctx.obj.get("extensions", False)
 
     try:
-        parser = SRLParser()
+        parser = SRLParser(extensions=ext)
         rule_set = parser.parse_file(rules_file)
         print_success(f"Parsed [bold]{rules_file}[/bold] ({len(rule_set.rules)} rule(s))")
     except FileNotFoundError:
@@ -196,7 +206,7 @@ def eval(
         sys.exit(1)
 
     try:
-        engine = RuleEngine(rule_set, max_iterations=max_iterations)
+        engine = RuleEngine(rule_set, max_iterations=max_iterations, extensions=ext)
 
         if verbose:
             result_graph, provenance = engine.evaluate_with_provenance(graph, inplace=False)
@@ -255,9 +265,10 @@ def analyze(ctx: click.Context, rules_file: str, show_layers: bool) -> None:
         srl -v analyze rules.srl --show-layers
     """
     verbose = ctx.obj.get("verbose", False)
+    ext = ctx.obj.get("extensions", False)
 
     try:
-        parser = SRLParser()
+        parser = SRLParser(extensions=ext)
         rule_set = parser.parse_file(rules_file)
         print_success(f"Parsed [bold]{rules_file}[/bold] ({len(rule_set.rules)} rule(s))")
     except FileNotFoundError:
@@ -268,7 +279,7 @@ def analyze(ctx: click.Context, rules_file: str, show_layers: bool) -> None:
         sys.exit(1)
 
     try:
-        engine = RuleEngine(rule_set)
+        engine = RuleEngine(rule_set, extensions=ext)
         strata = engine.get_stratum_info()
 
         console.print()
@@ -289,16 +300,123 @@ def analyze(ctx: click.Context, rules_file: str, show_layers: bool) -> None:
 
 
 @cli.command()
-def shacl() -> None:
+@click.argument("rules_file", type=click.Path(exists=True))
+@click.argument("data_file", type=click.Path(exists=True))
+@click.option(
+    "--shapes",
+    "shapes_file",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the SHACL shapes graph.",
+)
+@click.option(
+    "-f",
+    "--format",
+    "rules_format",
+    type=str,
+    help="Rules input format: 'rdf' to parse the SRL/RDF concrete syntax (default: text).",
+)
+@click.option("-o", "--output", type=click.Path(), help="Output file path for result graph.")
+@click.option("--output-format", type=str, default="turtle", help="Output format (default: turtle).")
+@click.pass_context
+def shacl(
+    ctx: click.Context,
+    rules_file: str,
+    data_file: str,
+    shapes_file: str,
+    rules_format: Optional[str],
+    output: Optional[str],
+    output_format: str,
+) -> None:
     """
-    Load and evaluate SHACL shapes with embedded rules.
+    Evaluate rule-to-shape targeted rules against a SHACL shapes graph.
 
-    [yellow]⚠ This feature is not yet implemented.[/yellow]
+    Parses the rules (text SRL or SRL/RDF with ``-f rdf``), loads the data and
+    shapes graphs, and evaluates targeted rules with the opt-in extension enabled.
+    Each targeted rule fires only for the focus nodes of its shape that conform.
 
-    SHACL shapes integration is planned for Phase 5 of the implementation.
-    Currently, you can convert SHACL rules to SRL syntax and use the 'eval' command.
+    ## Arguments
+
+    - **RULES_FILE**: Path to the SRL rules file (text or SRL/RDF).
+    - **DATA_FILE**: Path to the RDF data file.
+
+    ## Examples
+
+        srl shacl rules.srl data.ttl --shapes shapes.ttl -o out.ttl
+        srl -v shacl rules.srl data.ttl --shapes shapes.ttl
     """
-    display_shacl_coming_soon()
+    verbose = ctx.obj.get("verbose", False)
+
+    try:
+        if rules_format and rules_format.lower() == "rdf":
+            rule_set = parse_rdf_file(rules_file, extensions=True)
+        else:
+            rule_set = SRLParser(extensions=True).parse_file(rules_file)
+        print_success(
+            f"Parsed [bold]{rules_file}[/bold] "
+            f"({len(rule_set.rules)} rule(s), {len(rule_set.targeted_rules)} targeted rule(s))"
+        )
+    except FileNotFoundError:
+        print_file_error(rules_file, "Rules file not found.")
+        sys.exit(1)
+    except ParseError as e:
+        print_parse_error(str(e))
+        sys.exit(1)
+
+    try:
+        data_format = detect_format(data_file)
+        data_graph = Graph()
+        data_graph.parse(data_file, format=data_format)
+        original_count = len(data_graph)
+        print_success(f"Loaded data [bold]{data_file}[/bold] ({original_count} triple(s))")
+    except Exception as e:
+        print_file_error(data_file, f"Failed to parse RDF data: {e}")
+        sys.exit(1)
+
+    try:
+        shapes_format = detect_format(shapes_file)
+        shapes_graph = Graph()
+        shapes_graph.parse(shapes_file, format=shapes_format)
+        print_success(f"Loaded shapes [bold]{shapes_file}[/bold] ({len(shapes_graph)} triple(s))")
+    except Exception as e:
+        print_file_error(shapes_file, f"Failed to parse shapes graph: {e}")
+        sys.exit(1)
+
+    try:
+        engine = RuleEngine(rule_set, extensions=True, shapes_graph=shapes_graph)
+        result_graph = engine.evaluate(data_graph, inplace=False)
+
+        result_count = len(result_graph)
+        inferred_count = result_count - original_count
+
+        display_evaluation_results(
+            original_count=original_count,
+            result_count=result_count,
+            inferred_count=inferred_count,
+            provenance=None,
+            rules=rule_set.rules,
+            verbose=verbose,
+        )
+
+        if verbose:
+            display_focus_nodes(rule_set, result_graph, shapes_graph)
+
+    except StratificationError as e:
+        print_stratification_error(str(e))
+        sys.exit(1)
+    except Exception as e:
+        print_file_error(rules_file, f"Evaluation failed: {e}")
+        sys.exit(1)
+
+    if output:
+        try:
+            result_graph.serialize(destination=output, format=output_format)
+            print_success(f"Result written to [bold]{output}[/bold] ({result_count} triple(s))")
+        except Exception as e:
+            print_file_error(output, f"Failed to write output: {e}")
+            sys.exit(1)
+    else:
+        print_info("Use -o/--output to save results to a file.")
 
 
 if __name__ == "__main__":
