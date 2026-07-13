@@ -393,6 +393,24 @@ class Rule:
         return id(self)
 
 
+@dataclass
+class TargetedRule:
+    """A rule tied to a SHACL shape (opt-in extension, not part of the SRL spec).
+
+    The rule fires only for the shape's target focus nodes that conform to the
+    shape; ``focus_var`` is pre-bound to each focus node when the body evaluates.
+    """
+
+    rule: Rule
+    focus_var: Variable
+    shape: IRI
+    direction: str = "rule-to-shape"  # or "shape-to-rule"
+    layer: Optional[int] = None
+
+    def __hash__(self) -> int:
+        return id(self)
+
+
 @dataclass(frozen=True)
 class DataBlock:
     """
@@ -476,6 +494,7 @@ class RuleSet:
     rules: List[Rule]
     data_blocks: List[DataBlock]
     declarations: List["Declaration"] = field(default_factory=list)
+    targeted_rules: List["TargetedRule"] = field(default_factory=list)
 
     # Stratification metadata (computed during analysis)
     layers: Optional[List[List[Rule]]] = None
