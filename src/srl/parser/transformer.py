@@ -499,6 +499,26 @@ class SRLTransformer(Transformer):
     property_list_template = property_list_data
     property_list_pattern = property_list_data
 
+    def _make_bnode_property_list(self, pairs):
+        """[37]/[59]/[73] ``[ p o ; ... ]`` -> fresh bnode subject + its triples.
+
+        The empty ``[]`` never reaches here (it lexes as ANON).
+        """
+        b = self._fresh_bnode("bpl")
+        side: List[tuple] = []
+        for pred, obj in pairs:
+            obj_node = self._as_node(obj)
+            side += obj_node.side
+            side.append((b, pred, obj_node.head))
+            side += self._expand_annotations(b, pred, obj_node.head, obj_node.annotations)
+        return _Node(head=b, side=side)
+
+    def blank_node_property_list_data(self, items):
+        return self._make_bnode_property_list(items[0])
+
+    blank_node_property_list_template = blank_node_property_list_data
+    blank_node_property_list_pattern = blank_node_property_list_data
+
     # ------------------------------------------------------------------
     # Property paths
     # ------------------------------------------------------------------

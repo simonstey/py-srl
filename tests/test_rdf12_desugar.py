@@ -46,3 +46,16 @@ def test_collection_desugars_to_first_rest_nil():
 def test_empty_collection_is_nil():
     ts = _head_triples("PREFIX : <http://example/>\nRULE { :a :p () } WHERE { ?a ?b ?c }")
     assert any(isinstance(t.object, IRI) and t.object.value == RDF_NIL for t in ts)
+
+
+# ----------------------------------------------------------------------------
+# Blank-node property lists [ ... ]
+# ----------------------------------------------------------------------------
+
+
+def test_bnode_property_list_desugars():
+    ts = _body_triples("PREFIX : <http://example/>\nRULE {} WHERE { [ ?b ?c ; :p :z ] }")
+    subjects = {t.subject for t in ts}
+    assert len(subjects) == 1  # one fresh blank-node subject for both pairs
+    preds = {t.predicate for t in ts}
+    assert Variable("b") in preds and IRI("http://example/p") in preds
