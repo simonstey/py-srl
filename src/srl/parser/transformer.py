@@ -41,6 +41,7 @@ from ..ast.nodes import (
     UnaryOp,
     UnaryOperator,
     Variable,
+    WellFormednessError,
 )
 
 RDF_TYPE = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
@@ -94,21 +95,26 @@ class SRLTransformer(Transformer):
         super().__init__()
         self._prefixes: Dict[str, str] = dict(STANDARD_PREFIXES)
         self.extensions = extensions
-        # Monotonic per-parse counter for RDF-1.2 desugaring blank nodes.
+        # Monotonic counter for RDF-1.2 desugaring blank nodes.
         self._bnode_counter = 0
         # Bind the trivial built-in rules (name -> BuiltInCall(name, items)).
         for rule_name, bic_name in self._TRIVIAL_BUILTINS.items():
             setattr(self, rule_name, self._make_trivial_builtin(bic_name))
 
     def _fresh_bnode(self, kind: str = "b") -> BlankNode:
-        """Mint a fresh, deterministic blank node for RDF-1.2 desugaring.
+        """Mint a fresh blank node for RDF-1.2 desugaring.
 
-        Labels are unique within a parse (never reset per-rule) so distinct
-        desugared blank nodes stay distinct; the engine re-mints a per-solution
-        rdflib BNode keyed on the label at instantiation time.
+        The label carries a per-mint UUID segment, so it is **globally unique**:
+        distinct desugared nodes never collide, even across separately-parsed
+        imported sources merged by :func:`resolve_imports` (which instantiate
+        DATA blank nodes deterministically by label). The ``sx`` marker is
+        purely for readability; uniqueness comes from the UUID, and because the
+        label contains a random segment no realistic user-authored ``_:`` label
+        collides with it. The engine re-mints a per-solution rdflib BNode keyed
+        on the label at instantiation time.
         """
         self._bnode_counter += 1
-        return BlankNode(label=f"_sx_{kind}_{self._bnode_counter}")
+        return BlankNode(label=f"sx{uuid.uuid4().hex}_{kind}{self._bnode_counter}")
 
     @staticmethod
     def _as_node(x) -> "_Node":
@@ -950,6 +956,16 @@ class SRLTransformer(Transformer):
         pairs = items[1] if len(items) > 1 else []
         for pred, obj in pairs:
             obj_node = self._as_node(obj)
+            # A reified triple's predicate must be an IRI or Variable (spec
+            # productions [80]-[85]; TripleTerm invariant). Annotating an object
+            # reached by a property path would reify `<<( s <path> o )>>`, which
+            # is ill-formed — the sibling `<< s <path> o >>` forms reject paths
+            # too, so reject the annotation form here for consistency.
+            if obj_node.annotations and isinstance(pred, (InversePath, PathSequence)):
+                raise WellFormednessError(
+                    "Cannot reify/annotate a triple whose predicate is a property "
+                    "path; a reified triple term requires an IRI or variable predicate."
+                )
             triples += [kind(subject=s, predicate=p, object=o) for (s, p, o) in obj_node.side]
             triples.append(kind(subject=subject, predicate=pred, object=obj_node.head))
             triples += [

@@ -4,8 +4,12 @@ Parse-success is necessary but not sufficient — these tests assert the
 *desugared triples* per RDF 1.2 Turtle §7 constructor semantics.
 """
 
+import os
+import tempfile
+
 from srl.ast.nodes import IRI, TripleTerm, Variable
-from srl.parser.parser import SRLParser
+from srl.engine.imports import resolve_imports
+from srl.parser.parser import ParseError, SRLParser
 
 RDF_FIRST = "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
 RDF_REST = "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"
@@ -115,3 +119,74 @@ def test_reifier_then_block_reuses_reifier():
     )
     subs = {t.subject for t in ts if t.predicate == IRI("http://example/q1")}
     assert IRI("http://example/r1") in subs  # ~:r1 reused by its following block
+
+
+# ----------------------------------------------------------------------------
+# Blank-node label uniqueness (desugared nodes must be globally fresh)
+# ----------------------------------------------------------------------------
+
+
+def _first_cells(graph):
+    """Subjects carrying an rdf:first in an evaluated rdflib graph (list cells)."""
+    return {s for (s, pred, o) in graph if str(pred) == RDF_FIRST}
+
+
+def test_desugared_bnodes_unique_across_imports():
+    # Two separately-parsed files, each with a 2-element collection, must yield
+    # two DISTINCT list chains (4 distinct cells), not fuse into one.
+    from rdflib import Graph
+
+    from srl.engine.engine import RuleEngine
+
+    d = tempfile.mkdtemp()
+    a = os.path.join(d, "imp_a.srl")
+    with open(a, "w", encoding="utf-8") as f:
+        f.write("PREFIX ex: <http://example.org/>\nDATA { ex:s1 ex:p ( ex:a ex:b ) . }\n")
+    main = (
+        "PREFIX ex: <http://example.org/>\n"
+        f"IMPORTS <file:///{a.replace(os.sep, '/')}>\n"
+        "DATA { ex:s2 ex:q ( ex:c ex:d ) . }\n"
+    )
+    rs = resolve_imports(SRLParser().parse(main), base_location=os.path.join(d, "imp_main.srl"))
+    out = RuleEngine(rs).evaluate(Graph(), inplace=False)
+    # Four distinct collection cells (2 per list); nothing fused.
+    assert len(_first_cells(out)) == 4, list(out)
+
+
+def test_desugared_bnodes_dont_collide_with_user_labels():
+    from rdflib import Graph, URIRef
+
+    from srl.engine.engine import RuleEngine
+
+    # A user blank node whose label mimics the internal scheme must stay a
+    # distinct node from any desugared collection cell.
+    rs = SRLParser().parse(
+        "PREFIX : <http://example/>\nDATA { :s :p ( :a :b ) . _:_sx_c_1 :tag :USER . }"
+    )
+    out = RuleEngine(rs).evaluate(Graph(), inplace=False)
+    tag = URIRef("http://example/tag")
+    user = URIRef("http://example/USER")
+    tagged = {s for (s, pred, o) in out if pred == tag and o == user}
+    # The tagged user node must not be one of the collection's list cells.
+    assert tagged.isdisjoint(_first_cells(out)), list(out)
+
+
+# ----------------------------------------------------------------------------
+# Path predicates must not leak into a reified triple term
+# ----------------------------------------------------------------------------
+
+
+def test_annotating_path_predicate_object_is_rejected():
+    # A property path predicate cannot be reified (TripleTerm predicate must be
+    # an IRI or Variable). The sibling << :s :p1/:p2 :o >> forms already reject
+    # paths; the annotation form must too.
+    for src in (
+        "PREFIX : <http://example/>\nRULE {} WHERE { :s :p1/:p2 :o {| :q :z |} }",
+        "PREFIX : <http://example/>\nRULE {} WHERE { :s :p1/:p2 :o ~:r }",
+        "PREFIX : <http://example/>\nRULE {} WHERE { :s ^:p :o {| :q :z |} }",
+    ):
+        try:
+            SRLParser().parse(src)
+            raise AssertionError(f"expected rejection for: {src!r}")
+        except ParseError:
+            pass
