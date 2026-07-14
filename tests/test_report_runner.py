@@ -31,3 +31,14 @@ def test_targeting_eval_tests_pass():
         if t.test_type == R.TestType.TARGETING_EVAL:
             result = runner.run_test(t)
             assert result.outcome == R.TestOutcome.PASSED, f"{t.name}: {result.message}"
+
+
+def test_collect_tests_includes_extensions_only_when_asked():
+    suite = SUITE
+    spec_only = R.collect_tests(suite, include_extensions=False)
+    with_ext = R.collect_tests(suite, include_extensions=True)
+    spec_names = {t.name for t in spec_only}
+    ext_names = {t.name for t in with_ext}
+    assert "targeting-adult-01" not in spec_names
+    assert "targeting-adult-01" in ext_names
+    assert len(with_ext) == len(spec_only) + 3

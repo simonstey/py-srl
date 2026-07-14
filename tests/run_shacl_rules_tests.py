@@ -701,14 +701,31 @@ def find_manifest(test_suite_path: Path) -> Optional[Path]:
         test_suite_path / "rules" / "manifest-rules.ttl",
     ]
 
-    print(test_suite_path)
-
     for path in possible_paths:
-        print(path)
         if path.exists():
             return path
 
     return None
+
+
+def collect_tests(test_suite_path: Path, include_extensions: bool) -> List[TestEntry]:
+    """Parse the official manifest and, optionally, the FOR-IN extension manifest."""
+    manifest_path = find_manifest(test_suite_path)
+    if not manifest_path:
+        raise FileNotFoundError(f"Could not find manifest-rules.ttl in {test_suite_path}")
+    tests = TestManifestParser(manifest_path).parse()
+
+    if include_extensions:
+        ext_manifest = test_suite_path / "tests" / "rules-extensions" / "manifest.ttl"
+        if ext_manifest.exists():
+            tests.extend(TestManifestParser(ext_manifest).parse())
+        else:
+            print(
+                f"Warning: --include-extensions set but {ext_manifest} not found; "
+                "running spec tests only",
+                file=sys.stderr,
+            )
+    return tests
 
 
 def main():
@@ -739,9 +756,15 @@ Examples:
     )
 
     parser.add_argument(
+        "--include-extensions",
+        action="store_true",
+        help="Also run the opt-in FOR-IN targeting tests (rules-extensions/manifest.ttl)",
+    )
+
+    parser.add_argument(
         "--test-type",
         type=str,
-        choices=["syntax", "wellformed", "stratification", "eval", "all"],
+        choices=["syntax", "wellformed", "stratification", "eval", "targeting", "all"],
         default="all",
         help="Filter tests by type (default: all)",
     )
@@ -776,24 +799,19 @@ Examples:
 
     args = parser.parse_args()
 
-    # Find manifest
-    manifest_path = find_manifest(args.test_suite_path)
-    if not manifest_path:
-        print(
-            f"Error: Could not find manifest-rules.ttl in {args.test_suite_path}", file=sys.stderr
-        )
+    # Parse manifest(s)
+    print("Parsing test manifest...")
+    try:
+        tests = collect_tests(args.test_suite_path, args.include_extensions)
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
         print("Please specify the correct path with --test-suite-path", file=sys.stderr)
         sys.exit(1)
 
+    manifest_path = find_manifest(args.test_suite_path)  # for the runner base path
+
     if args.verbose:
         print(f"Using manifest: {manifest_path}")
-
-    # Parse manifest
-    print("Parsing test manifest...")
-    manifest_parser = TestManifestParser(manifest_path)
-    tests = manifest_parser.parse()
-
-    if args.verbose:
         print(f"Found {len(tests)} tests")
 
     # Filter tests by type if specified
@@ -803,6 +821,7 @@ Examples:
             "wellformed": [TestType.POSITIVE_WELLFORMEDNESS, TestType.NEGATIVE_WELLFORMEDNESS],
             "stratification": [TestType.POSITIVE_STRATIFICATION, TestType.NEGATIVE_STRATIFICATION],
             "eval": [TestType.EVAL],
+            "targeting": [TestType.TARGETING_EVAL],
         }
         allowed_types = type_filter_map.get(args.test_type, [])
         tests = [t for t in tests if t.test_type in allowed_types]
