@@ -456,6 +456,50 @@ class SRLTransformer(Transformer):
         return items[0]
 
     # ------------------------------------------------------------------
+    # RDF 1.2 constructs (desugared to plain triples; §7 constructors)
+    # Each method is family-agnostic — heads and side-triples are plain AST
+    # terms/tuples, so one implementation serves data / template / pattern.
+    # ------------------------------------------------------------------
+
+    def _make_collection(self, elem_nodes):
+        """[38]/[60]/[74] ``( e1 .. en )`` -> rdf:first/rdf:rest/rdf:nil chain.
+
+        Head is the first fresh blank node; the empty ``()`` never reaches here
+        (it lexes as NIL -> rdf:nil).
+        """
+        elem_nodes = [self._as_node(e) for e in elem_nodes]
+        if not elem_nodes:
+            return _Node(head=RDF_NIL)
+        bnodes = [self._fresh_bnode("c") for _ in elem_nodes]
+        side: List[tuple] = []
+        for i, (b, e) in enumerate(zip(bnodes, elem_nodes)):
+            side += e.side
+            side.append((b, RDF_FIRST, e.head))
+            rest = bnodes[i + 1] if i + 1 < len(bnodes) else RDF_NIL
+            side.append((b, RDF_REST, rest))
+        return _Node(head=bnodes[0], side=side)
+
+    def collection_data(self, items):
+        return self._make_collection(items)
+
+    collection_template = collection_data
+    collection_pattern = collection_data
+
+    def triples_node_data(self, items):
+        """[36]/[58]/[72] pass through the collection / bnode-list ``_Node``."""
+        return items[0]
+
+    triples_node_template = triples_node_data
+    triples_node_pattern = triples_node_data
+
+    def property_list_data(self, items):
+        """[30]/[53]/[68] optional property list -> pairs (or empty)."""
+        return items[0] if items and items[0] is not None else []
+
+    property_list_template = property_list_data
+    property_list_pattern = property_list_data
+
+    # ------------------------------------------------------------------
     # Property paths
     # ------------------------------------------------------------------
 
