@@ -58,7 +58,9 @@ data: "DATA"i "{" data_triples_block? "}"
 data_triples_block: triples_same_subject_data ("." data_triples_block?)?
 
 // [29] TriplesSameSubjectData ::= RDFTermData PropertyListNotEmptyData
-triples_same_subject_data: rdf_term_data property_list_not_empty_data
+//                               | TriplesNodeData PropertyListData
+//                               | ReifiedTripleBlockData
+triples_same_subject_data: rdf_term_data property_list_not_empty_data | triples_node_data property_list_data | reified_triple_block_data
 
 // [31] PropertyListNotEmptyData ::= VerbData ObjectListData ( ';' ( VerbData ObjectListData )? )*
 property_list_not_empty_data: verb_data object_list_data (";" (verb_data object_list_data)?)*
@@ -69,11 +71,11 @@ verb_data: iri | TYPE_A
 // [33] ObjectListData ::= ObjectData ( ',' ObjectData )*
 object_list_data: object_data ("," object_data)*
 
-// [34] ObjectData ::= GraphNodeData
-object_data: graph_node_data
+// [34] ObjectData ::= GraphNodeData AnnotationData
+object_data: graph_node_data annotation_data
 
-// [35] GraphNodeData ::= RDFTermData
-graph_node_data: rdf_term_data
+// [35] GraphNodeData ::= RDFTermData | TriplesNodeData | ReifiedTripleData
+graph_node_data: rdf_term_data | triples_node_data | reified_triple_data
 
 // [47] TripleTermData ::= '<<(' TripleTermSubjectData VerbData TripleTermObjectData ')>>'
 triple_term_data: "<<(" triple_term_subject_data verb_data triple_term_object_data ")>>"
@@ -96,7 +98,9 @@ head_template: "{" triples_block_template? "}"
 triples_block_template: triples_same_subject_template ("." triples_block_template?)?
 
 // [52] TriplesSameSubjectTemplate ::= VarOrRDFTerm PropertyListNotEmptyTemplate
-triples_same_subject_template: var_or_rdf_term property_list_not_empty_template
+//                                    | TriplesNodeTemplate PropertyListTemplate
+//                                    | ReifiedTripleBlockTemplate
+triples_same_subject_template: var_or_rdf_term property_list_not_empty_template | triples_node_template property_list_template | reified_triple_block_template
 
 // [54] PropertyListNotEmptyTemplate ::= Verb ObjectListTemplate ( ';' ( Verb ObjectListTemplate )? )*
 property_list_not_empty_template: verb object_list_template (";" (verb object_list_template)?)*
@@ -104,11 +108,11 @@ property_list_not_empty_template: verb object_list_template (";" (verb object_li
 // [55] ObjectListTemplate ::= ObjectTemplate ( ',' ObjectTemplate )*
 object_list_template: object_template ("," object_template)*
 
-// [56] ObjectTemplate ::= GraphNodeTemplate
-object_template: graph_node_template
+// [56] ObjectTemplate ::= GraphNodeTemplate AnnotationTemplate
+object_template: graph_node_template annotation_template
 
-// [57] GraphNodeTemplate ::= VarOrRDFTerm
-graph_node_template: var_or_rdf_term
+// [57] GraphNodeTemplate ::= VarOrRDFTerm | TriplesNodeTemplate | ReifiedTriple
+graph_node_template: var_or_rdf_term | triples_node_template | reified_triple
 
 // ============================================================================
 // Pattern family [16], [64]-[91] : rule bodies (variables AND paths)
@@ -157,7 +161,9 @@ body_triples_block: triples_block_pattern
 triples_block_pattern: triples_same_subject_pattern ("." triples_block_pattern?)?
 
 // [67] TriplesSameSubjectPattern ::= VarOrRDFTerm PropertyListNotEmptyPattern
-triples_same_subject_pattern: var_or_rdf_term property_list_not_empty_pattern
+//                                   | TriplesNodePattern PropertyListPattern
+//                                   | ReifiedTripleBlockPattern
+triples_same_subject_pattern: var_or_rdf_term property_list_not_empty_pattern | triples_node_pattern property_list_pattern | reified_triple_block_pattern
 
 // [69] PropertyListNotEmptyPattern ::= ( VerbPath | Var ) ObjectListPattern ( ';' ( ( VerbPath | Var ) ObjectListPattern )? )*
 property_list_not_empty_pattern: (verb_path | verb_simple) object_list_pattern (";" ((verb_path | verb_simple) object_list_pattern)?)*
@@ -165,11 +171,11 @@ property_list_not_empty_pattern: (verb_path | verb_simple) object_list_pattern (
 // [70] ObjectListPattern ::= ObjectPattern ( ',' ObjectPattern )*
 object_list_pattern: object_pattern ("," object_pattern)*
 
-// [71] ObjectPattern ::= GraphNodePattern
-object_pattern: graph_node_pattern
+// [71] ObjectPattern ::= GraphNodePattern AnnotationPattern
+object_pattern: graph_node_pattern annotation_pattern
 
-// [77] GraphNodePattern ::= VarOrRDFTerm
-graph_node_pattern: var_or_rdf_term
+// [77] GraphNodePattern ::= VarOrRDFTerm | TriplesNodePattern | ReifiedTriple
+graph_node_pattern: var_or_rdf_term | triples_node_pattern | reified_triple
 
 // [86] Verb ::= VarOrIri | 'a'
 verb: var_or_iri | TYPE_A
@@ -410,6 +416,83 @@ boolean_literal: TRUE | FALSE
 
 // [102] String
 string: STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
+
+// ============================================================================
+// RDF 1.2 concrete syntax: collections, blank-node property lists, reified
+// triples, reifiers, annotation blocks. Desugared to plain triples in the
+// transformer. Punctuation ('~' '<<' '>>' '{|' '|}') uses inline string
+// literals, matching the existing '<<(' / ')>>' triple-term convention.
+// ============================================================================
+
+// ---- Data family [30], [36]-[46] : NO variables ----
+// [30] PropertyListData ::= PropertyListNotEmptyData?
+property_list_data: property_list_not_empty_data?
+// [36] TriplesNodeData ::= CollectionData | BlankNodePropertyListData
+triples_node_data: collection_data | blank_node_property_list_data
+// [37] BlankNodePropertyListData ::= '[' PropertyListNotEmptyData ']'
+blank_node_property_list_data: "[" property_list_not_empty_data "]"
+// [38] CollectionData ::= '(' GraphNodeData+ ')'
+collection_data: "(" graph_node_data+ ")"
+// [39] AnnotationData ::= ( ReifierData | AnnotationBlockData )*
+annotation_data: (reifier_data | annotation_block_data)*
+// [40] AnnotationBlockData ::= '{|' PropertyListNotEmptyData '|}'
+annotation_block_data: "{|" property_list_not_empty_data "|}"
+// [41] ReifierData ::= '~' ReifierIdData?
+reifier_data: "~" reifier_id_data?
+// [42] ReifierIdData ::= iri | BlankNode   (NO Var in the Data family)
+reifier_id_data: iri | blank_node
+// [43] ReifiedTripleBlockData ::= ReifiedTripleData PropertyListData
+reified_triple_block_data: reified_triple_data property_list_data
+// [44] ReifiedTripleData ::= '<<' ReifiedTripleSubjectData VerbData ReifiedTripleObjectData ReifierData? '>>'
+reified_triple_data: "<<" reified_triple_subject_data verb_data reified_triple_object_data reifier_data? ">>"
+// [45] ReifiedTripleSubjectData
+reified_triple_subject_data: iri | rdf_literal | numeric_literal | boolean_literal | blank_node | reified_triple_data | triple_term_data
+// [46] ReifiedTripleObjectData
+reified_triple_object_data: iri | rdf_literal | numeric_literal | boolean_literal | blank_node | reified_triple_data | triple_term_data
+
+// ---- Template family [53], [58]-[63] : variables, NO paths ----
+// [53] PropertyListTemplate ::= PropertyListNotEmptyTemplate?
+property_list_template: property_list_not_empty_template?
+// [58] TriplesNodeTemplate ::= CollectionTemplate | BlankNodePropertyListTemplate
+triples_node_template: collection_template | blank_node_property_list_template
+// [59] BlankNodePropertyListTemplate ::= '[' PropertyListNotEmptyTemplate ']'
+blank_node_property_list_template: "[" property_list_not_empty_template "]"
+// [60] CollectionTemplate ::= '(' GraphNodeTemplate+ ')'
+collection_template: "(" graph_node_template+ ")"
+// [61] AnnotationTemplate ::= ( Reifier | AnnotationBlockTemplate )*
+annotation_template: (reifier | annotation_block_template)*
+// [62] AnnotationBlockTemplate ::= '{|' PropertyListNotEmptyTemplate '|}'
+annotation_block_template: "{|" property_list_not_empty_template "|}"
+// [63] ReifiedTripleBlockTemplate ::= ReifiedTriple PropertyListTemplate
+reified_triple_block_template: reified_triple property_list_template
+
+// ---- Pattern family [66], [68], [72]-[76] : variables AND paths ----
+// [68] PropertyListPattern ::= PropertyListNotEmptyPattern?
+property_list_pattern: property_list_not_empty_pattern?
+// [72] TriplesNodePattern ::= CollectionPattern | BlankNodePropertyListPattern
+triples_node_pattern: collection_pattern | blank_node_property_list_pattern
+// [73] BlankNodePropertyListPattern ::= '[' PropertyListNotEmptyPattern ']'
+blank_node_property_list_pattern: "[" property_list_not_empty_pattern "]"
+// [74] CollectionPattern ::= '(' GraphNodePattern+ ')'
+collection_pattern: "(" graph_node_pattern+ ")"
+// [75] AnnotationPattern ::= ( Reifier | AnnotationBlockPattern )*
+annotation_pattern: (reifier | annotation_block_pattern)*
+// [76] AnnotationBlockPattern ::= '{|' PropertyListNotEmptyPattern '|}'
+annotation_block_pattern: "{|" property_list_not_empty_pattern "|}"
+// [66] ReifiedTripleBlockPattern ::= ReifiedTriple PropertyListPattern
+reified_triple_block_pattern: reified_triple property_list_pattern
+
+// ---- Shared reifier / reified triple (Pattern + Template) [78]-[82] ----
+// [78] Reifier ::= '~' ReifierId?
+reifier: "~" reifier_id?
+// [79] ReifierId ::= Var | iri | BlankNode   (Var ALLOWED outside the Data family)
+reifier_id: var | iri | blank_node
+// [80] ReifiedTriple ::= '<<' ReifiedTripleSubject Verb ReifiedTripleObject Reifier? '>>'
+reified_triple: "<<" reified_triple_subject verb reified_triple_object reifier? ">>"
+// [81] ReifiedTripleSubject
+reified_triple_subject: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node | reified_triple | triple_term
+// [82] ReifiedTripleObject
+reified_triple_object: var | iri | rdf_literal | numeric_literal | boolean_literal | blank_node | reified_triple | triple_term
 
 // ============================================================================
 // TERMINALS [122]-[156]
