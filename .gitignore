@@ -167,3 +167,6 @@ htmlcov/
 
 # Auto-generated version file
 src/srl/_version.py
+/tests/shacl12-test-suite
+/tests/report.ttl
+/tests/run_shacl_rules_tests.py
