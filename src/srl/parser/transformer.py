@@ -519,6 +519,61 @@ class SRLTransformer(Transformer):
     blank_node_property_list_template = blank_node_property_list_data
     blank_node_property_list_pattern = blank_node_property_list_data
 
+    def reifier(self, items):
+        """[78]/[41] ``~ id?`` -> ('reifier', reifier_id | None)."""
+        return ("reifier", items[0] if items else None)
+
+    reifier_data = reifier
+
+    def reifier_id(self, items):
+        """[79]/[42] the reifier IRI / blank node / (pattern-only) Var."""
+        return items[0]
+
+    reifier_id_data = reifier_id
+
+    def _reifier_head(self, reifier):
+        """The reifier term: the given id, else a fresh blank node."""
+        if reifier is not None and reifier[1] is not None:
+            return reifier[1]
+        return self._fresh_bnode("r")
+
+    def _make_reified_triple(self, items):
+        """[80]/[44] ``<< s p o ~x? >>`` as a term.
+
+        Does NOT assert the base triple; emits ``reifier rdf:reifies
+        <<( s p o )>>``. Head is the reifier (fresh bnode when no ``~id``).
+        """
+        subj = self._as_node(items[0])
+        obj = self._as_node(items[2])
+        reifier = items[3] if len(items) > 3 else None
+        r = self._reifier_head(reifier)
+        tt = self._triple_term([subj.head, items[1], obj.head])
+        side = list(subj.side) + list(obj.side) + [(r, RDF_REIFIES, tt)]
+        return _Node(head=r, side=side)
+
+    def reified_triple(self, items):
+        return self._make_reified_triple(items)
+
+    reified_triple_data = reified_triple
+
+    def reified_triple_subject(self, items):
+        return items[0]
+
+    reified_triple_object = reified_triple_subject
+    reified_triple_subject_data = reified_triple_subject
+    reified_triple_object_data = reified_triple_subject
+
+    def reified_triple_block_data(self, items):
+        """[43]/[63]/[66] ``<< s p o >> :q :z``: the reifier is the subject of
+        a further property list. Returns ``[subject_node, pairs]`` in the shape
+        ``triples_same_subject_*`` expects (base still NOT asserted)."""
+        node = self._as_node(items[0])
+        pairs = items[1] if len(items) > 1 else []
+        return [node, pairs]
+
+    reified_triple_block_template = reified_triple_block_data
+    reified_triple_block_pattern = reified_triple_block_data
+
     # ------------------------------------------------------------------
     # Property paths
     # ------------------------------------------------------------------
@@ -866,6 +921,11 @@ class SRLTransformer(Transformer):
         ``(predicate, object)`` list from ``_pairs`` (objects may be ``_Node``s
         carrying side-triples and annotations).
         """
+        # The ReifiedTripleBlock alternative ([43]/[63]/[66]) reduces to a single
+        # child ``[subject_node, pairs]``; unwrap it to the two-item shape. The
+        # other alternatives always yield a non-list ``items[0]``.
+        if len(items) == 1 and isinstance(items[0], list):
+            items = items[0]
         subj_node = self._as_node(items[0])
         subject = subj_node.head
         triples = [kind(subject=s, predicate=p, object=o) for (s, p, o) in subj_node.side]

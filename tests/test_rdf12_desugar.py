@@ -59,3 +59,29 @@ def test_bnode_property_list_desugars():
     assert len(subjects) == 1  # one fresh blank-node subject for both pairs
     preds = {t.predicate for t in ts}
     assert Variable("b") in preds and IRI("http://example/p") in preds
+
+
+# ----------------------------------------------------------------------------
+# Reified triples << ... >>  (base NOT asserted)
+# ----------------------------------------------------------------------------
+
+
+def test_reified_triple_term_base_not_asserted():
+    ts = _body_triples("PREFIX : <http://example/>\nRULE {} WHERE { ?s :p << :a :b :c >> }")
+    reifies = _preds(ts, RDF_REIFIES)
+    assert len(reifies) == 1 and isinstance(reifies[0].object, TripleTerm)
+    assert not any(t.subject == IRI("http://example/a") for t in ts)  # base NOT asserted
+
+
+def test_reified_triple_explicit_reifier():
+    ts = _body_triples("PREFIX : <http://example/>\nRULE {} WHERE { ?s :p << :a :b :c ~:r >> }")
+    reifies = _preds(ts, RDF_REIFIES)
+    assert reifies and reifies[0].subject == IRI("http://example/r")
+
+
+def test_reified_triple_block_subject():
+    ts = _body_triples("PREFIX : <http://example/>\nRULE {} WHERE { << :s :p :o >> :q :z }")
+    reifies = _preds(ts, RDF_REIFIES)
+    q = [t for t in ts if t.predicate == IRI("http://example/q")]
+    assert reifies and q and reifies[0].subject == q[0].subject  # same reifier
+    assert not any(t.subject == IRI("http://example/s") for t in ts)  # base NOT asserted
