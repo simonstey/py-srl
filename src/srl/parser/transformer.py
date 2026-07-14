@@ -984,9 +984,10 @@ class SRLTransformer(Transformer):
         enclosing subject+predicate are known.
         """
         node = self._as_node(items[0])
-        annotations = items[1] if len(items) > 1 and items[1] else []
-        if annotations:
-            node.annotations = list(node.annotations) + list(annotations)
+        # object_* always reduces to [graph_node, annotation_list]; the list is
+        # empty when there are no annotations.
+        if items[1]:
+            node.annotations.extend(items[1])
         return node
 
     def _expand_annotations(self, s, p, o, annotations):
@@ -1003,12 +1004,13 @@ class SRLTransformer(Transformer):
             the reifier as subject (recursing into each object's own side and
             annotations).
         """
+        # (s, p, o) is fixed for this frame, so the reified triple term is too.
+        tt = self._triple_term([s, p, o])
         out: List[tuple] = []
         pending = None
         for entry in annotations:
-            tt = self._triple_term([s, p, o])
             if entry[0] == "reifier":
-                r = entry[1] if entry[1] is not None else self._fresh_bnode("r")
+                r = self._reifier_head(entry)
                 out.append((r, RDF_REIFIES, tt))
                 pending = r
             else:  # ('block', pairs)
