@@ -12,6 +12,7 @@ Usage:
 """
 
 import argparse
+import html as _html
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -801,6 +802,93 @@ class MarkdownReportGenerator:
                     lines.append("")
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
+
+
+class HtmlReportGenerator:
+    """Renders a self-contained (inline-CSS) HTML conformance report."""
+
+    _CSS = """
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
+    h1 { font-size: 1.5rem; } h2 { margin-top: 2rem; border-bottom: 1px solid #ddd; }
+    .cards { display: flex; gap: 1rem; margin: 1rem 0; }
+    .card { padding: 1rem 1.5rem; border-radius: 8px; background: #f4f4f5; }
+    .card .n { font-size: 1.8rem; font-weight: 700; }
+    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #eee; }
+    code { font-family: ui-monospace, monospace; }
+    .pill { padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+    .passed { background: #dcfce7; color: #166534; }
+    .failed { background: #fee2e2; color: #991b1b; }
+    .other  { background: #fef9c3; color: #854d0e; }
+    details { margin: 0.3rem 0; } pre { background: #f8f8f8; padding: 0.6rem; overflow-x: auto; }
+    .ext { color: #7c3aed; }
+    """
+
+    def __init__(self, project_name: str = "shacl-rules", project_version: str = None):
+        self.project_name = project_name
+        self.project_version = project_version or SRL_VERSION
+        self.results: List[TestResult] = []
+        self.runner: Optional["SHACLRulesTestRunner"] = None
+
+    def add_results(self, results: List[TestResult], runner: "SHACLRulesTestRunner" = None):
+        self.results = results
+        self.runner = runner
+
+    def _pill(self, outcome: TestOutcome) -> str:
+        cls = {TestOutcome.PASSED: "passed", TestOutcome.FAILED: "failed"}.get(outcome, "other")
+        return f'<span class="pill {cls}">{OUTCOME_BADGE.get(outcome, "?")} {outcome.value}</span>'
+
+    def serialize(self, output_path: Path):
+        passed = sum(1 for r in self.results if r.outcome == TestOutcome.PASSED)
+        failed = sum(1 for r in self.results if r.outcome == TestOutcome.FAILED)
+        other = len(self.results) - passed - failed
+        parts = [
+            "<!DOCTYPE html>",
+            '<html lang="en"><head><meta charset="utf-8">',
+            f"<title>{self.project_name} conformance report</title>",
+            f"<style>{self._CSS}</style></head><body>",
+            f"<h1>{self.project_name} — SHACL 1.2 Rules conformance report</h1>",
+            f"<p><b>Version:</b> {_html.escape(self.project_version)} &nbsp; "
+            f"<b>Generated:</b> {datetime.now(timezone.utc).date().isoformat()}</p>",
+            '<div class="cards">',
+            f'<div class="card"><div class="n">{passed}</div>✅ Passed</div>',
+            f'<div class="card"><div class="n">{failed}</div>❌ Failed</div>',
+            f'<div class="card"><div class="n">{other}</div>⚠️ Other</div>',
+            f'<div class="card"><div class="n">{len(self.results)}</div>Total</div>',
+            "</div>",
+        ]
+        by_type = {}
+        for r in self.results:
+            by_type.setdefault(r.test.test_type, []).append(r)
+        for cat_name, types in CATEGORY_ORDER:
+            cat_results = [r for tt in types for r in by_type.get(tt, [])]
+            if not cat_results:
+                continue
+            cls = ' class="ext"' if types == [TestType.TARGETING_EVAL] else ""
+            parts.append(f"<h2{cls}>{_html.escape(cat_name)}</h2>")
+            parts.append("<table><tr><th>Test</th><th>Outcome</th><th>Message</th></tr>")
+            for r in cat_results:
+                parts.append(
+                    f"<tr><td><code>{_html.escape(r.test.name)}</code></td>"
+                    f"<td>{self._pill(r.outcome)}</td>"
+                    f"<td>{_html.escape(r.message or '')}</td></tr>"
+                )
+            parts.append("</table>")
+            if self.runner is not None:
+                for r in cat_results:
+                    snippets = collect_source_snippets(self.runner, r.test)
+                    if not snippets:
+                        continue
+                    parts.append(
+                        f"<details><summary><code>{_html.escape(r.test.name)}</code> "
+                        "source</summary>"
+                    )
+                    for label, text in snippets:
+                        parts.append(f"<b>{label}:</b><pre>{_html.escape(text.rstrip())}</pre>")
+                    parts.append("</details>")
+        parts.append("</body></html>")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(parts))
 
 
 def find_manifest(test_suite_path: Path) -> Optional[Path]:

@@ -58,3 +58,19 @@ def test_markdown_report_contains_summary_and_categories(tmp_path):
     assert "targeting-adult-01" in text  # test name in a row
     assert "<details>" in text  # collapsible source
     assert "✅" in text or "❌" in text  # outcome badge
+
+
+def test_html_report_is_self_contained(tmp_path):
+    runner = R.SHACLRulesTestRunner(EXT_MANIFEST.parent)
+    tests = R.TestManifestParser(EXT_MANIFEST).parse()
+    results = [runner.run_test(t) for t in tests]
+    gen = R.HtmlReportGenerator()
+    gen.add_results(results, runner=runner)
+    out = tmp_path / "report.html"
+    gen.serialize(out)
+    html = out.read_text(encoding="utf-8")
+    assert html.lstrip().lower().startswith("<!doctype html>")
+    assert "<style>" in html  # inline CSS, self-contained
+    assert "targeting-adult-01" in html
+    assert "<details>" in html
+    assert "http" not in html.split("<style>")[1].split("</style>")[0]  # no external CSS URL
