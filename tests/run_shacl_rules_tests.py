@@ -1042,6 +1042,10 @@ Examples:
         developer_name=args.developer_name,
     )
 
+    md_report = MarkdownReportGenerator(project_name=args.project_name)
+    html_report = HtmlReportGenerator(project_name=args.project_name)
+    all_results: List[TestResult] = []
+
     # Run tests
     print(f"Running {len(tests)} tests...")
     passed = 0
@@ -1054,6 +1058,7 @@ Examples:
 
         result = test_runner.run_test(test)
         report.add_result(result)
+        all_results.append(result)
 
         if result.outcome == TestOutcome.PASSED:
             passed += 1
@@ -1071,6 +1076,15 @@ Examples:
     # Write report
     report.serialize(args.output)
     print(f"\nEARL report written to: {args.output}")
+
+    md_path = args.output.with_suffix(".md")
+    html_path = args.output.with_suffix(".html")
+    md_report.add_results(all_results, runner=test_runner)
+    html_report.add_results(all_results, runner=test_runner)
+    md_report.serialize(md_path)
+    html_report.serialize(html_path)
+    print(f"Markdown report written to: {md_path}")
+    print(f"HTML report written to: {html_path}")
 
     # Print summary
     print("\nTest Results Summary:")
