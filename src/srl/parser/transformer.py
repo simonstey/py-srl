@@ -357,7 +357,7 @@ class SRLTransformer(Transformer):
         return list(items)
 
     def object_data(self, items):
-        return items[0]
+        return self._object_with_annotations(items)
 
     def graph_node_data(self, items):
         return items[0]
@@ -391,7 +391,7 @@ class SRLTransformer(Transformer):
         return list(items)
 
     def object_template(self, items):
-        return items[0]
+        return self._object_with_annotations(items)
 
     def graph_node_template(self, items):
         return items[0]
@@ -416,7 +416,7 @@ class SRLTransformer(Transformer):
         return list(items)
 
     def object_pattern(self, items):
-        return items[0]
+        return self._object_with_annotations(items)
 
     def graph_node_pattern(self, items):
         return items[0]
@@ -573,6 +573,24 @@ class SRLTransformer(Transformer):
 
     reified_triple_block_template = reified_triple_block_data
     reified_triple_block_pattern = reified_triple_block_data
+
+    def annotation_data(self, items):
+        """[39]/[61]/[75] ordered annotation list on an object.
+
+        Entries are ('reifier', id | None) and ('block', pairs), applied by
+        ``_expand_annotations`` once the enclosing (s, p, o) is known.
+        """
+        return list(items)
+
+    annotation_template = annotation_data
+    annotation_pattern = annotation_data
+
+    def annotation_block_data(self, items):
+        """[40]/[62]/[76] ``{| p o ; ... |}`` -> ('block', pairs)."""
+        return ("block", items[0])
+
+    annotation_block_template = annotation_block_data
+    annotation_block_pattern = annotation_block_data
 
     # ------------------------------------------------------------------
     # Property paths
@@ -942,13 +960,53 @@ class SRLTransformer(Transformer):
             ]
         return triples
 
+    def _object_with_annotations(self, items):
+        """``ObjectData/Template/Pattern ::= GraphNode Annotation``.
+
+        Wrap the graph node as a ``_Node`` and attach its (possibly empty)
+        annotation list so ``_emit_same_subject`` can expand it once the
+        enclosing subject+predicate are known.
+        """
+        node = self._as_node(items[0])
+        annotations = items[1] if len(items) > 1 and items[1] else []
+        if annotations:
+            node.annotations = list(node.annotations) + list(annotations)
+        return node
+
     def _expand_annotations(self, s, p, o, annotations):
         """Expand an object's RDF-1.2 annotation list to side-triple tuples.
 
-        Filled in by the annotation task; until then no construct produces
-        annotations, so the list is always empty.
+        The base triple ``(s, p, o)`` is asserted by the caller. Per RDF 1.2
+        Turtle §7, the list ``(reifier | annotationBlock)*`` is processed
+        left-to-right with a ``pending`` reifier:
+
+          * ``~x?``: reifier = ``x`` (else fresh); emit
+            ``reifier rdf:reifies <<( s p o )>>``; remember it as ``pending``.
+          * ``{| pol |}``: reuse ``pending`` if set (consuming it), else mint a
+            fresh reifier and emit its ``rdf:reifies``; then emit ``pol`` with
+            the reifier as subject (recursing into each object's own side and
+            annotations).
         """
-        return []
+        out: List[tuple] = []
+        pending = None
+        for entry in annotations:
+            tt = self._triple_term([s, p, o])
+            if entry[0] == "reifier":
+                r = entry[1] if entry[1] is not None else self._fresh_bnode("r")
+                out.append((r, RDF_REIFIES, tt))
+                pending = r
+            else:  # ('block', pairs)
+                if pending is not None:
+                    r, pending = pending, None
+                else:
+                    r = self._fresh_bnode("r")
+                    out.append((r, RDF_REIFIES, tt))
+                for bp, bo in entry[1]:
+                    bo_node = self._as_node(bo)
+                    out += bo_node.side
+                    out.append((r, bp, bo_node.head))
+                    out += self._expand_annotations(r, bp, bo_node.head, bo_node.annotations)
+        return out
 
     @staticmethod
     def _pairs(items):

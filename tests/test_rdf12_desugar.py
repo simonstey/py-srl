@@ -85,3 +85,33 @@ def test_reified_triple_block_subject():
     q = [t for t in ts if t.predicate == IRI("http://example/q")]
     assert reifies and q and reifies[0].subject == q[0].subject  # same reifier
     assert not any(t.subject == IRI("http://example/s") for t in ts)  # base NOT asserted
+
+
+# ----------------------------------------------------------------------------
+# Reifier annotation ~ and annotation blocks {| ... |}  (base IS asserted)
+# ----------------------------------------------------------------------------
+
+
+def test_reifier_annotation_asserts_base():
+    ts = _data_triples("PREFIX : <http://example/>\nDATA { :a :b :c ~:r . }")
+    assert any(
+        t.subject == IRI("http://example/a") and t.predicate == IRI("http://example/b") for t in ts
+    )  # base asserted
+    reifies = _preds(ts, RDF_REIFIES)
+    assert reifies and reifies[0].subject == IRI("http://example/r")
+
+
+def test_annotation_block_standalone_fresh_reifier():
+    ts = _body_triples("PREFIX : <http://example/>\nRULE {} WHERE { :s :p :o {| :q :r |} }")
+    assert any(t.subject == IRI("http://example/s") for t in ts)  # base asserted
+    reifies = _preds(ts, RDF_REIFIES)
+    q = [t for t in ts if t.predicate == IRI("http://example/q")]
+    assert len(reifies) == 1 and q and q[0].subject == reifies[0].subject  # block list on reifier
+
+
+def test_reifier_then_block_reuses_reifier():
+    ts = _data_triples(
+        "PREFIX : <http://example/>\n" "DATA { :s :p :o ~:r1 {| :q1 :z1 |} ~_:B {| :q1 :z1 |} . }"
+    )
+    subs = {t.subject for t in ts if t.predicate == IRI("http://example/q1")}
+    assert IRI("http://example/r1") in subs  # ~:r1 reused by its following block
