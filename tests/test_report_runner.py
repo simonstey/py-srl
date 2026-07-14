@@ -72,5 +72,21 @@ def test_html_report_is_self_contained(tmp_path):
     assert html.lstrip().lower().startswith("<!doctype html>")
     assert "<style>" in html  # inline CSS, self-contained
     assert "targeting-adult-01" in html
-    assert "<details>" in html
+    assert '<details class="row"' in html  # rows expand in place to reveal source
     assert "http" not in html.split("<style>")[1].split("</style>")[0]  # no external CSS URL
+
+
+def test_html_report_shows_inferred_triples(tmp_path):
+    """Eval/targeting rows surface the triples the engine actually inferred."""
+    runner = R.SHACLRulesTestRunner(EXT_MANIFEST.parent)
+    tests = R.TestManifestParser(EXT_MANIFEST).parse()
+    results = [runner.run_test(t) for t in tests]
+    # The engine records inferred Turtle on every eval/targeting result.
+    assert any(r.inferred and "ex:adult" in r.inferred for r in results)
+    gen = R.HtmlReportGenerator()
+    gen.add_results(results, runner=runner)
+    out = tmp_path / "report.html"
+    gen.serialize(out)
+    html = out.read_text(encoding="utf-8")
+    assert "inferred (actual)" in html  # labelled distinctly from the input files
+    assert "snip-inferred" in html

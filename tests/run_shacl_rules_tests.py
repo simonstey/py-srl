@@ -89,6 +89,7 @@ class TestResult:
     outcome: TestOutcome
     message: Optional[str] = None
     duration_ms: Optional[float] = None
+    inferred: Optional[str] = None  # Turtle of triples produced by eval/targeting tests
 
 
 # Report categorization shared by the Markdown and HTML generators.
@@ -463,12 +464,32 @@ class SHACLRulesTestRunner:
                 message=f"Test file not found: {str(e)}",
             )
 
+    @staticmethod
+    def _serialize_inferred(inferred_graph: Graph, expected_graph: Graph) -> Optional[str]:
+        """Render the inferred triples as compact Turtle for the report.
+
+        Reuses the expected graph's namespace bindings so terms print as prefixed
+        names (``:x``) rather than full IRIs. Best-effort: returns None on failure.
+        """
+        try:
+            for prefix, ns in expected_graph.namespaces():
+                inferred_graph.bind(prefix, ns, replace=False)
+            body = "\n".join(
+                line
+                for line in inferred_graph.serialize(format="turtle").splitlines()
+                if not line.startswith("@prefix") and line.strip()
+            ).strip()
+            return body or "# (no triples inferred)"
+        except Exception:
+            return None
+
     def _compare_inferred(
         self, test: TestEntry, inferred_graph: Graph, expected_graph: Graph
     ) -> TestResult:
         """Compare inferred triples to the expected graph by RDF isomorphism."""
+        inferred_ttl = self._serialize_inferred(inferred_graph, expected_graph)
         if isomorphic(inferred_graph, expected_graph):
-            return TestResult(test=test, outcome=TestOutcome.PASSED)
+            return TestResult(test=test, outcome=TestOutcome.PASSED, inferred=inferred_ttl)
         expected_count = len(expected_graph)
         actual_count = len(inferred_graph)
         msg = f"Graph mismatch: expected {expected_count} inferred triples, got {actual_count}"
@@ -478,7 +499,9 @@ class SHACLRulesTestRunner:
             msg += f"; missing: {len(missing)}"
         if extra:
             msg += f"; extra: {len(extra)}"
-        return TestResult(test=test, outcome=TestOutcome.FAILED, message=msg)
+        return TestResult(
+            test=test, outcome=TestOutcome.FAILED, message=msg, inferred=inferred_ttl
+        )
 
     def _run_eval_test(self, test: TestEntry) -> TestResult:
         """
@@ -805,88 +828,591 @@ class MarkdownReportGenerator:
 
 
 class HtmlReportGenerator:
-    """Renders a self-contained (inline-CSS) HTML conformance report."""
+    """Renders a self-contained, dependency-free HTML conformance report.
 
-    _CSS = """
-    body { font-family: system-ui, sans-serif; margin: 2rem; color: #1a1a1a; }
-    h1 { font-size: 1.5rem; } h2 { margin-top: 2rem; border-bottom: 1px solid #ddd; }
-    .cards { display: flex; gap: 1rem; margin: 1rem 0; }
-    .card { padding: 1rem 1.5rem; border-radius: 8px; background: #f4f4f5; }
-    .card .n { font-size: 1.8rem; font-weight: 700; }
-    table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; }
-    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #eee; }
-    code { font-family: ui-monospace, monospace; }
-    .pill { padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
-    .passed { background: #dcfce7; color: #166534; }
-    .failed { background: #fee2e2; color: #991b1b; }
-    .other  { background: #fef9c3; color: #854d0e; }
-    details { margin: 0.3rem 0; } pre { background: #f8f8f8; padding: 0.6rem; overflow-x: auto; }
-    .ext { color: #7c3aed; }
+    One page, one system: a pass-rate hero, a sticky search/filter toolbar, and
+    per-category tables whose rows expand in place to reveal their source. Ships
+    light and dark themes (system default + a manual toggle) with all styling and
+    behaviour inlined so the file works from disk with no server or assets.
     """
 
-    def __init__(self, project_name: str = "shacl-rules", project_version: str = None):
+    # Design tokens + component styles. Product register: restrained palette,
+    # semantic state colors, dense scannable rows. OKLCH throughout; dark theme
+    # follows the system preference unless the manual toggle overrides it.
+    _CSS = """
+    :root {
+      color-scheme: light dark;
+      --bg: oklch(0.985 0.003 255); --surface: oklch(1 0 0);
+      --surface-2: oklch(0.968 0.004 255); --hover: oklch(0.955 0.006 255);
+      --border: oklch(0.905 0.006 255); --border-strong: oklch(0.83 0.01 255);
+      --ink: oklch(0.26 0.02 262); --ink-muted: oklch(0.505 0.02 262);
+      --accent: oklch(0.55 0.16 264); --ext: oklch(0.55 0.2 300);
+      --pass-ink: oklch(0.46 0.11 150); --pass-bg: oklch(0.945 0.045 150);
+      --pass-solid: oklch(0.63 0.14 150); --pass-row: oklch(0.986 0.012 150);
+      --fail-ink: oklch(0.5 0.17 26); --fail-bg: oklch(0.948 0.045 26);
+      --fail-solid: oklch(0.6 0.2 26); --fail-row: oklch(0.975 0.022 26);
+      --warn-ink: oklch(0.48 0.09 80); --warn-bg: oklch(0.945 0.06 90);
+      --warn-solid: oklch(0.76 0.14 85); --warn-row: oklch(0.98 0.03 90);
+      --shadow: 0 1px 2px oklch(0.2 0.03 262 / 0.06), 0 4px 16px oklch(0.2 0.03 262 / 0.05);
+      --radius: 14px; --radius-sm: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: oklch(0.185 0.012 262); --surface: oklch(0.222 0.014 262);
+        --surface-2: oklch(0.262 0.016 262); --hover: oklch(0.29 0.018 262);
+        --border: oklch(0.32 0.016 262); --border-strong: oklch(0.42 0.02 262);
+        --ink: oklch(0.955 0.008 262); --ink-muted: oklch(0.72 0.016 262);
+        --accent: oklch(0.72 0.14 264); --ext: oklch(0.76 0.16 300);
+        --pass-ink: oklch(0.86 0.14 150); --pass-bg: oklch(0.32 0.06 150);
+        --pass-solid: oklch(0.66 0.15 150); --pass-row: oklch(0.24 0.03 150);
+        --fail-ink: oklch(0.83 0.13 26); --fail-bg: oklch(0.34 0.08 26);
+        --fail-solid: oklch(0.62 0.2 26); --fail-row: oklch(0.27 0.045 26);
+        --warn-ink: oklch(0.88 0.11 90); --warn-bg: oklch(0.34 0.06 85);
+        --warn-solid: oklch(0.78 0.14 85); --warn-row: oklch(0.26 0.035 85);
+        --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 6px 20px oklch(0 0 0 / 0.35);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: oklch(0.185 0.012 262); --surface: oklch(0.222 0.014 262);
+      --surface-2: oklch(0.262 0.016 262); --hover: oklch(0.29 0.018 262);
+      --border: oklch(0.32 0.016 262); --border-strong: oklch(0.42 0.02 262);
+      --ink: oklch(0.955 0.008 262); --ink-muted: oklch(0.72 0.016 262);
+      --accent: oklch(0.72 0.14 264); --ext: oklch(0.76 0.16 300);
+      --pass-ink: oklch(0.86 0.14 150); --pass-bg: oklch(0.32 0.06 150);
+      --pass-solid: oklch(0.66 0.15 150); --pass-row: oklch(0.24 0.03 150);
+      --fail-ink: oklch(0.83 0.13 26); --fail-bg: oklch(0.34 0.08 26);
+      --fail-solid: oklch(0.62 0.2 26); --fail-row: oklch(0.27 0.045 26);
+      --warn-ink: oklch(0.88 0.11 90); --warn-bg: oklch(0.34 0.06 85);
+      --warn-solid: oklch(0.78 0.14 85); --warn-row: oklch(0.26 0.035 85);
+      --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 6px 20px oklch(0 0 0 / 0.35);
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      margin: 0; background: var(--bg); color: var(--ink);
+      line-height: 1.5; font-size: 15px;
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    .wrap { max-width: 74rem; margin-inline: auto; padding: 2rem 1.25rem 4rem; }
+    code, pre, .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace; }
+    .vh {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    a { color: var(--accent); }
+
+    /* Header */
+    .top {
+      display: flex; flex-wrap: wrap; gap: 1rem 1.5rem;
+      align-items: flex-start; justify-content: space-between;
+    }
+    .brand h1 {
+      font-size: clamp(1.35rem, 1rem + 1.4vw, 1.9rem); font-weight: 700;
+      letter-spacing: -0.02em; margin: 0; display: flex; align-items: center;
+      gap: 0.6rem; flex-wrap: wrap;
+    }
+    .brand .tag {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+      color: var(--accent); background: color-mix(in oklch, var(--accent) 14%, transparent);
+      padding: 0.2rem 0.55rem; border-radius: 999px; white-space: nowrap;
+    }
+    .brand .sub { margin: 0.35rem 0 0; color: var(--ink-muted); font-size: 0.92rem; }
+    .top-right { display: flex; align-items: center; gap: 1.25rem; }
+    .meta { display: flex; gap: 1.5rem; margin: 0; }
+    .meta div { margin: 0; }
+    .meta dt {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--ink-muted); margin: 0;
+    }
+    .meta dd { margin: 0.15rem 0 0; font-size: 0.86rem; font-weight: 600; }
+    .theme-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2.3rem; height: 2.3rem; padding: 0; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+      cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .theme-btn:hover { background: var(--hover); border-color: var(--border-strong); }
+    .theme-btn .ic { display: inline-flex; }
+    .theme-btn .i-moon { display: none; }
+    .theme-btn[data-mode="dark"] .i-sun { display: none; }
+    .theme-btn[data-mode="dark"] .i-moon { display: inline-flex; }
+
+    /* Hero */
+    .hero {
+      display: grid; gap: 1.5rem; margin: 1.75rem 0 1.25rem;
+      padding: 1.4rem 1.5rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    @media (min-width: 46rem) {
+      .hero { grid-template-columns: auto 1fr; align-items: center; gap: 2.5rem; }
+    }
+    .rate { font-size: clamp(2.4rem, 1.6rem + 3vw, 3.2rem); font-weight: 750;
+            line-height: 1; letter-spacing: -0.03em; color: var(--pass-ink); }
+    .rate.has-fail { color: var(--ink); }
+    .rate-sub { margin-top: 0.45rem; color: var(--ink-muted); font-size: 0.95rem; }
+    .rate-note { color: var(--fail-ink); font-weight: 600; }
+    .bar {
+      display: flex; height: 0.8rem; border-radius: 999px; overflow: hidden;
+      background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border);
+    }
+    .seg { min-width: 0.2rem; }
+    .seg.passed { background: var(--pass-solid); }
+    .seg.failed { background: var(--fail-solid); }
+    .seg.other { background: var(--warn-solid); }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem;
+      list-style: none; margin: 0.9rem 0 0; padding: 0;
+    }
+    .leg {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: none; border: 0; padding: 0.2rem 0; font: inherit;
+      font-size: 0.88rem; color: var(--ink-muted); cursor: pointer; border-radius: 6px;
+    }
+    .leg:hover { color: var(--ink); }
+    .leg b { color: var(--ink); font-variant-numeric: tabular-nums; }
+    .leg .sw { width: 0.7rem; height: 0.7rem; border-radius: 3px; flex: none; }
+    .leg .sw.passed { background: var(--pass-solid); }
+    .leg .sw.failed { background: var(--fail-solid); }
+    .leg .sw.other { background: var(--warn-solid); }
+
+    /* Toolbar */
+    .toolbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+      padding: 0.75rem 0; margin-bottom: 0.5rem;
+      background: color-mix(in oklch, var(--bg) 92%, transparent);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .search { position: relative; flex: 1 1 15rem; min-width: 12rem; }
+    .search svg {
+      position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+      color: var(--ink-muted); pointer-events: none;
+    }
+    .search input {
+      width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.2rem; font: inherit;
+      color: var(--ink); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 9px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .search input::placeholder { color: var(--ink-muted); }
+    .search input:focus-visible {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 25%, transparent);
+    }
+    .filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; font: inherit; font-size: 0.85rem; font-weight: 500;
+      color: var(--ink-muted); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .chip:hover { color: var(--ink); border-color: var(--border-strong); }
+    .chip .chip-n {
+      font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.78rem;
+      color: var(--ink-muted);
+    }
+    .chip[aria-pressed="true"] {
+      color: var(--ink); background: var(--hover); border-color: var(--border-strong);
+    }
+    .chip-pass[aria-pressed="true"] {
+      color: var(--pass-ink); background: var(--pass-bg);
+      border-color: color-mix(in oklch, var(--pass-solid) 45%, transparent);
+    }
+    .chip-fail[aria-pressed="true"] {
+      color: var(--fail-ink); background: var(--fail-bg);
+      border-color: color-mix(in oklch, var(--fail-solid) 45%, transparent);
+    }
+    .chip-other[aria-pressed="true"] {
+      color: var(--warn-ink); background: var(--warn-bg);
+      border-color: color-mix(in oklch, var(--warn-solid) 55%, transparent);
+    }
+    .chip[aria-pressed="true"] .chip-n { color: inherit; }
+    .bulk { display: flex; gap: 0.25rem; margin-left: auto; }
+    .txtbtn {
+      background: none; border: 0; font: inherit; font-size: 0.82rem;
+      color: var(--ink-muted); cursor: pointer; padding: 0.4rem 0.55rem; border-radius: 7px;
+    }
+    .txtbtn:hover { color: var(--accent); background: var(--hover); }
+
+    /* Category sections */
+    .cat { margin-top: 2.25rem; }
+    .cat-head {
+      display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+    }
+    .cat-head h2 {
+      font-size: 1.1rem; font-weight: 650; letter-spacing: -0.01em; margin: 0;
+    }
+    .cat.ext .cat-head h2 { color: var(--ext); }
+    .cat-count {
+      font-size: 0.85rem; color: var(--ink-muted); font-variant-numeric: tabular-nums;
+    }
+    .cat-badge {
+      font-size: 0.75rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 999px;
+      margin-left: auto;
+    }
+    .cat-badge.ok { color: var(--pass-ink); background: var(--pass-bg); }
+    .cat-badge.bad { color: var(--fail-ink); background: var(--fail-bg); }
+    .note { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--ink-muted); }
+
+    /* Rows */
+    .tbl { margin-top: 0.4rem; }
+    .row { border-bottom: 1px solid var(--border); }
+    .row[data-outcome="failed"] { background: var(--fail-row); }
+    .row[data-outcome="other"] { background: var(--warn-row); }
+    .rowhead {
+      display: grid; align-items: center; gap: 0.15rem 0.6rem; padding: 0.5rem 0.6rem;
+      grid-template-columns: 1.1rem 1fr auto;
+      grid-template-areas: "caret name pill" "msg msg msg";
+    }
+    @media (min-width: 52rem) {
+      .rowhead {
+        grid-template-columns: 1.1rem minmax(0, 22rem) 7.5rem minmax(0, 1fr);
+        grid-template-areas: "caret name pill msg";
+      }
+    }
+    details.row > summary.rowhead { cursor: pointer; list-style: none; }
+    details.row > summary.rowhead::-webkit-details-marker { display: none; }
+    details.row > summary:hover { background: var(--hover); }
+    details.row > summary:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 7px;
+    }
+    .c-caret { grid-area: caret; display: inline-flex; }
+    details.row > summary .c-caret::before {
+      content: ""; width: 0.42rem; height: 0.42rem; margin-left: 0.15rem;
+      border-right: 2px solid var(--ink-muted); border-bottom: 2px solid var(--ink-muted);
+      transform: rotate(-45deg); transition: transform 0.15s ease;
+    }
+    details.row[open] > summary .c-caret::before { transform: rotate(45deg); }
+    .c-name {
+      grid-area: name; min-width: 0; font-size: 0.86rem; overflow-wrap: anywhere;
+      color: var(--ink);
+    }
+    .c-pill { grid-area: pill; justify-self: start; }
+    .c-msg {
+      grid-area: msg; font-size: 0.82rem; color: var(--ink-muted); overflow-wrap: anywhere;
+    }
+    .c-msg:empty { display: none; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.15rem 0.55rem; border-radius: 999px;
+      font-size: 0.76rem; font-weight: 600; white-space: nowrap;
+    }
+    .pill .dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; flex: none; }
+    .pill.passed { color: var(--pass-ink); background: var(--pass-bg); }
+    .pill.failed { color: var(--fail-ink); background: var(--fail-bg); }
+    .pill.other { color: var(--warn-ink); background: var(--warn-bg); }
+
+    /* Expanded source panel */
+    .panel { padding: 0.25rem 0.6rem 0.9rem 1.85rem; display: grid; gap: 0.7rem; }
+    .snip { display: grid; gap: 0.3rem; }
+    .snip-label {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--ink-muted);
+    }
+    .snip pre {
+      margin: 0; padding: 0.7rem 0.85rem; font-size: 0.8rem; line-height: 1.55;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow-x: auto;
+    }
+    .snip-inferred .snip-label { color: var(--accent); }
+    .snip-inferred pre {
+      background: color-mix(in oklch, var(--accent) 8%, var(--surface));
+      border-color: color-mix(in oklch, var(--accent) 30%, var(--border));
+    }
+    details.row[open] > .panel { animation: reveal 0.18s ease; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; } }
+
+    .empty { text-align: center; color: var(--ink-muted); padding: 3rem 1rem; font-size: 0.95rem; }
+    .foot {
+      margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+      color: var(--ink-muted); font-size: 0.82rem;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    """
+
+    _JS = """
+    (function () {
+      var rows = [].slice.call(document.querySelectorAll('.row'));
+      var sections = [].slice.call(document.querySelectorAll('.cat'));
+      var chips = [].slice.call(document.querySelectorAll('.chip'));
+      var q = document.getElementById('q');
+      var empty = document.getElementById('empty');
+      var state = { q: '', f: 'all' };
+
+      function apply() {
+        var term = state.q.trim().toLowerCase();
+        var any = false;
+        rows.forEach(function (row) {
+          var okF = state.f === 'all' || row.getAttribute('data-outcome') === state.f;
+          var okQ = !term || row.getAttribute('data-name').toLowerCase().indexOf(term) > -1;
+          var vis = okF && okQ;
+          row.hidden = !vis;
+          if (vis) any = true;
+        });
+        sections.forEach(function (sec) {
+          sec.hidden = sec.querySelectorAll('.row:not([hidden])').length === 0;
+        });
+        empty.hidden = any;
+      }
+
+      function setFilter(f) {
+        state.f = f;
+        chips.forEach(function (c) {
+          c.setAttribute('aria-pressed', c.getAttribute('data-filter') === f ? 'true' : 'false');
+        });
+        apply();
+      }
+
+      q.addEventListener('input', function () { state.q = q.value; apply(); });
+      chips.forEach(function (c) {
+        c.addEventListener('click', function () { setFilter(c.getAttribute('data-filter')); });
+      });
+      [].slice.call(document.querySelectorAll('[data-filter-set]')).forEach(function (el) {
+        el.addEventListener('click', function () { setFilter(el.getAttribute('data-filter-set')); });
+      });
+      [].slice.call(document.querySelectorAll('[data-bulk]')).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var open = b.getAttribute('data-bulk') === 'expand';
+          rows.forEach(function (r) {
+            if (r.tagName === 'DETAILS' && !r.hidden) r.open = open;
+          });
+        });
+      });
+
+      var tbtn = document.getElementById('theme');
+      function resolved() {
+        return document.documentElement.getAttribute('data-theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      }
+      function syncTheme() { if (tbtn) tbtn.setAttribute('data-mode', resolved()); }
+      if (tbtn) {
+        syncTheme();
+        tbtn.addEventListener('click', function () {
+          var next = resolved() === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          try { localStorage.setItem('srl-theme', next); } catch (e) {}
+          syncTheme();
+        });
+      }
+      apply();
+    })();
+    """
+
+    _THEME_BOOT = (
+        "try{var t=localStorage.getItem('srl-theme');"
+        "if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}"
+    )
+
+    _SUN = (
+        '<svg class="ic i-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" '
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+        '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2'
+        'M5 5l1.4 1.4M17.2 17.2L18.6 18.6M18.6 5.4L17.2 6.8M6.8 17.2L5.4 18.6"/></svg>'
+    )
+    _MOON = (
+        '<svg class="ic i-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" '
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+        'aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
+    )
+    _SEARCH_ICON = (
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        'stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+        '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'
+    )
+
+    def __init__(self, project_name: str = "shacl-rules", project_version: Optional[str] = None):
         self.project_name = project_name
         self.project_version = project_version or SRL_VERSION
         self.results: List[TestResult] = []
         self.runner: Optional["SHACLRulesTestRunner"] = None
 
-    def add_results(self, results: List[TestResult], runner: "SHACLRulesTestRunner" = None):
+    def add_results(
+        self, results: List[TestResult], runner: Optional["SHACLRulesTestRunner"] = None
+    ) -> None:
         self.results = results
         self.runner = runner
 
-    def _pill(self, outcome: TestOutcome) -> str:
-        cls = {TestOutcome.PASSED: "passed", TestOutcome.FAILED: "failed"}.get(outcome, "other")
-        return f'<span class="pill {cls}">{OUTCOME_BADGE.get(outcome, "?")} {outcome.value}</span>'
+    @staticmethod
+    def _outcome_cls(outcome: TestOutcome) -> str:
+        return {TestOutcome.PASSED: "passed", TestOutcome.FAILED: "failed"}.get(outcome, "other")
 
-    def serialize(self, output_path: Path):
+    def _row_html(self, r: TestResult) -> str:
+        cls = self._outcome_cls(r.outcome)
+        name = _html.escape(r.test.name)
+        name_attr = _html.escape(r.test.name, quote=True)
+        msg = _html.escape(r.message or "")
+        pill = (
+            f'<span class="pill c-pill {cls}"><span class="dot"></span>'
+            f"{_html.escape(r.outcome.value)}</span>"
+        )
+        head = (
+            '<span class="c-caret" aria-hidden="true"></span>'
+            f'<code class="c-name">{name}</code>{pill}'
+            f'<span class="c-msg">{msg}</span>'
+        )
+
+        # (label, text, kind) — kind "src" is a static input file, "inferred" is
+        # the runtime output the engine actually produced for an eval test.
+        snippets: List[tuple] = [
+            (label, text, "src")
+            for label, text in (
+                collect_source_snippets(self.runner, r.test) if self.runner else []
+            )
+            if text.strip()
+        ]
+        if r.inferred is not None:
+            snippets.append(("inferred (actual)", r.inferred, "inferred"))
+
+        if not snippets:
+            return (
+                f'<div class="row static" data-outcome="{cls}" data-name="{name_attr}">'
+                f'<div class="rowhead">{head}</div></div>'
+            )
+
+        panel = ['<div class="panel">']
+        for label, text, kind in snippets:
+            panel.append(
+                f'<div class="snip snip-{kind}">'
+                f'<span class="snip-label">{_html.escape(label)}</span>'
+                f"<pre>{_html.escape(text.rstrip())}</pre></div>"
+            )
+        panel.append("</div>")
+        return (
+            f'<details class="row" data-outcome="{cls}" data-name="{name_attr}">'
+            f'<summary class="rowhead">{head}</summary>{"".join(panel)}</details>'
+        )
+
+    def serialize(self, output_path: Path) -> None:
         passed = sum(1 for r in self.results if r.outcome == TestOutcome.PASSED)
         failed = sum(1 for r in self.results if r.outcome == TestOutcome.FAILED)
-        other = len(self.results) - passed - failed
-        parts = [
+        total = len(self.results)
+        other = total - passed - failed
+        pct = (100.0 * passed / total) if total else 0.0
+        pct_str = (f"{pct:.1f}".rstrip("0").rstrip(".")) if total else "0"
+        gen = datetime.now(timezone.utc).date().isoformat()
+        ver = _html.escape(self.project_version)
+
+        fail_note = (
+            f' &middot; <span class="rate-note">{failed} failing</span>' if failed else ""
+        )
+        rate_cls = " has-fail" if failed else ""
+
+        segs = []
+        if passed:
+            segs.append(f'<div class="seg passed" style="flex:{passed} 1 0"></div>')
+        if failed:
+            segs.append(f'<div class="seg failed" style="flex:{failed} 1 0"></div>')
+        if other:
+            segs.append(f'<div class="seg other" style="flex:{other} 1 0"></div>')
+
+        legend = [
+            '<li><button class="leg" data-filter-set="passed">'
+            f'<span class="sw passed"></span>Passed <b>{passed}</b></button></li>',
+            '<li><button class="leg" data-filter-set="failed">'
+            f'<span class="sw failed"></span>Failed <b>{failed}</b></button></li>',
+        ]
+        if other:
+            legend.append(
+                '<li><button class="leg" data-filter-set="other">'
+                f'<span class="sw other"></span>Other <b>{other}</b></button></li>'
+            )
+
+        parts: List[str] = [
             "<!DOCTYPE html>",
             '<html lang="en"><head><meta charset="utf-8">',
-            f"<title>{self.project_name} conformance report</title>",
-            f"<style>{self._CSS}</style></head><body>",
-            f"<h1>{self.project_name} — SHACL 1.2 Rules conformance report</h1>",
-            f"<p><b>Version:</b> {_html.escape(self.project_version)} &nbsp; "
-            f"<b>Generated:</b> {datetime.now(timezone.utc).date().isoformat()}</p>",
-            '<div class="cards">',
-            f'<div class="card"><div class="n">{passed}</div>✅ Passed</div>',
-            f'<div class="card"><div class="n">{failed}</div>❌ Failed</div>',
-            f'<div class="card"><div class="n">{other}</div>⚠️ Other</div>',
-            f'<div class="card"><div class="n">{len(self.results)}</div>Total</div>',
-            "</div>",
+            '<meta name="viewport" content="width=device-width, initial-scale=1">',
+            '<meta name="color-scheme" content="light dark">',
+            f"<title>{_html.escape(self.project_name)} conformance report</title>",
+            f"<script>{self._THEME_BOOT}</script>",
+            f"<style>{self._CSS}</style></head><body><div class=\"wrap\">",
+            '<header class="top"><div class="brand">',
+            f'<h1>{_html.escape(self.project_name)} '
+            '<span class="tag">SHACL 1.2 Rules</span></h1>',
+            '<p class="sub">Shape Rule Language conformance report</p></div>',
+            '<div class="top-right"><dl class="meta">'
+            f"<div><dt>Version</dt><dd>{ver}</dd></div>"
+            f"<div><dt>Generated</dt><dd>{gen}</dd></div></dl>"
+            '<button id="theme" class="theme-btn" type="button" aria-label="Toggle theme">'
+            f"{self._SUN}{self._MOON}</button></div></header>",
+            # Hero: pass-rate + proportional bar + filterable legend.
+            '<section class="hero"><div class="hero-rate">'
+            f'<div class="rate{rate_cls}">{pct_str}%</div>'
+            f'<div class="rate-sub">{passed} / {total} tests passed{fail_note}</div></div>'
+            '<div class="hero-bar">'
+            f'<div class="bar" role="img" aria-label="{passed} passed, {failed} failed, '
+            f'{other} other of {total}">{"".join(segs)}</div>'
+            f'<ul class="legend">{"".join(legend)}</ul></div></section>',
+            # Sticky toolbar: search + outcome filters + expand/collapse.
+            '<div class="toolbar"><div class="search">'
+            f"{self._SEARCH_ICON}"
+            '<label class="vh" for="q">Search tests</label>'
+            '<input id="q" type="search" placeholder="Search tests…" autocomplete="off">'
+            "</div>"
+            '<div class="filters" role="group" aria-label="Filter by outcome">'
+            f'<button class="chip" type="button" data-filter="all" aria-pressed="true">'
+            f'All <span class="chip-n">{total}</span></button>'
+            f'<button class="chip chip-pass" type="button" data-filter="passed" '
+            f'aria-pressed="false">Passed <span class="chip-n">{passed}</span></button>'
+            f'<button class="chip chip-fail" type="button" data-filter="failed" '
+            f'aria-pressed="false">Failed <span class="chip-n">{failed}</span></button>'
+            f'<button class="chip chip-other" type="button" data-filter="other" '
+            f'aria-pressed="false">Other <span class="chip-n">{other}</span></button></div>'
+            '<div class="bulk">'
+            '<button class="txtbtn" type="button" data-bulk="expand">Expand all</button>'
+            '<button class="txtbtn" type="button" data-bulk="collapse">Collapse all</button>'
+            "</div></div>",
+            "<main>",
         ]
-        by_type = {}
+
+        by_type: dict = {}
         for r in self.results:
             by_type.setdefault(r.test.test_type, []).append(r)
+
         for cat_name, types in CATEGORY_ORDER:
             cat_results = [r for tt in types for r in by_type.get(tt, [])]
             if not cat_results:
                 continue
-            cls = ' class="ext"' if types == [TestType.TARGETING_EVAL] else ""
-            parts.append(f"<h2{cls}>{_html.escape(cat_name)}</h2>")
-            parts.append("<table><tr><th>Test</th><th>Outcome</th><th>Message</th></tr>")
-            for r in cat_results:
+            is_ext = types == [TestType.TARGETING_EVAL]
+            n = len(cat_results)
+            p = sum(1 for r in cat_results if r.outcome == TestOutcome.PASSED)
+            not_passed = n - p
+            badge = (
+                f'<span class="cat-badge bad">{not_passed} not passed</span>'
+                if not_passed
+                else '<span class="cat-badge ok">all passing</span>'
+            )
+            parts.append(f'<section class="cat{" ext" if is_ext else ""}">')
+            parts.append(
+                '<div class="cat-head">'
+                f"<h2>{_html.escape(cat_name)}</h2>"
+                f'<span class="cat-count">{p} / {n} passed</span>{badge}</div>'
+            )
+            if is_ext:
                 parts.append(
-                    f"<tr><td><code>{_html.escape(r.test.name)}</code></td>"
-                    f"<td>{self._pill(r.outcome)}</td>"
-                    f"<td>{_html.escape(r.message or '')}</td></tr>"
+                    '<p class="note">Opt-in extension &mdash; not part of the '
+                    "W3C SHACL 1.2 specification.</p>"
                 )
-            parts.append("</table>")
-            if self.runner is not None:
-                for r in cat_results:
-                    snippets = collect_source_snippets(self.runner, r.test)
-                    if not snippets:
-                        continue
-                    parts.append(
-                        f"<details><summary><code>{_html.escape(r.test.name)}</code> "
-                        "source</summary>"
-                    )
-                    for label, text in snippets:
-                        parts.append(f"<b>{label}:</b><pre>{_html.escape(text.rstrip())}</pre>")
-                    parts.append("</details>")
-        parts.append("</body></html>")
+            parts.append('<div class="tbl">')
+            for r in cat_results:
+                parts.append(self._row_html(r))
+            parts.append("</div></section>")
+
+        parts.append('<p id="empty" class="empty" hidden>No tests match your search.</p>')
+        parts.append("</main>")
+        parts.append(
+            '<footer class="foot">Generated by the shacl-rules W3C conformance runner '
+            f"&middot; {gen}</footer>"
+        )
+        parts.append(f"<script>{self._JS}</script>")
+        parts.append("</div></body></html>")
+
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(parts))
 
