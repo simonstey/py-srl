@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Union
 
-
 # ============================================================================
 # RDF Terms and Basic Types
 # ============================================================================
@@ -287,17 +286,6 @@ class Assignment:
 
     def __str__(self) -> str:
         return f"SET ({self.variable} := {self.expression})"
-
-
-@dataclass(frozen=True)
-class Annotation:
-    """RDF-star annotation on a triple. Grammar AnnotationBlock ``{| ... |}``."""
-
-    properties: List[tuple]
-
-    def __str__(self) -> str:
-        props = "; ".join(f"{p} {o}" for p, o in self.properties)
-        return f"{{| {props} |}}"
 
 
 # Union type for rule body elements (the four spec rule-element kinds).
@@ -604,9 +592,7 @@ def _check_well_formed_sequence(elements: List[RuleBodyElement], v0: set) -> set
             undefined = expr_vars - v_prev
             if undefined:
                 names = ", ".join(sorted(str(v) for v in undefined))
-                raise WellFormednessError(
-                    f"Filter references variable(s) not yet defined: {names}"
-                )
+                raise WellFormednessError(f"Filter references variable(s) not yet defined: {names}")
             # A filter defines no variables (vars_i = empty).
 
         elif isinstance(element, Assignment):
@@ -652,9 +638,7 @@ def validate_rule_well_formedness(rule: Rule) -> None:
     undefined_head = head_vars - v_all
     if undefined_head:
         names = ", ".join(sorted(str(v) for v in undefined_head))
-        raise WellFormednessError(
-            f"Head template variable(s) not defined in body: {names}"
-        )
+        raise WellFormednessError(f"Head template variable(s) not defined in body: {names}")
 
 
 def validate_rule_set_well_formedness(rule_set: RuleSet) -> None:
