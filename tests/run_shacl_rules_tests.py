@@ -90,6 +90,23 @@ class TestResult:
     duration_ms: Optional[float] = None
 
 
+# Report categorization shared by the Markdown and HTML generators.
+CATEGORY_ORDER = [
+    ("Syntax", [TestType.POSITIVE_SYNTAX, TestType.NEGATIVE_SYNTAX]),
+    ("Well-formedness", [TestType.POSITIVE_WELLFORMEDNESS, TestType.NEGATIVE_WELLFORMEDNESS]),
+    ("Stratification", [TestType.POSITIVE_STRATIFICATION, TestType.NEGATIVE_STRATIFICATION]),
+    ("Evaluation", [TestType.EVAL]),
+    ("Targeting extension (opt-in, NOT W3C-spec)", [TestType.TARGETING_EVAL]),
+]
+OUTCOME_BADGE = {
+    TestOutcome.PASSED: "✅",
+    TestOutcome.FAILED: "❌",
+    TestOutcome.CANT_TELL: "⚠️",
+    TestOutcome.INAPPLICABLE: "➖",
+    TestOutcome.UNTESTED: "❔",
+}
+
+
 class TestManifestParser:
     """Parses SHACL Rules test manifests."""
 
@@ -690,6 +707,100 @@ class EARLReportGenerator:
         """Serialize the EARL report to a Turtle file."""
         with open(output_path, "w", encoding="utf-8") as f:
             f.write(self.graph.serialize(format="turtle"))
+
+
+def collect_source_snippets(runner: "SHACLRulesTestRunner", test: TestEntry) -> List[tuple]:
+    """Return (label, text) pairs of the source files backing a test, best-effort."""
+    snippets: List[tuple] = []
+    refs = []
+    if test.test_type in (TestType.EVAL, TestType.TARGETING_EVAL):
+        refs = [
+            ("ruleset", test.action_ruleset),
+            ("data", test.action_data),
+            ("shapes", test.action_shapes),
+            ("expected", test.result),
+        ]
+    else:
+        refs = [("source", test.action)]
+    for label, ref in refs:
+        if ref is None:
+            continue
+        try:
+            snippets.append((label, runner._read_file(runner._resolve_file(ref))))
+        except OSError:
+            continue
+    return snippets
+
+
+class MarkdownReportGenerator:
+    """Renders a styled Markdown conformance report."""
+
+    def __init__(self, project_name: str = "shacl-rules", project_version: str = None):
+        self.project_name = project_name
+        self.project_version = project_version or SRL_VERSION
+        self.results: List[TestResult] = []
+        self.runner: Optional["SHACLRulesTestRunner"] = None
+
+    def add_results(self, results: List[TestResult], runner: "SHACLRulesTestRunner" = None):
+        self.results = results
+        self.runner = runner
+
+    def _counts(self):
+        passed = sum(1 for r in self.results if r.outcome == TestOutcome.PASSED)
+        failed = sum(1 for r in self.results if r.outcome == TestOutcome.FAILED)
+        other = len(self.results) - passed - failed
+        return passed, failed, other
+
+    def serialize(self, output_path: Path):
+        passed, failed, other = self._counts()
+        lines = [
+            f"# {self.project_name} — SHACL 1.2 Rules conformance report",
+            "",
+            f"**Version:** {self.project_version}  ",
+            f"**Generated:** {datetime.now(timezone.utc).date().isoformat()}",
+            "",
+            "| Result | Count |",
+            "| --- | --- |",
+            f"| ✅ Passed | {passed} |",
+            f"| ❌ Failed | {failed} |",
+            f"| ⚠️ Other | {other} |",
+            f"| **Total** | **{len(self.results)}** |",
+            "",
+        ]
+        by_type = {}
+        for r in self.results:
+            by_type.setdefault(r.test.test_type, []).append(r)
+        for cat_name, types in CATEGORY_ORDER:
+            cat_results = [r for tt in types for r in by_type.get(tt, [])]
+            if not cat_results:
+                continue
+            lines.append(f"## {cat_name}")
+            lines.append("")
+            lines.append("| Test | Outcome | Message |")
+            lines.append("| --- | --- | --- |")
+            for r in cat_results:
+                badge = OUTCOME_BADGE.get(r.outcome, "?")
+                msg = (r.message or "").replace("|", "\\|").replace("\n", " ")
+                lines.append(f"| `{r.test.name}` | {badge} {r.outcome.value} | {msg} |")
+            lines.append("")
+            if self.runner is not None:
+                for r in cat_results:
+                    snippets = collect_source_snippets(self.runner, r.test)
+                    if not snippets:
+                        continue
+                    lines.append(f"<details><summary><code>{r.test.name}</code> source</summary>")
+                    lines.append("")
+                    for label, text in snippets:
+                        lines.append(f"**{label}:**")
+                        lines.append("")
+                        lines.append("```")
+                        lines.append(text.rstrip())
+                        lines.append("```")
+                        lines.append("")
+                    lines.append("</details>")
+                    lines.append("")
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
 
 
 def find_manifest(test_suite_path: Path) -> Optional[Path]:

@@ -42,3 +42,19 @@ def test_collect_tests_includes_extensions_only_when_asked():
     assert "targeting-adult-01" not in spec_names
     assert "targeting-adult-01" in ext_names
     assert len(with_ext) == len(spec_only) + 3
+
+
+def test_markdown_report_contains_summary_and_categories(tmp_path):
+    runner = R.SHACLRulesTestRunner(EXT_MANIFEST.parent)
+    tests = R.TestManifestParser(EXT_MANIFEST).parse()
+    results = [runner.run_test(t) for t in tests]
+    gen = R.MarkdownReportGenerator()
+    gen.add_results(results, runner=runner)
+    out = tmp_path / "report.md"
+    gen.serialize(out)
+    text = out.read_text(encoding="utf-8")
+    assert "# " in text  # has a title
+    assert "Targeting extension" in text  # extension section rendered
+    assert "targeting-adult-01" in text  # test name in a row
+    assert "<details>" in text  # collapsible source
+    assert "✅" in text or "❌" in text  # outcome badge
