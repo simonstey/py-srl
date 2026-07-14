@@ -1,0 +1,2 @@
+PREFIX ex: <http://example.org/>
+RULE ex:r FOR ?e IN ex:EmployeeShape { ?e a ex:Employee } WHERE { ?e ex:worksFor ?c }
