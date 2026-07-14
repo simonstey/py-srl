@@ -6,7 +6,8 @@ following the Shape Rules abstract syntax and the 2026-07 grammar restructuring.
 """
 
 import uuid
-from typing import Dict
+from dataclasses import dataclass, field
+from typing import Dict, List
 
 from lark import Token, Transformer
 
@@ -43,6 +44,33 @@ from ..ast.nodes import (
 )
 
 RDF_TYPE = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+RDF_FIRST = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#first")
+RDF_REST = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest")
+RDF_NIL = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
+RDF_REIFIES = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies")
+
+
+@dataclass
+class _Node:
+    """Transform-time carrier for RDF-1.2 desugaring.
+
+    A term standing in the enclosing triple slot (``head``) plus the plain
+    triples it drags along (``side``). NOT an AST node — mutable, transient,
+    never frozen or exported; it only flows between transformer methods.
+
+    Attributes:
+        head: the RDF term occupying the enclosing subject/object slot
+            (IRI / BlankNode / Variable / Literal / TripleTerm, or rdf:nil).
+        side: already-desugared ``(subject, predicate, object)`` AST-term
+            tuples emitted alongside the base triple.
+        annotations: deferred annotation entries for an object, applied once
+            the enclosing subject+predicate are known (see _expand_annotations).
+    """
+
+    head: object
+    side: List[tuple] = field(default_factory=list)
+    annotations: List[tuple] = field(default_factory=list)
+
 
 STANDARD_PREFIXES: Dict[str, str] = {
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
@@ -66,9 +94,26 @@ class SRLTransformer(Transformer):
         super().__init__()
         self._prefixes: Dict[str, str] = dict(STANDARD_PREFIXES)
         self.extensions = extensions
+        # Monotonic per-parse counter for RDF-1.2 desugaring blank nodes.
+        self._bnode_counter = 0
         # Bind the trivial built-in rules (name -> BuiltInCall(name, items)).
         for rule_name, bic_name in self._TRIVIAL_BUILTINS.items():
             setattr(self, rule_name, self._make_trivial_builtin(bic_name))
+
+    def _fresh_bnode(self, kind: str = "b") -> BlankNode:
+        """Mint a fresh, deterministic blank node for RDF-1.2 desugaring.
+
+        Labels are unique within a parse (never reset per-rule) so distinct
+        desugared blank nodes stay distinct; the engine re-mints a per-solution
+        rdflib BNode keyed on the label at instantiation time.
+        """
+        self._bnode_counter += 1
+        return BlankNode(label=f"_sx_{kind}_{self._bnode_counter}")
+
+    @staticmethod
+    def _as_node(x) -> "_Node":
+        """Wrap a bare term as a side-effect-free ``_Node`` (idempotent)."""
+        return x if isinstance(x, _Node) else _Node(head=x)
 
     def _make_trivial_builtin(self, bic_name: str):
         """Return a rule handler emitting ``BuiltInCall(bic_name, items)``."""
@@ -84,6 +129,7 @@ class SRLTransformer(Transformer):
 
     def rule_set(self, items):
         """[1] RuleSet ::= (Prologue1 | Rule | Data)*"""
+        self._bnode_counter = 0
         prologue = Prologue()
         rules = []
         data_blocks = []
@@ -296,9 +342,7 @@ class SRLTransformer(Transformer):
         return self._flatten_triples(items, TripleTemplate)
 
     def triples_same_subject_data(self, items):
-        subject = items[0]
-        property_list = items[1] if len(items) > 1 else []
-        return [TripleTemplate(subject=subject, predicate=p, object=o) for p, o in property_list]
+        return self._emit_same_subject(items, TripleTemplate)
 
     def property_list_not_empty_data(self, items):
         return self._pairs(items)
@@ -338,9 +382,7 @@ class SRLTransformer(Transformer):
         return self._flatten_triples(items, TripleTemplate)
 
     def triples_same_subject_template(self, items):
-        subject = items[0]
-        property_list = items[1] if len(items) > 1 else []
-        return [TripleTemplate(subject=subject, predicate=p, object=o) for p, o in property_list]
+        return self._emit_same_subject(items, TripleTemplate)
 
     def property_list_not_empty_template(self, items):
         return self._pairs(items)
@@ -365,9 +407,7 @@ class SRLTransformer(Transformer):
         return self._flatten_triples(items, TriplePattern)
 
     def triples_same_subject_pattern(self, items):
-        subject = items[0]
-        property_list = items[1] if len(items) > 1 else []
-        return [TriplePattern(subject=subject, predicate=p, object=o) for p, o in property_list]
+        return self._emit_same_subject(items, TriplePattern)
 
     def property_list_not_empty_pattern(self, items):
         return self._pairs(items)
@@ -749,8 +789,42 @@ class SRLTransformer(Transformer):
     @staticmethod
     def _nil_or_first(items):
         if items and isinstance(items[0], Token) and items[0].type == "NIL":
-            return IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
+            return RDF_NIL
         return items[0]
+
+    def _emit_same_subject(self, items, kind):
+        """Build the base triples for one subject, hoisting carrier side-triples.
+
+        ``kind`` is ``TripleTemplate`` (data/template families) or
+        ``TriplePattern`` (pattern family). ``items`` is ``[subject, pairs]``
+        where ``subject`` may be a bare term or a ``_Node`` (collection /
+        blank-node list / reified-triple subject) and ``pairs`` is the
+        ``(predicate, object)`` list from ``_pairs`` (objects may be ``_Node``s
+        carrying side-triples and annotations).
+        """
+        subj_node = self._as_node(items[0])
+        subject = subj_node.head
+        triples = [kind(subject=s, predicate=p, object=o) for (s, p, o) in subj_node.side]
+        pairs = items[1] if len(items) > 1 else []
+        for pred, obj in pairs:
+            obj_node = self._as_node(obj)
+            triples += [kind(subject=s, predicate=p, object=o) for (s, p, o) in obj_node.side]
+            triples.append(kind(subject=subject, predicate=pred, object=obj_node.head))
+            triples += [
+                kind(subject=s, predicate=p, object=o)
+                for (s, p, o) in self._expand_annotations(
+                    subject, pred, obj_node.head, obj_node.annotations
+                )
+            ]
+        return triples
+
+    def _expand_annotations(self, s, p, o, annotations):
+        """Expand an object's RDF-1.2 annotation list to side-triple tuples.
+
+        Filled in by the annotation task; until then no construct produces
+        annotations, so the list is always empty.
+        """
+        return []
 
     @staticmethod
     def _pairs(items):
