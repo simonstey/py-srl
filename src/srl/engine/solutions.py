@@ -33,6 +33,33 @@ except Exception:  # pragma: no cover - older rdflib
 RDFTerm = Union[URIRef, RDFLiteral, BNode]
 
 
+class UnrepresentableTripleTermError(Exception):
+    """Raised when a triple term must be added to a graph but the installed
+    rdflib exposes no triple-term type.
+
+    RDF 1.2 triple terms ``<<( s p o )>>`` — including those produced by
+    desugaring reified triples ``<< >>``, reifier annotations ``~`` and
+    annotation blocks ``{| |}`` into ``reifier rdf:reifies <<( s p o )>>`` —
+    parse and desugar correctly, but cannot be materialized into an rdflib
+    Graph when ``rdflib.term.Triple`` is unavailable (e.g. rdflib 7.5.0).
+    Instantiating such a term in a rule head or DATA block raises this with an
+    actionable message instead of an opaque ``Graph.add`` assertion downstream.
+    """
+
+
+def _materialize_triple_term(s: RDFTerm, p: RDFTerm, o: RDFTerm):
+    """Build an rdflib triple term, or raise if this rdflib exposes none."""
+    if RDFTripleTerm is not None:
+        return RDFTripleTerm((s, p, o))
+    raise UnrepresentableTripleTermError(
+        f"This rdflib version has no triple-term type, so the RDF 1.2 triple "
+        f"term <<( {s} {p} {o} )>> cannot be added to the result graph. Triple "
+        f"terms — and the reified-triple / reifier / annotation-block constructs "
+        f"that desugar to rdf:reifies triple terms — parse but are not evaluable "
+        f"here; upgrade to an rdflib with triple-term support to evaluate them."
+    )
+
+
 @dataclass(frozen=True)
 class SolutionMapping:
     """
@@ -141,10 +168,7 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
         s = substitute_term(term.subject, mu)
         p = substitute_term(term.predicate, mu)
         o = substitute_term(term.object, mu)
-        if RDFTripleTerm is not None:
-            return RDFTripleTerm((s, p, o))
-        # Fallback: represent the triple term as a plain (s, p, o) tuple.
-        return (s, p, o)
+        return _materialize_triple_term(s, p, o)
     elif isinstance(term, IRI):
         return URIRef(term.value)
     elif isinstance(term, Literal):
@@ -402,9 +426,7 @@ def _subst_with_bnodes(term, mu, bnode_map):
         s = _subst_with_bnodes(term.subject, mu, bnode_map)
         p = _subst_with_bnodes(term.predicate, mu, bnode_map)
         o = _subst_with_bnodes(term.object, mu, bnode_map)
-        if RDFTripleTerm is not None:
-            return RDFTripleTerm((s, p, o))
-        return (s, p, o)
+        return _materialize_triple_term(s, p, o)
     return substitute_term(term, mu)
 
 
