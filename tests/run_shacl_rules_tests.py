@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import html as _html
+import json
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -499,9 +500,7 @@ class SHACLRulesTestRunner:
             msg += f"; missing: {len(missing)}"
         if extra:
             msg += f"; extra: {len(extra)}"
-        return TestResult(
-            test=test, outcome=TestOutcome.FAILED, message=msg, inferred=inferred_ttl
-        )
+        return TestResult(test=test, outcome=TestOutcome.FAILED, message=msg, inferred=inferred_ttl)
 
     def _run_eval_test(self, test: TestEntry) -> TestResult:
         """
@@ -825,6 +824,153 @@ class MarkdownReportGenerator:
                     lines.append("")
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
+
+
+# Preset scenarios seeded into the in-report playground. Each teaches one SRL
+# feature and is drawn verbatim from the examples/ directory so the playground
+# stays honest to what the reference implementation actually runs. `extension`
+# entries carry a shapes graph and require the opt-in FOR-IN targeting toggle.
+PLAYGROUND_PRESETS = [
+    {
+        "id": "paths",
+        "label": "Sequence paths",
+        "blurb": "Grandparent / great-grandparent via multi-step sequence paths (a/b).",
+        "rules": (
+            "PREFIX ex: <http://example.org/>\n\n"
+            "# Grandparents via a two-step sequence path (parentOf/parentOf).\n"
+            "RULE ex:GrandparentRule { ?gp ex:grandparentOf ?gc } WHERE {\n"
+            "    ?gp ex:parentOf/ex:parentOf ?gc\n"
+            "}\n\n"
+            "# Great-grandparents via a three-step sequence path.\n"
+            "RULE ex:GreatGrandparentRule { ?p ex:greatGrandparentOf ?ggc } WHERE {\n"
+            "    ?p ex:parentOf/ex:parentOf/ex:parentOf ?ggc\n"
+            "}"
+        ),
+        "data": (
+            "@prefix ex: <http://example.org/> .\n\n"
+            "ex:Alice ex:parentOf ex:Bob .\n"
+            "ex:Bob ex:parentOf ex:Charlie .\n"
+            "ex:Charlie ex:parentOf ex:Diana ."
+        ),
+    },
+    {
+        "id": "recursion",
+        "label": "Recursive closure",
+        "blurb": "Transitive ancestor relation computed to a fixed point (base + recursive rule).",
+        "rules": (
+            "PREFIX ex: <http://example.org/>\n\n"
+            "# Base case: a parent is an ancestor.\n"
+            "RULE {\n"
+            "    ?x ex:ancestor ?y .\n"
+            "} WHERE {\n"
+            "    ?x ex:parent ?y .\n"
+            "}\n\n"
+            "# Recursive case: an ancestor of an ancestor is an ancestor.\n"
+            "RULE {\n"
+            "    ?x ex:ancestor ?z .\n"
+            "} WHERE {\n"
+            "    ?x ex:ancestor ?y .\n"
+            "    ?y ex:ancestor ?z .\n"
+            "}"
+        ),
+        "data": (
+            "@prefix ex: <http://example.org/> .\n\n"
+            "ex:Alice ex:parent ex:Bob .\n"
+            "ex:Bob ex:parent ex:Charlie .\n"
+            "ex:Charlie ex:parent ex:Diana ."
+        ),
+    },
+    {
+        "id": "set",
+        "label": "SET + built-ins",
+        "blurb": "Chained SET assignments over string and numeric built-ins "
+        "(CONCAT, UCASE, STRLEN, ABS, ROUND).",
+        "rules": (
+            "PREFIX ex: <http://example.org/>\n\n"
+            "# String pipeline: build a full name, then derive views of it.\n"
+            "RULE {\n"
+            "    ?p ex:fullName ?full .\n"
+            "    ?p ex:displayName ?disp .\n"
+            "    ?p ex:nameLength ?len .\n"
+            "} WHERE {\n"
+            "    ?p ex:firstName ?first .\n"
+            "    ?p ex:lastName ?last .\n"
+            '    SET(?full := CONCAT(?first, " ", ?last))\n'
+            "    SET(?disp := UCASE(?full))\n"
+            "    SET(?len := STRLEN(?full))\n"
+            "}\n\n"
+            "# Numeric pipeline: absolute error, then a rounded percentage error.\n"
+            "RULE {\n"
+            "    ?p ex:absError ?err .\n"
+            "    ?p ex:pctError ?pct .\n"
+            "} WHERE {\n"
+            "    ?p ex:predicted ?pred .\n"
+            "    ?p ex:actual ?act .\n"
+            "    SET(?err := ABS(?pred - ?act))\n"
+            "    SET(?pct := ROUND(100 * ?err / ?act))\n"
+            "}"
+        ),
+        "data": (
+            "@prefix ex: <http://example.org/> .\n\n"
+            'ex:Person1 ex:firstName "John" ; ex:lastName "Doe" ;\n'
+            "    ex:predicted 80 ; ex:actual 78 .\n"
+            'ex:Person2 ex:firstName "Jane" ; ex:lastName "Smith" ;\n'
+            "    ex:predicted 60 ; ex:actual 72 ."
+        ),
+    },
+    {
+        "id": "negation",
+        "label": "Negation (NOT)",
+        "blurb": "Closed-world reasoning: flag people with no recorded child via NOT { ... }.",
+        "rules": (
+            "PREFIX ex: <http://example.org/>\n\n"
+            "# ?person is bound by the positive Person pattern before NOT references it.\n"
+            "RULE {\n"
+            "    ?person ex:childless true .\n"
+            "} WHERE {\n"
+            "    ?person ex:type ex:Person .\n"
+            "    NOT {\n"
+            "        ?person ex:hasChild ?child .\n"
+            "    }\n"
+            "}"
+        ),
+        "data": (
+            "@prefix ex: <http://example.org/> .\n\n"
+            "ex:Alice ex:type ex:Person ; ex:hasChild ex:Bob .\n"
+            "ex:Carol ex:type ex:Person .   # no children recorded\n"
+            "ex:Dave ex:type ex:Person .    # no children recorded"
+        ),
+    },
+    {
+        "id": "targeting",
+        "label": "FOR-IN targeting",
+        "blurb": "Opt-in rule-to-shape targeting: the rule fires only for focus nodes that "
+        "conform to a SHACL shape. Not part of the W3C SRL spec.",
+        "extension": True,
+        "rules": (
+            "PREFIX ex: <http://example.org/>\n\n"
+            "# Fires only for ex:EmployeeShape focus nodes that CONFORM to it,\n"
+            "# i.e. Persons that actually have a worksFor value.\n"
+            "RULE ex:EmployeeRule FOR ?e IN ex:EmployeeShape { ?e a ex:Employee } WHERE {\n"
+            "    ?e ex:worksFor ?company\n"
+            "}"
+        ),
+        "data": (
+            "@prefix ex: <http://example.org/> .\n\n"
+            "# Eve works for a company (conforms); Frank does not.\n"
+            "ex:Eve a ex:Person ; ex:worksFor ex:Acme .\n"
+            "ex:Frank a ex:Person ."
+        ),
+        "shapes": (
+            "@prefix sh: <http://www.w3.org/ns/shacl#> .\n"
+            "@prefix ex: <http://example.org/> .\n\n"
+            "# Targets every Person, conforms only when a worksFor value is present.\n"
+            "ex:EmployeeShape a sh:NodeShape ;\n"
+            "    sh:targetClass ex:Person ;\n"
+            "    sh:property [ sh:path ex:worksFor ; sh:minCount 1 ] ."
+        ),
+    },
+]
 
 
 class HtmlReportGenerator:
@@ -1226,6 +1372,280 @@ class HtmlReportGenerator:
         'stroke-width="2" stroke-linecap="round" aria-hidden="true">'
         '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'
     )
+    _PLAY_ICON = (
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" '
+        'aria-hidden="true"><path d="M7 5.2c0-.9 1-1.5 1.8-1L18.6 10a1.2 1.2 0 0 1 0 2.1'
+        'L8.8 17.9c-.8.5-1.8-.1-1.8-1V5.2z"/></svg>'
+    )
+    _ARROW_ICON = (
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+        '<path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+    )
+
+    # Playground styles. Reuses the report's tokens (surface / border / ink /
+    # accent / pass-fail-warn / radius); adds only editor-gutter, panel-grid,
+    # and run-state pieces. Kept in a separate constant so the report CSS above
+    # stays untouched and legible.
+    _PG_CSS = """
+    .pg {
+      margin: 1.5rem 0 0.5rem; padding: 1.4rem 1.5rem 1.6rem;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .pg-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem 1rem; }
+    .pg-head h2 {
+      font-size: 1.1rem; font-weight: 650; letter-spacing: -0.01em; margin: 0;
+      display: flex; align-items: center; gap: 0.55rem;
+    }
+    .pg-head h2 .tag {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em; color: var(--accent);
+      background: color-mix(in oklch, var(--accent) 14%, transparent);
+      padding: 0.15rem 0.5rem; border-radius: 999px;
+    }
+    .pg-sub { margin: 0; color: var(--ink-muted); font-size: 0.9rem; flex: 1 1 16rem; }
+    .pg-engine {
+      display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.78rem;
+      color: var(--ink-muted); white-space: nowrap;
+    }
+    .pg-engine .dot {
+      width: 0.5rem; height: 0.5rem; border-radius: 50%; flex: none;
+      background: var(--warn-solid); transition: background 0.2s ease;
+    }
+    .pg-engine[data-state="ready"] .dot { background: var(--pass-solid); }
+    .pg-engine[data-state="error"] .dot { background: var(--fail-solid); }
+    .pg-engine .lbl-loading { display: inline; }
+    .pg-engine .lbl-ready, .pg-engine .lbl-error { display: none; }
+    .pg-engine[data-state="ready"] .lbl-loading,
+    .pg-engine[data-state="ready"] .lbl-error { display: none; }
+    .pg-engine[data-state="ready"] .lbl-ready { display: inline; }
+    .pg-engine[data-state="error"] .lbl-loading,
+    .pg-engine[data-state="error"] .lbl-ready { display: none; }
+    .pg-engine[data-state="error"] .lbl-error { display: inline; }
+    .pg-engine .spin {
+      width: 0.85rem; height: 0.85rem; border-radius: 50%; flex: none;
+      border: 2px solid color-mix(in oklch, var(--ink-muted) 35%, transparent);
+      border-top-color: var(--ink-muted); animation: pg-spin 0.7s linear infinite;
+    }
+    .pg-engine[data-state="ready"] .spin, .pg-engine[data-state="error"] .spin { display: none; }
+    @keyframes pg-spin { to { transform: rotate(360deg); } }
+
+    /* Presets + extension toggle */
+    .pg-controls {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
+      margin: 1rem 0 0.9rem;
+    }
+    .pg-presets { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .pg-preset {
+      font: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer;
+      padding: 0.35rem 0.7rem; border-radius: 999px; color: var(--ink-muted);
+      background: var(--surface-2); border: 1px solid var(--border);
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .pg-preset:hover { color: var(--ink); border-color: var(--border-strong); }
+    .pg-preset[aria-pressed="true"] {
+      color: var(--accent); background: color-mix(in oklch, var(--accent) 12%, var(--surface));
+      border-color: color-mix(in oklch, var(--accent) 45%, transparent);
+    }
+    .pg-preset.is-ext::after {
+      content: "ext"; margin-left: 0.4rem; font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.03em; color: var(--ext); vertical-align: 0.05em;
+    }
+    .pg-ext-toggle {
+      display: inline-flex; align-items: center; gap: 0.5rem; margin-left: auto;
+      font-size: 0.82rem; color: var(--ink-muted); cursor: pointer; user-select: none;
+    }
+    .pg-ext-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .pg-ext-toggle .track {
+      width: 2.1rem; height: 1.15rem; border-radius: 999px; flex: none; position: relative;
+      background: var(--surface-2); border: 1px solid var(--border-strong);
+      transition: background 0.18s ease, border-color 0.18s ease;
+    }
+    .pg-ext-toggle .track::after {
+      content: ""; position: absolute; top: 50%; left: 0.12rem; transform: translateY(-50%);
+      width: 0.85rem; height: 0.85rem; border-radius: 50%; background: var(--ink-muted);
+      transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s ease;
+    }
+    .pg-ext-toggle input:checked + .track {
+      background: color-mix(in oklch, var(--ext) 30%, transparent); border-color: var(--ext);
+    }
+    .pg-ext-toggle input:checked + .track::after { transform: translateY(-50%) translateX(0.92rem); background: var(--ext); }
+    .pg-ext-toggle input:focus-visible + .track {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .pg-ext-toggle b { color: var(--ext); font-weight: 600; }
+
+    /* Editor grid */
+    .pg-grid { display: grid; gap: 0.9rem; grid-template-columns: 1fr; }
+    @media (min-width: 54rem) { .pg-grid { grid-template-columns: 1fr 1fr; } }
+    .pg.has-shapes .pg-grid .ed-shapes { grid-column: 1 / -1; }
+    .ed { display: grid; gap: 0.35rem; min-width: 0; }
+    .ed.ed-shapes { display: none; }
+    .pg.has-shapes .ed.ed-shapes { display: grid; }
+    .ed-top { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+    .ed-label {
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--ink-muted);
+    }
+    .ed-shapes .ed-label { color: var(--ext); }
+    .ed-hint { font-size: 0.72rem; color: var(--ink-muted); }
+    .ed-box {
+      position: relative; display: grid; grid-template-columns: auto 1fr;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow: hidden;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .ed-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 22%, transparent);
+    }
+    .ed-box.invalid { border-color: color-mix(in oklch, var(--fail-solid) 55%, var(--border)); }
+    .ed-box.invalid:focus-within {
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--fail-solid) 22%, transparent);
+    }
+    .ed-gutter {
+      margin: 0; padding: 0.7rem 0.5rem 0.7rem 0.7rem; text-align: right;
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+      font-size: 0.8rem; line-height: 1.6; color: var(--ink-muted);
+      background: color-mix(in oklch, var(--ink) 4%, var(--surface-2));
+      border-right: 1px solid var(--border); user-select: none;
+      overflow: hidden; white-space: pre; opacity: 0.7; min-width: 2.4rem;
+    }
+    .ed-ta {
+      margin: 0; padding: 0.7rem 0.85rem; border: 0; resize: vertical;
+      width: 100%; min-height: 12.5rem; background: transparent; color: var(--ink);
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+      font-size: 0.8rem; line-height: 1.6; tab-size: 4; white-space: pre;
+      overflow-wrap: normal; overflow-x: auto;
+    }
+    .ed-shapes .ed-ta { min-height: 8rem; }
+    .ed-ta:focus { outline: none; }
+    .ed-ta::placeholder { color: var(--ink-muted); }
+
+    /* Run bar */
+    .pg-run { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin: 1rem 0 0; }
+    .pg-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer;
+      font: inherit; font-size: 0.9rem; font-weight: 600; padding: 0.55rem 1.1rem;
+      color: oklch(1 0 0); background: var(--accent); border: 1px solid transparent;
+      border-radius: 10px; transition: filter 0.15s ease, transform 0.06s ease;
+    }
+    .pg-btn:hover { filter: brightness(1.07); }
+    .pg-btn:active { transform: translateY(1px); }
+    .pg-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .pg-btn[disabled] { opacity: 0.55; cursor: not-allowed; filter: none; transform: none; }
+    .pg-btn .spin {
+      width: 0.9rem; height: 0.9rem; border-radius: 50%; flex: none; display: none;
+      border: 2px solid oklch(1 0 0 / 0.4); border-top-color: oklch(1 0 0);
+      animation: pg-spin 0.7s linear infinite;
+    }
+    .pg.is-running .pg-btn .spin { display: inline-block; }
+    .pg.is-running .pg-btn .pg-btn-ic { display: none; }
+    .pg-share {
+      display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer;
+      font: inherit; font-size: 0.82rem; color: var(--ink-muted);
+      background: none; border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.5rem 0.75rem; transition: color 0.15s ease, border-color 0.15s ease;
+    }
+    .pg-share:hover { color: var(--ink); border-color: var(--border-strong); }
+    .pg-share.copied { color: var(--pass-ink); border-color: color-mix(in oklch, var(--pass-solid) 45%, transparent); }
+    .pg-runhint { font-size: 0.8rem; color: var(--ink-muted); margin-left: auto; }
+    kbd {
+      font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 0.1rem 0.35rem;
+      border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 5px;
+      background: var(--surface-2); color: var(--ink-muted);
+    }
+
+    /* Output */
+    .pg-out { margin-top: 1.15rem; display: grid; gap: 0.9rem; }
+    .pg-out[hidden] { display: none; }
+    .pg-stats { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; align-items: baseline; }
+    .pg-stat { display: inline-flex; align-items: baseline; gap: 0.4rem; }
+    .pg-stat b {
+      font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums;
+      letter-spacing: -0.01em; color: var(--ink);
+    }
+    .pg-stat.pg-hero b { color: var(--pass-ink); }
+    .pg-stat span {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--ink-muted);
+    }
+    .pg-diag { display: grid; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+    .pg-diag li {
+      display: grid; grid-template-columns: auto auto 1fr; gap: 0.5rem 0.6rem;
+      align-items: baseline; padding: 0.5rem 0.7rem; font-size: 0.82rem;
+      border-radius: var(--radius-sm); border: 1px solid transparent;
+    }
+    .pg-diag .d-tag {
+      font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 0.1rem 0.4rem; border-radius: 5px; white-space: nowrap;
+    }
+    .pg-diag .d-loc {
+      font-family: ui-monospace, monospace; font-size: 0.74rem; color: var(--ink-muted);
+      white-space: nowrap;
+    }
+    .pg-diag .d-msg { overflow-wrap: anywhere; color: var(--ink); }
+    .pg-diag li.error { background: var(--fail-bg); border-color: color-mix(in oklch, var(--fail-solid) 30%, transparent); }
+    .pg-diag li.error .d-tag { color: oklch(1 0 0); background: var(--fail-solid); }
+    .pg-diag li.warning { background: var(--warn-bg); border-color: color-mix(in oklch, var(--warn-solid) 40%, transparent); }
+    .pg-diag li.warning .d-tag { color: var(--warn-ink); background: color-mix(in oklch, var(--warn-solid) 45%, transparent); }
+    .pg-diag li.info { background: var(--surface-2); border-color: var(--border); }
+    .pg-diag li.info .d-tag { color: var(--accent); background: color-mix(in oklch, var(--accent) 15%, transparent); }
+    .pg-diag li.strat .d-tag::after { content: " · strat"; font-weight: 600; opacity: 0.8; }
+
+    .pg-result-head {
+      display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap;
+      font-size: 0.82rem; color: var(--ink-muted);
+    }
+    .pg-result-head b { color: var(--ink); font-size: 0.95rem; }
+    .pg-table-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: auto; max-height: 26rem; }
+    table.pg-triples { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    table.pg-triples th {
+      position: sticky; top: 0; z-index: 1; text-align: left; font-weight: 600;
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--ink-muted); background: var(--surface-2);
+      padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+    table.pg-triples td {
+      padding: 0.4rem 0.75rem; border-bottom: 1px solid var(--border);
+      vertical-align: top; overflow-wrap: anywhere;
+    }
+    table.pg-triples tr:last-child td { border-bottom: 0; }
+    table.pg-triples tbody tr:hover { background: var(--hover); }
+    table.pg-triples .t-term {
+      font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+      font-size: 0.78rem; color: var(--ink);
+    }
+    table.pg-triples .t-rule { white-space: nowrap; }
+    .pg-rulebadge {
+      display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem;
+      padding: 0.12rem 0.5rem; border-radius: 999px; color: var(--accent);
+      background: color-mix(in oklch, var(--accent) 12%, transparent);
+    }
+    .pg-rulebadge .it {
+      font-variant-numeric: tabular-nums; font-size: 0.66rem; color: var(--ink-muted);
+    }
+    .pg-empty-out {
+      padding: 1.5rem 1rem; text-align: center; font-size: 0.86rem; color: var(--ink-muted);
+      background: var(--surface-2); border: 1px dashed var(--border); border-radius: var(--radius-sm);
+    }
+    .pg-empty-out.ok { color: var(--pass-ink); border-color: color-mix(in oklch, var(--pass-solid) 35%, transparent); }
+    .pg-note {
+      margin: 0.9rem 0 0; padding: 0.7rem 0.85rem; font-size: 0.8rem; line-height: 1.5;
+      color: var(--ext); background: color-mix(in oklch, var(--ext) 8%, var(--surface));
+      border: 1px solid color-mix(in oklch, var(--ext) 30%, var(--border));
+      border-radius: var(--radius-sm);
+    }
+    .pg-note[hidden] { display: none; }
+    .pg-fail {
+      margin-top: 1rem; padding: 0.8rem 0.95rem; font-size: 0.85rem; line-height: 1.5;
+      color: var(--fail-ink); background: var(--fail-bg);
+      border: 1px solid color-mix(in oklch, var(--fail-solid) 35%, transparent);
+      border-radius: var(--radius-sm);
+    }
+    .pg-fail[hidden] { display: none; }
+    .pg-fail code { font-size: 0.78rem; overflow-wrap: anywhere; }
+    """
 
     def __init__(self, project_name: str = "shacl-rules", project_version: Optional[str] = None):
         self.project_name = project_name
@@ -1262,9 +1682,7 @@ class HtmlReportGenerator:
         # the runtime output the engine actually produced for an eval test.
         snippets: List[tuple] = [
             (label, text, "src")
-            for label, text in (
-                collect_source_snippets(self.runner, r.test) if self.runner else []
-            )
+            for label, text in (collect_source_snippets(self.runner, r.test) if self.runner else [])
             if text.strip()
         ]
         if r.inferred is not None:
@@ -1289,6 +1707,430 @@ class HtmlReportGenerator:
             f'<summary class="rowhead">{head}</summary>{"".join(panel)}</details>'
         )
 
+    # Pinned engine version: the browser loads this exact release from esm.sh,
+    # which bundles its chevrotain + n3 deps for a no-build ES module import.
+    _ENGINE_PKG = "srl-engine@0.1.0"
+
+    def _playground_html(self) -> str:
+        """The in-report SRL playground section (rendered before the toolbar).
+
+        All rule evaluation happens client-side in the visitor's browser via the
+        srl-engine ES module; the report itself ships no engine code and stays a
+        static file. If the module fails to load, the section degrades to an
+        explicit error state and the rest of the report is unaffected.
+        """
+        first = PLAYGROUND_PRESETS[0]
+        preset_buttons = []
+        for i, p in enumerate(PLAYGROUND_PRESETS):
+            ext_cls = " is-ext" if p.get("extension") else ""
+            pressed = "true" if i == 0 else "false"
+            preset_buttons.append(
+                f'<button class="pg-preset{ext_cls}" type="button" role="tab" '
+                f'data-preset="{_html.escape(p["id"], quote=True)}" '
+                f'aria-pressed="{pressed}" title="{_html.escape(p["blurb"], quote=True)}">'
+                f'{_html.escape(p["label"])}</button>'
+            )
+        presets_json = _html.escape(json.dumps(PLAYGROUND_PRESETS), quote=True)
+
+        return (
+            '<section class="pg" id="playground" aria-labelledby="pg-title" '
+            f'data-presets="{presets_json}" data-engine-pkg="{self._ENGINE_PKG}">'
+            '<div class="pg-head">'
+            '<h2 id="pg-title">Playground <span class="tag">try it</span></h2>'
+            '<p class="pg-sub">Write SRL rules and RDF data, then evaluate them in your '
+            "browser. Each inferred triple is tagged with the rule that produced it.</p>"
+            '<span class="pg-engine" id="pg-engine" data-state="loading" role="status" '
+            'aria-live="polite">'
+            '<span class="spin" aria-hidden="true"></span>'
+            '<span class="dot" aria-hidden="true"></span>'
+            f'<span class="lbl-loading">Loading engine …</span>'
+            '<span class="lbl-ready">Engine ready</span>'
+            '<span class="lbl-error">Engine unavailable</span>'
+            "</span></div>"
+            # Presets + extension toggle
+            '<div class="pg-controls">'
+            '<div class="pg-presets" role="tablist" aria-label="Preset scenarios">'
+            f'{"".join(preset_buttons)}</div>'
+            '<label class="pg-ext-toggle" title="Enable the opt-in FOR-IN rule-to-shape '
+            'targeting extension (not part of the W3C SRL spec)">'
+            '<input type="checkbox" id="pg-ext"><span class="track" aria-hidden="true"></span>'
+            "<span>Enable <b>extensions</b></span></label></div>"
+            # Editors
+            '<div class="pg-grid">'
+            '<div class="ed"><div class="ed-top">'
+            '<label class="ed-label" for="pg-rules">Rules (SRL)</label>'
+            '<span class="ed-hint">grammar-validated live</span></div>'
+            '<div class="ed-box" id="pg-rules-box"><pre class="ed-gutter" id="pg-rules-gutter" '
+            'aria-hidden="true">1</pre>'
+            '<textarea class="ed-ta" id="pg-rules" spellcheck="false" autocomplete="off" '
+            'autocapitalize="off" wrap="off" aria-label="SRL rules">'
+            f'{_html.escape(first["rules"])}</textarea></div></div>'
+            '<div class="ed"><div class="ed-top">'
+            '<label class="ed-label" for="pg-data">Data (Turtle)</label>'
+            '<span class="ed-hint">RDF input graph</span></div>'
+            '<div class="ed-box" id="pg-data-box"><pre class="ed-gutter" id="pg-data-gutter" '
+            'aria-hidden="true">1</pre>'
+            '<textarea class="ed-ta" id="pg-data" spellcheck="false" autocomplete="off" '
+            'autocapitalize="off" wrap="off" aria-label="RDF data in Turtle">'
+            f'{_html.escape(first["data"])}</textarea></div></div>'
+            '<div class="ed ed-shapes"><div class="ed-top">'
+            '<label class="ed-label" for="pg-shapes">Shapes (Turtle)</label>'
+            '<span class="ed-hint">SHACL shapes graph — extension only</span></div>'
+            '<div class="ed-box" id="pg-shapes-box"><pre class="ed-gutter" id="pg-shapes-gutter" '
+            'aria-hidden="true">1</pre>'
+            '<textarea class="ed-ta" id="pg-shapes" spellcheck="false" autocomplete="off" '
+            'autocapitalize="off" wrap="off" aria-label="SHACL shapes in Turtle"></textarea>'
+            "</div></div></div>"
+            # Run bar
+            '<div class="pg-run">'
+            '<button class="pg-btn" id="pg-run" type="button">'
+            '<span class="spin" aria-hidden="true"></span>'
+            f'<span class="pg-btn-ic" aria-hidden="true">{self._PLAY_ICON}</span>'
+            "Run</button>"
+            '<button class="pg-share" id="pg-share" type="button" title="Copy a link that '
+            'restores these editors">'
+            '<span aria-hidden="true">\U0001f517</span><span class="pg-share-lbl">Share</span>'
+            "</button>"
+            '<span class="pg-runhint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to run</span>'
+            "</div>"
+            # Extension note (shown when extensions on)
+            '<p class="pg-note" id="pg-note" hidden>Extensions on — the '
+            "<code>FOR … IN</code> rule-to-shape targeting clause is an opt-in feature of "
+            "this implementation and is <b>not part of the W3C SHACL 1.2 Rules specification</b>."
+            "</p>"
+            # Engine load failure
+            '<div class="pg-fail" id="pg-fail" hidden></div>'
+            # Output
+            '<div class="pg-out" id="pg-out" hidden>'
+            '<div class="pg-stats" id="pg-stats"></div>'
+            '<ul class="pg-diag" id="pg-diag"></ul>'
+            '<div id="pg-result"></div>'
+            "</div>"
+            "</section>"
+        )
+
+    _PG_JS = """
+    (function () {
+      var root = document.getElementById('playground');
+      if (!root) return;
+      var presets = JSON.parse(root.getAttribute('data-presets') || '[]');
+      var pkg = root.getAttribute('data-engine-pkg');
+      var byId = presets.reduce(function (m, p) { m[p.id] = p; return m; }, {});
+
+      var els = {
+        engine: document.getElementById('pg-engine'),
+        rules: document.getElementById('pg-rules'),
+        data: document.getElementById('pg-data'),
+        shapes: document.getElementById('pg-shapes'),
+        ext: document.getElementById('pg-ext'),
+        note: document.getElementById('pg-note'),
+        run: document.getElementById('pg-run'),
+        share: document.getElementById('pg-share'),
+        shareLbl: document.querySelector('#pg-share .pg-share-lbl'),
+        fail: document.getElementById('pg-fail'),
+        out: document.getElementById('pg-out'),
+        stats: document.getElementById('pg-stats'),
+        diag: document.getElementById('pg-diag'),
+        result: document.getElementById('pg-result'),
+      };
+      var presetBtns = [].slice.call(root.querySelectorAll('.pg-preset'));
+      var engine = null;
+
+      function esc(s) {
+        return String(s).replace(/[&<>"]/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+        });
+      }
+
+      /* --- line-number gutters, synced to scroll --- */
+      function wireGutter(taId, gutterId) {
+        var ta = document.getElementById(taId), g = document.getElementById(gutterId);
+        if (!ta || !g) return;
+        function sync() {
+          var n = ta.value.split('\\n').length, s = '';
+          for (var i = 1; i <= n; i++) s += i + (i < n ? '\\n' : '');
+          g.textContent = s;
+        }
+        ta.addEventListener('input', sync);
+        ta.addEventListener('scroll', function () { g.scrollTop = ta.scrollTop; });
+        sync();
+      }
+      wireGutter('pg-rules', 'pg-rules-gutter');
+      wireGutter('pg-data', 'pg-data-gutter');
+      wireGutter('pg-shapes', 'pg-shapes-gutter');
+
+      /* --- extension toggle: reveal shapes editor + non-spec note --- */
+      function syncExt() {
+        var on = els.ext.checked;
+        root.classList.toggle('has-shapes', on);
+        els.note.hidden = !on;
+      }
+      els.ext.addEventListener('change', function () {
+        syncExt();
+        // re-fire input on shapes gutter so line numbers show once visible
+        els.shapes.dispatchEvent(new Event('input'));
+      });
+
+      /* --- presets --- */
+      function applyPreset(id) {
+        var p = byId[id];
+        if (!p) return;
+        els.rules.value = p.rules || '';
+        els.data.value = p.data || '';
+        els.shapes.value = p.shapes || '';
+        els.ext.checked = !!p.extension;
+        syncExt();
+        presetBtns.forEach(function (b) {
+          b.setAttribute('aria-pressed', b.getAttribute('data-preset') === id ? 'true' : 'false');
+        });
+        [els.rules, els.data, els.shapes].forEach(function (ta) {
+          ta.dispatchEvent(new Event('input'));
+        });
+      }
+      presetBtns.forEach(function (b) {
+        b.addEventListener('click', function () { applyPreset(b.getAttribute('data-preset')); });
+      });
+
+      /* --- editors that clear the active-preset highlight when hand-edited --- */
+      [els.rules, els.data, els.shapes].forEach(function (ta) {
+        ta.addEventListener('input', function () {
+          presetBtns.forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+        });
+      });
+
+      /* --- share via URL hash (base64 of the editor state) --- */
+      function b64e(s) { return btoa(unescape(encodeURIComponent(s))); }
+      function b64d(s) { return decodeURIComponent(escape(atob(s))); }
+      function readHash() {
+        if (!location.hash || location.hash.length < 2) return false;
+        try {
+          var st = JSON.parse(b64d(location.hash.slice(1)));
+          if (st && typeof st.r === 'string') {
+            els.rules.value = st.r || '';
+            els.data.value = st.d || '';
+            els.shapes.value = st.s || '';
+            els.ext.checked = !!st.x;
+            syncExt();
+            presetBtns.forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+            [els.rules, els.data, els.shapes].forEach(function (ta) {
+              ta.dispatchEvent(new Event('input'));
+            });
+            return true;
+          }
+        } catch (e) { /* malformed hash: ignore, keep default preset */ }
+        return false;
+      }
+      els.share.addEventListener('click', function () {
+        var st = { r: els.rules.value, d: els.data.value };
+        if (els.shapes.value) st.s = els.shapes.value;
+        if (els.ext.checked) st.x = 1;
+        var hash = '#' + b64e(JSON.stringify(st));
+        try { history.replaceState(null, '', location.pathname + location.search + hash); }
+        catch (e) { location.hash = hash; }
+        var link = location.href;
+        var done = function () {
+          els.share.classList.add('copied');
+          els.shareLbl.textContent = 'Link copied';
+          setTimeout(function () {
+            els.share.classList.remove('copied');
+            els.shareLbl.textContent = 'Share';
+          }, 1800);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(done, done);
+        } else { done(); }
+      });
+
+      /* --- render helpers --- */
+      function renderDiagnostics(messages) {
+        els.diag.innerHTML = '';
+        if (!messages || !messages.length) return 0;
+        var errors = 0;
+        messages.forEach(function (m) {
+          if (m.type === 'error') errors++;
+          var li = document.createElement('li');
+          li.className = m.type + (m.category === 'stratification' ? ' strat' : '');
+          var loc = (m.startLine ? 'L' + m.startLine + (m.startColumn ? ':' + m.startColumn : '') : '');
+          li.innerHTML =
+            '<span class="d-tag">' + esc(m.type) + '</span>' +
+            '<span class="d-loc">' + esc(loc) + '</span>' +
+            '<span class="d-msg">' + esc(m.message) + '</span>';
+          els.diag.appendChild(li);
+        });
+        return errors;
+      }
+
+      function stat(value, label, hero) {
+        return '<span class="pg-stat' + (hero ? ' pg-hero' : '') + '"><b>' +
+          esc(value) + '</b><span>' + esc(label) + '</span></span>';
+      }
+
+      // Collapse a full IRI to prefix:local using the rule set's prefixes, so a
+      // named rule reads `ex:GrandparentRule` rather than the bare IRI.
+      function collapseIri(iri, prefixes) {
+        if (!prefixes || !iri || iri.indexOf('://') === -1) return iri;
+        var best = null;
+        prefixes.forEach(function (ns, prefix) {
+          if (iri.indexOf(ns) === 0 && (!best || ns.length > best.ns.length)) {
+            best = { prefix: prefix, ns: ns };
+          }
+        });
+        return best ? best.prefix + ':' + iri.slice(best.ns.length) : iri;
+      }
+
+      // Tidy a displayed object term: drop the implicit ^^xsd:string datatype and
+      // collapse any remaining ^^<datatype> IRI to prefixed form.
+      function tidyTerm(term, prefixes) {
+        var m = /^(".*?")\\^\\^<([^>]+)>$/.exec(term);
+        if (!m) return term;
+        if (m[2] === 'http://www.w3.org/2001/XMLSchema#string') return m[1];
+        return m[1] + '^^' + collapseIri(m[2], prefixes);
+      }
+
+      function renderResult(result, prefixes) {
+        var tris = result.inferredTriples || [];
+        if (!tris.length) {
+          els.result.innerHTML =
+            '<div class="pg-empty-out ok">Rules are valid and ran to a fixed point, but ' +
+            'inferred no new triples over this data.</div>';
+          return;
+        }
+        var rows = tris.map(function (t) {
+          var d;
+          try { d = engine.formatTripleForDisplay(t.quad, prefixes); }
+          catch (e) { d = null; }
+          var s, p, o;
+          if (d) { s = d.subject; p = d.predicate; o = d.object; }
+          else {
+            // fall back to the engine-provided quad string, split on whitespace
+            var parts = (t.quadString || '').split(/\\s+/);
+            s = parts[0] || ''; p = parts[1] || ''; o = parts.slice(2).join(' ');
+          }
+          var rule = collapseIri((t.sourceRule && t.sourceRule.name) || 'rule', prefixes);
+          var iter = (typeof t.iteration === 'number') ? t.iteration : '';
+          return '<tr>' +
+            '<td class="t-term">' + esc(s) + '</td>' +
+            '<td class="t-term">' + esc(p) + '</td>' +
+            '<td class="t-term">' + esc(tidyTerm(o, prefixes)) + '</td>' +
+            '<td class="t-rule"><span class="pg-rulebadge">' + esc(rule) +
+            (iter !== '' ? ' <span class="it">iter ' + esc(iter) + '</span>' : '') +
+            '</span></td></tr>';
+        }).join('');
+        els.result.innerHTML =
+          '<div class="pg-result-head"><b>' + tris.length + '</b> inferred triple' +
+          (tris.length === 1 ? '' : 's') + '</div>' +
+          '<div class="pg-table-wrap"><table class="pg-triples"><thead><tr>' +
+          '<th>Subject</th><th>Predicate</th><th>Object</th><th>Rule</th>' +
+          '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+      }
+
+      /* --- run --- */
+      function run() {
+        if (!engine) return;
+        root.classList.add('is-running');
+        els.run.disabled = true;
+        // let the spinner paint before the (synchronous) engine work
+        requestAnimationFrame(function () { setTimeout(doRun, 0); });
+      }
+
+      function doRun() {
+        var opts = {};
+        var ext = els.ext.checked;
+        if (ext) { opts.extensions = true; opts.shapesGraph = els.shapes.value; }
+        els.out.hidden = false;
+        els.result.innerHTML = '';
+        try {
+          var report = engine.validateSRL(els.rules.value, ext ? { extensions: true } : undefined);
+          var errCount = renderDiagnostics(report.messages);
+
+          if (!report.isValid) {
+            els.stats.innerHTML =
+              stat(errCount, errCount === 1 ? 'error' : 'errors') +
+              stat((report.messages || []).length, 'diagnostics');
+            els.result.innerHTML =
+              '<div class="pg-empty-out">Fix the error' + (errCount === 1 ? '' : 's') +
+              ' above, then run again.</div>';
+            return;
+          }
+
+          var ruleSet = engine.buildAST(els.rules.value, ext ? { extensions: true } : undefined);
+          var result = engine.executeRules(ruleSet, els.data.value, opts);
+
+          // Display-only: seed well-known prefixes the user may not have declared,
+          // so inferred terms read as rdf:type / xsd:string rather than full IRIs.
+          // User-declared prefixes win on collision.
+          var displayPrefixes = new Map(ruleSet.prefixes || []);
+          var wellKnown = {
+            rdf: 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+            rdfs: 'http://www.w3.org/2000/01/rdf-schema#',
+            xsd: 'http://www.w3.org/2001/XMLSchema#',
+            owl: 'http://www.w3.org/2002/07/owl#',
+            sh: 'http://www.w3.org/ns/shacl#'
+          };
+          var declaredNs = new Set(displayPrefixes.values());
+          Object.keys(wellKnown).forEach(function (pfx) {
+            if (!displayPrefixes.has(pfx) && !declaredNs.has(wellKnown[pfx])) {
+              displayPrefixes.set(pfx, wellKnown[pfx]);
+            }
+          });
+
+          if (result.errors && result.errors.length) {
+            (result.errors).forEach(function (msg) {
+              var li = document.createElement('li');
+              li.className = 'error';
+              li.innerHTML = '<span class="d-tag">error</span><span class="d-loc"></span>' +
+                '<span class="d-msg">' + esc(msg) + '</span>';
+              els.diag.appendChild(li);
+            });
+          }
+
+          var ms = (typeof result.executionTime === 'number')
+            ? (result.executionTime < 1 ? '<1' : Math.round(result.executionTime)) : '?';
+          els.stats.innerHTML =
+            stat((result.inferredTriples || []).length, 'inferred', true) +
+            stat(result.baseTriples ? result.baseTriples.length : '?', 'base') +
+            stat(result.iterations, result.iterations === 1 ? 'iteration' : 'iterations') +
+            stat(ms + ' ms', 'engine time');
+
+          renderResult(result, displayPrefixes);
+        } catch (e) {
+          els.stats.innerHTML = '';
+          var li = document.createElement('li');
+          li.className = 'error';
+          li.innerHTML = '<span class="d-tag">error</span><span class="d-loc"></span>' +
+            '<span class="d-msg">' + esc((e && e.message) || String(e)) + '</span>';
+          els.diag.appendChild(li);
+          els.result.innerHTML = '<div class="pg-empty-out">The engine raised an error ' +
+            'while running these inputs.</div>';
+        } finally {
+          root.classList.remove('is-running');
+          els.run.disabled = false;
+        }
+      }
+
+      els.run.addEventListener('click', run);
+      root.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); }
+      });
+
+      /* --- boot: restore shared state, then load the engine from a CDN --- */
+      readHash();
+      var url = 'https://esm.sh/' + pkg;
+      import(/* @vite-ignore */ url).then(function (mod) {
+        engine = mod;
+        els.engine.setAttribute('data-state', 'ready');
+      }).catch(function (err) {
+        els.engine.setAttribute('data-state', 'error');
+        els.run.disabled = true;
+        els.fail.hidden = false;
+        els.fail.innerHTML =
+          'The SRL engine could not be loaded from the CDN, so the playground is ' +
+          'inactive. The conformance results below are unaffected. ' +
+          '<br><code>' + esc((err && err.message) || String(err)) + '</code>';
+      });
+    })();
+    """
+
     def serialize(self, output_path: Path) -> None:
         passed = sum(1 for r in self.results if r.outcome == TestOutcome.PASSED)
         failed = sum(1 for r in self.results if r.outcome == TestOutcome.FAILED)
@@ -1299,9 +2141,7 @@ class HtmlReportGenerator:
         gen = datetime.now(timezone.utc).date().isoformat()
         ver = _html.escape(self.project_version)
 
-        fail_note = (
-            f' &middot; <span class="rate-note">{failed} failing</span>' if failed else ""
-        )
+        fail_note = f' &middot; <span class="rate-note">{failed} failing</span>' if failed else ""
         rate_cls = " has-fail" if failed else ""
 
         segs = []
@@ -1331,9 +2171,9 @@ class HtmlReportGenerator:
             '<meta name="color-scheme" content="light dark">',
             f"<title>{_html.escape(self.project_name)} conformance report</title>",
             f"<script>{self._THEME_BOOT}</script>",
-            f"<style>{self._CSS}</style></head><body><div class=\"wrap\">",
+            f'<style>{self._CSS}{self._PG_CSS}</style></head><body><div class="wrap">',
             '<header class="top"><div class="brand">',
-            f'<h1>{_html.escape(self.project_name)} '
+            f"<h1>{_html.escape(self.project_name)} "
             '<span class="tag">SHACL 1.2 Rules</span></h1>',
             '<p class="sub">Shape Rule Language conformance report</p></div>',
             '<div class="top-right"><dl class="meta">'
@@ -1349,6 +2189,8 @@ class HtmlReportGenerator:
             f'<div class="bar" role="img" aria-label="{passed} passed, {failed} failed, '
             f'{other} other of {total}">{"".join(segs)}</div>'
             f'<ul class="legend">{"".join(legend)}</ul></div></section>',
+            # Interactive SRL playground (client-side engine via CDN ES module).
+            self._playground_html(),
             # Sticky toolbar: search + outcome filters + expand/collapse.
             '<div class="toolbar"><div class="search">'
             f"{self._SEARCH_ICON}"
@@ -1411,6 +2253,7 @@ class HtmlReportGenerator:
             f"&middot; {gen}</footer>"
         )
         parts.append(f"<script>{self._JS}</script>")
+        parts.append(f'<script type="module">{self._PG_JS}</script>')
         parts.append("</div></body></html>")
 
         with open(output_path, "w", encoding="utf-8") as f:

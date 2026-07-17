@@ -90,3 +90,34 @@ def test_html_report_shows_inferred_triples(tmp_path):
     html = out.read_text(encoding="utf-8")
     assert "inferred (actual)" in html  # labelled distinctly from the input files
     assert "snip-inferred" in html
+
+
+def test_html_report_embeds_playground(tmp_path):
+    """The report ships the interactive SRL playground and all its presets."""
+    gen = R.HtmlReportGenerator()
+    gen.add_results([])
+    out = tmp_path / "report.html"
+    gen.serialize(out)
+    html = out.read_text(encoding="utf-8")
+    # The playground section, its CDN-loaded engine, and the client module.
+    assert 'id="playground"' in html
+    assert R.HtmlReportGenerator._ENGINE_PKG in html
+    assert "https://esm.sh/" in html
+    assert '<script type="module">' in html
+    # Every preset scenario is seeded into the page.
+    for preset in R.PLAYGROUND_PRESETS:
+        assert f'data-preset="{preset["id"]}"' in html
+    # The opt-in extension is fenced as non-spec, and the shapes editor exists.
+    assert "not part of the W3C SHACL 1.2 Rules specification" in html
+    assert 'id="pg-shapes"' in html
+
+
+def test_playground_presets_are_well_formed():
+    """Non-extension presets must parse and validate against the reference impl."""
+    from srl import SRLParser, validate_rule_well_formedness
+
+    for preset in R.PLAYGROUND_PRESETS:
+        parser = SRLParser(extensions=bool(preset.get("extension")))
+        rule_set = parser.parse(preset["rules"])
+        for rule in rule_set.rules:
+            validate_rule_well_formedness(rule)
