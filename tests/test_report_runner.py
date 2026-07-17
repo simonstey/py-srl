@@ -110,6 +110,10 @@ def test_html_report_embeds_playground(tmp_path):
     # The opt-in extension is fenced as non-spec, and the shapes editor exists.
     assert "not part of the W3C SHACL 1.2 Rules specification" in html
     assert 'id="pg-shapes"' in html
+    # The client-side engine is credited with a link to its npm package.
+    pkg_name = R.HtmlReportGenerator._ENGINE_PKG.split("@")[0]
+    assert f"https://www.npmjs.com/package/{pkg_name}" in html
+    assert "powered by" in html
 
 
 def test_playground_presets_are_well_formed():

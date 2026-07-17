@@ -1645,6 +1645,12 @@ class HtmlReportGenerator:
     }
     .pg-fail[hidden] { display: none; }
     .pg-fail code { font-size: 0.78rem; overflow-wrap: anywhere; }
+    .pg-credit {
+      margin: 1.15rem 0 0; padding-top: 0.9rem; border-top: 1px solid var(--border);
+      font-size: 0.78rem; line-height: 1.55; color: var(--ink-muted);
+    }
+    .pg-credit code { font-size: 0.76rem; color: var(--ink); }
+    .pg-credit a { color: var(--accent); text-underline-offset: 2px; }
     """
 
     def __init__(self, project_name: str = "shacl-rules", project_version: Optional[str] = None):
@@ -1806,7 +1812,24 @@ class HtmlReportGenerator:
             '<ul class="pg-diag" id="pg-diag"></ul>'
             '<div id="pg-result"></div>'
             "</div>"
+            # Credit: the browser-side engine is a separate JS library.
+            f"{self._playground_credit()}"
             "</section>"
+        )
+
+    def _playground_credit(self) -> str:
+        """A disclaimer crediting the client-side engine (a distinct JS library)."""
+        pkg_name = self._ENGINE_PKG.split("@")[0]
+        version = self._ENGINE_PKG.split("@")[1] if "@" in self._ENGINE_PKG else ""
+        npm_url = f"https://www.npmjs.com/package/{pkg_name}"
+        ver_txt = f" v{version}" if version else ""
+        return (
+            '<p class="pg-credit">Rule evaluation in this playground runs entirely in your '
+            "browser, powered by "
+            f'<a href="{npm_url}" target="_blank" rel="noopener noreferrer">'
+            f"<code>{_html.escape(pkg_name)}</code></a>{_html.escape(ver_txt)} — an "
+            "independent JavaScript SRL parser and engine, distinct from the Python "
+            "implementation this report tests. It is loaded on demand from a public CDN.</p>"
         )
 
     _PG_JS = """
