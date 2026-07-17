@@ -1,5 +1,7 @@
 # shacl-rules: Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine
 
+[![PyPI](https://img.shields.io/pypi/v/shacl-rules.svg)](https://pypi.org/project/shacl-rules/)
+
 ## Overview
 
 The [Shape Rule Language (SRL)](https://w3c.github.io/data-shapes/shacl12-rules/) is an extension of SHACL that provides a declarative rule language for deriving new RDF triples from existing ones. This project aims to implement:
@@ -10,7 +12,13 @@ The [Shape Rule Language (SRL)](https://w3c.github.io/data-shapes/shacl12-rules/
 
 ## Installation
 
-**Development Status:** This project is in active development. Install from source:
+Install the latest release from PyPI:
+
+```bash
+pip install shacl-rules
+```
+
+**Development Status:** This project is in active development. To install from source:
 
 ```bash
 # Clone the repository
