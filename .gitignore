@@ -186,3 +186,5 @@ examples/*-out.ttl
 /[0-9].ttl
 /[0-9]-out.ttl
 /docs
+/CLAUDE.md
+/tests/report.html
