@@ -1,209 +1,207 @@
-# SHACL 1.2 Rules - Examples
+# SHACL 1.2 Rules — Examples
 
-This directory contains working examples demonstrating the key features of the SHACL 1.2 Rules implementation.
+Runnable examples covering the SHACL 1.2 Shape Rule Language (SRL) and the
+py-srl API. Each numbered script is standalone and isolates one feature; they
+build up from a single rule to the full programmatic API.
 
-## Running Examples
+## Running
 
-Each example is a standalone Python script that can be run directly:
+Run any script from the project root:
 
 ```bash
-python examples/01_simple_inference.py
-python examples/02_transitive_closure.py
-python examples/03_filter_conditions.py
-python examples/04_bind_concat.py
+uv run python examples/01_simple_inference.py
+uv run python examples/02_rule_forms.py
+# ... through ...
+uv run python examples/11_api_provenance.py
 ```
+
+The scripts import the installed package (`from srl.parser import SRLParser`).
+If you have not installed the project, set `PYTHONPATH=src` first (this is what
+the test suite does): `PYTHONPATH=src python examples/01_simple_inference.py`.
 
 ## Example Descriptions
 
 ### 1. Simple Inference (`01_simple_inference.py`)
 
-**Concept:** Basic rule-based inference
+**Concept:** the parse → evaluate → read cycle.
 
-Demonstrates how to:
-- Create RDF data with rdflib
-- Define a simple SHACL rule
-- Parse the rule with SRLParser
-- Evaluate rules with RuleEngine
-- Access inferred triples
+The minimal rule: `parent(x, y) → ancestor(x, y)`. Shows `SRLParser().parse`,
+`RuleEngine(...).evaluate(graph, inplace=False)`, and reading the new triples.
 
-**Rule:** `parent(x, y) → ancestor(x, y)`
+### 2. Rule Forms (`02_rule_forms.py`)
 
-**Input:** 2 parent relationships  
-**Output:** 2 ancestor relationships inferred
+**Concept:** the two interchangeable syntaxes, plus named rules.
 
-### 2. Transitive Closure (`02_transitive_closure.py`)
-
-**Concept:** Recursive rules with fixpoint iteration
-
-Demonstrates how to:
-- Define multiple rules in a rule set
-- Use recursive rules for transitive closure
-- Handle multi-level inference
-
-**Rules:**
-1. Base case: `parent(x, y) → ancestor(x, y)`
-2. Recursive: `ancestor(x, y) ∧ ancestor(y, z) → ancestor(x, z)`
-
-**Input:** 3 parent relationships (Alice→Bob→Charlie→Diana)  
-**Output:** 6 ancestor relationships inferred (complete transitive closure)
-
-**Stratification:** The engine automatically stratifies these rules and performs fixpoint iteration.
-
-### 3. FILTER Conditions (`03_filter_conditions.py`)
-
-**Concept:** Conditional inference based on data values
-
-Demonstrates how to:
-- Use FILTER to apply conditions
-- Compare numeric values
-- Selectively infer based on criteria
-
-**Rule:** `age(person, n) ∧ n >= 18 → isAdult(person)`
-
-**Input:** 4 people with ages (25, 16, 30, 12)  
-**Output:** 2 adult classifications (age >= 18)
-
-**FILTER:** Only people with age >= 18 are marked as adults.
-
-### 4. SET and String Operations (`04_bind_concat.py`)
-
-**Concept:** Computed values with SET assignments
-
-Demonstrates how to:
-- Use SET to assign new variables
-- Call built-in functions (CONCAT)
-- Generate derived data
-
-**Rule:** `firstName(p, f) ∧ lastName(p, l) → fullName(p, CONCAT(f, " ", l))`
-
-**Input:** 2 people with first and last names  
-**Output:** 2 full name triples generated
-
-**Built-in Function:** CONCAT combines strings with separator.
-
-## Common Patterns
-
-### Creating RDF Data
-
-```python
-from rdflib import Graph, Namespace, Literal
-
-# Define namespace
-EX = Namespace("http://example.org/")
-
-# Create graph
-graph = Graph()
-graph.bind("ex", EX)
-
-# Add triples
-graph.add((EX.Alice, EX.age, Literal(25)))
-```
-
-### Defining Rules
-
-```python
-rule_text = """
-PREFIX ex: <http://example.org/>
-
-RULE {
-    ?person ex:isAdult true .
-} WHERE {
-    ?person ex:age ?age .
-    FILTER (?age >= 18)
-}
-"""
-```
-
-### Parsing and Evaluation
-
-```python
-from srl.parser import SRLParser
-from srl.engine import RuleEngine
-
-# Parse
-parser = SRLParser()
-rule_set = parser.parse(rule_text)
-
-# Evaluate
-engine = RuleEngine(rule_set)
-result = engine.evaluate(graph, inplace=False)
-```
-
-### Accessing Results
-
-```python
-# Iterate over results
-for s, p, o in result:
-    print(f"{s} {p} {o}")
-
-# Check specific triple
-if (EX.Alice, EX.isAdult, Literal(True)) in result:
-    print("Alice is an adult")
-
-# Query specific predicate
-for s, p, o in result:
-    if p == EX.fullName:
-        print(f"{s} has full name: {o}")
-```
-
-## Extending Examples
-
-### Add More Built-in Functions
-
-Available functions (the spec [121] built-in list) include:
-- String: STRLEN, SUBSTR, UCASE, LCASE, STRSTARTS, STRENDS, CONTAINS, CONCAT, REPLACE, ENCODE_FOR_URI
-- Numeric: ABS, ROUND, CEIL, FLOOR
-- Date/Time: NOW, YEAR, MONTH, DAY
-- Identifiers: UUID, STRUUID
-
-Note: MD5/SHA1/SHA256/SHA384/SHA512, RAND, BOUND, COALESCE, and EXISTS/NOT EXISTS
-are **not** part of the SHACL 1.2 Rules built-in list and do not parse.
-
-Example:
 ```sparql
-SET(?upperName := UCASE(?name))
-SET(?length := STRLEN(?text))
+RULE ex:PersonRule { ?p rdf:type ex:Person } WHERE { ?p ex:age ?a ; ex:name ?n }
+IF   { ?p rdf:type ex:Person . ?p ex:age ?a . FILTER (?a >= 18) } THEN { ?p rdf:type ex:Adult }
 ```
 
-### Combine Multiple Conditions
+`RULE {head} WHERE {body}` and `IF {body} THEN {head}` parse to the same AST.
+An optional IRI after `RULE` names the rule (inspectable via `rule.iri`).
+
+### 3. Recursion & Transitive Closure (`03_recursion_transitive.py`)
+
+**Concept:** a recursive rule + fixpoint iteration.
+
+```sparql
+RULE { ?x ex:ancestor ?z } WHERE { ?x ex:ancestor ?y . ?y ex:ancestor ?z }
+```
+
+The engine stratifies the rules and iterates until no new triples appear, so a
+parent chain of any depth yields the complete ancestor relation.
+
+### 4. FILTER Conditions (`04_filter_conditions.py`)
+
+**Concept:** keeping only the solution mappings a condition accepts.
 
 ```sparql
 FILTER (?age >= 18 && ?age < 65)
-FILTER (?price > 100 || ?onSale = true)
+FILTER (?dept IN ("Engineering", "Design"))
 ```
 
-### Use Complex Patterns
+Demonstrates comparison, compound `&&`, and `IN` membership.
+
+### 5. SET & Built-in Functions (`05_set_and_functions.py`)
+
+**Concept:** computing new values with `SET(?v := expr)`.
 
 ```sparql
-RULE {
-    ?x ex:friend ?z .
-} WHERE {
-    ?x ex:knows ?y .
-    ?y ex:knows ?z .
-    FILTER (?x != ?z)
+SET(?full := CONCAT(?first, " ", ?last))
+SET(?disp := UCASE(?full))
+SET(?err  := ABS(?pred - ?act))
+SET(?rating := IF(?err <= 5, "good", "poor"))
+```
+
+Assignments chain (a later `SET` may use an earlier one). There is **no** `BIND`
+keyword — assignment is always `SET`.
+
+### 6. Negation (`06_negation.py`)
+
+**Concept:** closed-world negation with `NOT { … }`.
+
+```sparql
+RULE { ?person ex:childless true } WHERE {
+    ?person ex:type ex:Person .
+    NOT { ?person ex:hasChild ?child }
 }
 ```
 
+Every variable used inside `NOT` must be bound by a positive pattern first, and
+the negated predicate must differ from the head predicate.
+
+### 7. Property Paths (`07_property_paths.py`)
+
+**Concept:** the two supported path operators.
+
+```sparql
+?grandparent ex:parentOf/ex:parentOf ?grandchild   # sequence a/b
+?child ^ex:parentOf ?parent                          # inverse ^a
+```
+
+Alternative (`|`), transitive (`+`/`*`), optional (`?`), and negated (`!`) paths
+are not part of SRL. Use recursion (Example 3) for transitivity.
+
+### 8. Declarations (`08_declarations.py`)
+
+**Concept:** `TRANSITIVE`/`SYMMETRIC`/`INVERSE` as inspectable metadata.
+
+```sparql
+TRANSITIVE(ex:ancestorOf)
+(ex:friendOf) SYMMETRIC
+INVERSE(ex:employs, ex:worksFor)
+```
+
+These are recorded on `rule_set.declarations` (and merged across `IMPORTS`), but
+this engine does **not** derive their closure automatically — the example pairs
+each declaration with an explicit rule that performs the inference.
+
+### 9. DATA Blocks (`09_data_blocks.py`)
+
+**Concept:** ground facts that travel with the rules.
+
+```sparql
+DATA { ex:Alice ex:parent ex:Bob . ex:Bob ex:parent ex:Carol . }
+```
+
+`DATA` triples are seeded into the graph before evaluation, so a rule set can be
+self-contained and run against an empty input graph.
+
+### 10. RDF 1.2 Syntax (`10_rdf12_syntax.py`)
+
+**Concept:** RDF 1.2 surface syntax desugared to plain triples.
+
+```sparql
+?c ex:items ( "milk" "eggs" "bread" )                  # collection
+?c ex:contact [ ex:email "a@b.c" ; ex:priority 1 ]     # blank-node list
+?s ex:validReading ?r {| ex:derivedBy ex:Rule |}       # annotation
+```
+
+Collections and blank-node lists desugar to ordinary triples and evaluate
+normally. The reification family (`<< >>`, `~`, `{| |}`) desugars to RDF 1.2
+*triple terms*; those parse, but on an rdflib without triple-term support
+evaluating them raises `UnrepresentableTripleTermError` — the example shows both
+outcomes.
+
+### 11. API: Provenance & Strata (`11_api_provenance.py`)
+
+**Concept:** the richer engine API.
+
+```python
+engine.get_stratum_info()                                 # rule indices per layer
+engine.evaluate(graph, inplace=False, results_only=True)  # only the NEW triples
+engine.evaluate_with_provenance(graph, inplace=False)     # (graph, [(triple, rule_idx, stratum)])
+```
+
+Attributes every inferred triple to the rule (and stratum) that produced it;
+`rule_idx == -1` means the triple came from a `DATA` block.
+
+## CLI Usage
+
+The `srl` command wraps the same engine. Using the bundled `ancestor_rules.srl`
++ `family_data.ttl`:
+
+```bash
+# Parse + validate, show a rule-set summary
+uv run srl parse examples/ancestor_rules.srl
+
+# Show stratification layers
+uv run srl analyze examples/ancestor_rules.srl --show-layers
+
+# Evaluate rules over data, writing the result graph
+uv run srl eval examples/ancestor_rules.srl examples/family_data.ttl -o out.ttl
+
+# Verbose eval prints a provenance table (which rule inferred each triple)
+uv run srl -v eval examples/ancestor_rules.srl examples/family_data.ttl
+```
+
+## Interactive Notebook
+
+`playground.ipynb` is a guided tour of the API: parse → inspect the `RuleSet`
+→ evaluate → trace provenance → view stratification layers.
+
+```bash
+uv run jupyter lab examples/playground.ipynb
+```
+
+## Not Supported
+
+These deliberately do **not** parse or evaluate (documented so you don't reach
+for them):
+
+- **Built-ins:** `MD5`/`SHA1`/`SHA256`/`SHA384`/`SHA512`, `RAND`, `BOUND`,
+  `COALESCE`, `EXISTS`/`NOT EXISTS`. (Use `NOT { … }` instead of `NOT EXISTS`;
+  add the triple pattern to the body instead of `EXISTS`.)
+- **Path operators:** alternative `|`, transitive `+`/`*`, optional `?`,
+  negated `!`. Only sequence `a/b` and inverse `^a` are supported.
+- **Old syntax:** the Datalog `head :- body` form and `BIND(expr AS ?var)` were
+  removed; use `RULE`/`WHERE` (or `IF`/`THEN`) and `SET(?var := expr)`.
+
 ## Troubleshooting
 
-### Import Errors
+**Import errors** — install the project (`uv sync --extra dev`) or run with
+`PYTHONPATH=src`.
 
-Ensure py-srl is installed or add to PYTHONPATH:
-
-```bash
-export PYTHONPATH=/path/to/py-srl/src:$PYTHONPATH
-```
-
-Or run from project root:
-
-```bash
-cd py-srl
-python examples/01_simple_inference.py
-```
-
-### No Output
-
-Check that:
-1. Input data matches rule patterns
-2. Variables are consistent between body and head
-3. PREFIX declarations match data namespaces
+**No output** — check that (1) input data matches the rule body patterns,
+(2) variables are consistent between body and head, (3) `PREFIX` declarations
+match the data namespaces.

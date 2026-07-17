@@ -1,11 +1,15 @@
-PREFIX : <http://example.org/>
+PREFIX ex: <http://example.org/>
 
-# Find grandchildren using path sequence (parent/parent)
-RULE { ?grandparent :grandchildOf ?grandchild } WHERE {
-    ?grandchild :parentOf/:parentOf ?grandparent
+# Companion ruleset for the CLI walkthrough in README.md.
+# Evaluate against family_data.ttl:
+#   srl eval examples/ancestor_rules.srl examples/family_data.ttl -o out.ttl
+
+# Grandparents via a two-step sequence path (parentOf/parentOf).
+RULE ex:GrandparentRule { ?grandparent ex:grandparentOf ?grandchild } WHERE {
+    ?grandparent ex:parentOf/ex:parentOf ?grandchild
 }
 
-# Find great-grandparents
-RULE { ?person :greatGrandparent ?ggp } WHERE {
-    ?person :parentOf/:parentOf/:parentOf ?ggp
+# Great-grandparents via a three-step sequence path.
+RULE ex:GreatGrandparentRule { ?person ex:greatGrandparentOf ?ggc } WHERE {
+    ?person ex:parentOf/ex:parentOf/ex:parentOf ?ggc
 }

@@ -1,8 +1,9 @@
 """
-Example 1: Simple Inference
+Example 3: Recursion and Transitive Closure
 
-The smallest useful rule: derive an ancestor relationship directly from a
-parent relationship. Start here to see the parse -> evaluate -> read cycle.
+A recursive rule feeds its own output back in. The engine stratifies the rule
+set and iterates to a fixpoint, so parent chains of any depth collapse into the
+full ancestor relation.
 """
 
 from rdflib import Graph, Namespace
@@ -13,43 +14,51 @@ from srl.parser import SRLParser
 # Define namespace
 EX = Namespace("http://example.org/")
 
-# Create an RDF graph with some data
+# Create graph with a chain of parent relationships
 graph = Graph()
 graph.bind("ex", EX)
 
-# Add parent relationships
 graph.add((EX.Alice, EX.parent, EX.Bob))
 graph.add((EX.Bob, EX.parent, EX.Charlie))
+graph.add((EX.Charlie, EX.parent, EX.Diana))
 
-print("Input data:")
+print("Input data (parent relationships):")
 for s, p, o in sorted(graph):
     print(
         f"  {s.n3(graph.namespace_manager)} {p.n3(graph.namespace_manager)} {o.n3(graph.namespace_manager)}"
     )
 
-# Define a SHACL rule (RULE { head } WHERE { body } form)
+# Base case seeds ancestor from parent; the recursive case chains ancestors.
 rule_text = """
 PREFIX ex: <http://example.org/>
 
+# Base case: a parent is an ancestor.
 RULE {
     ?x ex:ancestor ?y .
 } WHERE {
     ?x ex:parent ?y .
 }
+
+# Recursive case: an ancestor of an ancestor is an ancestor.
+RULE {
+    ?x ex:ancestor ?z .
+} WHERE {
+    ?x ex:ancestor ?y .
+    ?y ex:ancestor ?z .
+}
 """
 
-# Parse the rule
+# Parse and evaluate
 parser = SRLParser()
 rule_set = parser.parse(rule_text)
 
-# Create engine and evaluate rules (inplace=False leaves the input graph intact)
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
 
-# Show inferred triples (everything in the result that was not in the input)
-print("\nInferred triples:")
+# Show the complete ancestor relation (base + all transitively inferred pairs)
+print("\nInferred ancestor relationships:")
 for s, p, o in sorted(result_graph):
-    if (s, p, o) not in graph:
+    if p == EX.ancestor:
         print(
             f"  {s.n3(result_graph.namespace_manager)} {p.n3(result_graph.namespace_manager)} {o.n3(result_graph.namespace_manager)}"
         )
