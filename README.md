@@ -28,29 +28,29 @@ pip install -e ".[dev]"
 
 ### Running Examples
 
+The `examples/` directory contains 12 standalone scripts, each isolating one
+feature (see [`examples/README.md`](examples/README.md) for the full index):
+
 ```bash
-# Run simple inference example
+# Basic inference
 python examples/01_simple_inference.py
 
-# Run transitive closure example
-python examples/02_transitive_closure.py
+# Recursion / transitive closure
+python examples/03_recursion_transitive.py
 
-# Run FILTER example
-python examples/03_filter_conditions.py
+# Rule-to-shape targeting (opt-in extension)
+python examples/12_shape_targeting.py
 
-# Run SET/CONCAT example
-python examples/04_bind_concat.py
-
-# Run complete test suite
-python -m pytest tests/test_complete.py -v
+# Run the test suite
+python -m pytest
 ```
 
 ## Python API Usage
 
 ```python
 from rdflib import Graph, Namespace, Literal
-from src.srl.parser import SRLParser
-from src.srl.engine import RuleEngine
+from srl.parser import SRLParser
+from srl.engine import RuleEngine
 
 # Define namespace
 EX = Namespace("http://example.org/")
@@ -143,7 +143,7 @@ This implementation tracks the current (2026-07) [W3C SHACL 1.2 Rules](https://w
 
 ### Opt-in rule-to-shape targeting extension (`--extensions`)
 
-Beyond the spec, this project ships an **opt-in** rule-to-shape targeting feature (the `FOR ?v IN <shape>` clause, the `srl shacl` command, and an in-house SHACL 1.2 Core subset). It is **not part of the SRL spec** and is reachable only behind the `--extensions`/`-x` CLI flag (or `SRLParser(extensions=True)` / `RuleEngine(..., extensions=True)`). With the flag off, the parser and engine remain byte-for-byte spec-conformant. Exactly which SHACL constraints and targets the subset supports — and what it deliberately does not — is documented in the [SHACL Core support matrix](docs/shacl-core-support-matrix.md).
+Beyond the spec, this project ships an **opt-in** rule-to-shape targeting feature (the `FOR ?v IN <shape>` clause, the `srl shacl` command, and an in-house SHACL 1.2 Core subset). It is **not part of the SRL spec** and is reachable only behind the `--extensions`/`-x` CLI flag (or `SRLParser(extensions=True)` / `RuleEngine(..., extensions=True)`). With the flag off, the parser and engine remain byte-for-byte spec-conformant. Exactly which SHACL constraints and targets the subset supports — and what it deliberately does not — is documented in the [SHACL Core support matrix](docs/shacl-core-support-matrix.md). A worked example is [`examples/12_shape_targeting.py`](examples/12_shape_targeting.py) (`srl shacl` walkthrough in [`examples/README.md`](examples/README.md)).
 
 **Unsupported property paths** (also deferred, and *not* in the current spec): alternative `|`, transitive `+`/`*`, optional `?`, and negated property sets. Only sequence `a/b` and inverse `^a` paths are supported. Test cases exercising the unsupported forms are marked `xfail`.
 
@@ -182,7 +182,7 @@ Sample output:
 ┏━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Prefix ┃ IRI                   ┃
 ┡━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│        │ <http://example.org/> │
+│ ex     │ <http://example.org/> │
 └────────┴───────────────────────┘
                   Rules
 ┏━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
@@ -204,15 +204,15 @@ srl analyze examples/ancestor_rules.srl --show-layers
 Sample output:
 
 ```text
-✓ Successfully parsed examples/ancestor_rules.srl (2 rule(s))
+✓ Parsed examples/ancestor_rules.srl (2 rule(s))
 
 Total strata: 1
 Total rules: 2
 
 Stratification Layers
 └── Stratum 0 (2 rule(s))
-    ├── Rule 1: ?grandparent <http://example.org/grandchildOf> ?grandchild .
-    └── Rule 2: ?person <http://example.org/greatGrandparent> ?ggp .
+    ├── Rule 1: ?grandparent <http://example.org/grandparentOf> ?grandchild .
+    └── Rule 2: ?person <http://example.org/greatGrandparentOf> ?ggc .
 ```
 
 ```pwsh
@@ -222,17 +222,17 @@ srl -v analyze examples/ancestor_rules.srl --show-layers
 Sample output:
 
 ```text
-✓ Successfully parsed examples/ancestor_rules.srl (2 rule(s))
+✓ Parsed examples/ancestor_rules.srl (2 rule(s))
 
 Total strata: 1
 Total rules: 2
 
 Stratification Layers
 └── Stratum 0 (2 rule(s))
-    ├── Rule 1: ?grandparent <http://example.org/grandchildOf> ?grandchild .
-    │   └── PATTERN: ?grandchild <http://example.org/parentOf>/<http://example.org/parentOf> ?grandparent .
-    └── Rule 2: ?person <http://example.org/greatGrandparent> ?ggp .
-        └── PATTERN: ?person <http://example.org/parentOf>/<http://example.org/parentOf>/<http://example.org/parentOf> ?ggp .
+    ├── Rule 1: ?grandparent <http://example.org/grandparentOf> ?grandchild .
+    │   └── PATTERN: ?grandparent <http://example.org/parentOf>/<http://example.org/parentOf> ?grandchild .
+    └── Rule 2: ?person <http://example.org/greatGrandparentOf> ?ggc .
+        └── PATTERN: ?person <http://example.org/parentOf>/<http://example.org/parentOf>/<http://example.org/parentOf> ?ggc .
 ```
 
 3) Evaluate rules on an RDF data file and show inferred triples
@@ -254,7 +254,7 @@ Sample output (summary):
 │ Inferred triples: 3                    │
 └────────────────────────────────────────┘
 
-Use -o/--output to save results to a file.
+ℹ Use -o/--output to save results to a file.
 ```
 
 You can save the resulting graph to a file with the `-o` option:

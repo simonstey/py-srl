@@ -406,9 +406,16 @@ examples. Each numbered script is standalone and isolates one feature:
 - `09_data_blocks.py` - self-contained rule sets with `DATA { … }`
 - `10_rdf12_syntax.py` - RDF 1.2 collections, blank-node lists, reification
 - `11_api_provenance.py` - provenance, stratification layers, `results_only`
+- `12_shape_targeting.py` - rule-to-shape targeting (**opt-in extension**)
 
 Run any script with `uv run python examples/<name>.py`. An interactive tour of
 the API is in `examples/playground.ipynb`.
+
+Example 12 uses the opt-in rule-to-shape targeting extension
+(`RULE ex:r FOR ?v IN ex:Shape { … } WHERE { … }`), which is **not** part of
+the SRL spec. It requires `SRLParser(extensions=True)` and
+`RuleEngine(..., extensions=True, shapes_graph=…)`, or the `srl shacl` CLI
+subcommand.
 
 ### Command-Line Interface
 
@@ -419,6 +426,10 @@ srl parse   examples/ancestor_rules.srl                          # parse + summa
 srl analyze examples/ancestor_rules.srl --show-layers            # stratification layers
 srl eval    examples/ancestor_rules.srl examples/family_data.ttl -o out.ttl
 srl -v eval examples/ancestor_rules.srl examples/family_data.ttl # + provenance table
+
+# Opt-in rule-to-shape targeting extension:
+srl shacl   examples/shape_targeting.srl examples/shape_targeting_data.ttl \
+            --shapes examples/shape_targeting_shapes.ttl -o out.ttl
 ```
 
 See `examples/README.md` for the full CLI walkthrough.

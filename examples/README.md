@@ -156,6 +156,31 @@ engine.evaluate_with_provenance(graph, inplace=False)     # (graph, [(triple, ru
 Attributes every inferred triple to the rule (and stratum) that produced it;
 `rule_idx == -1` means the triple came from a `DATA` block.
 
+### 12. Rule-to-Shape Targeting (`12_shape_targeting.py`) — opt-in extension
+
+**Concept:** scope a rule to the focus nodes of a SHACL shape.
+
+> **Not part of the SRL spec.** This is an opt-in extension, off by default.
+
+```sparql
+RULE ex:AdultRule FOR ?this IN ex:AdultShape {
+    ?this ex:status ex:adult .
+} WHERE {
+    ?this ex:age ?a .
+}
+```
+
+The rule fires once per data node that the shape *targets* **and** that
+*conforms* to it. Enabling the extension is explicit:
+
+```python
+SRLParser(extensions=True)                       # to parse FOR ?v IN <shape>
+RuleEngine(rs, extensions=True, shapes_graph=g)  # to evaluate against the shapes
+```
+
+Targeted rules are collected on `rule_set.targeted_rules` (separate from
+`rule_set.rules`). On the CLI this is the `srl shacl` subcommand (below).
+
 ## CLI Usage
 
 The `srl` command wraps the same engine. Using the bundled `ancestor_rules.srl`
@@ -173,6 +198,14 @@ uv run srl eval examples/ancestor_rules.srl examples/family_data.ttl -o out.ttl
 
 # Verbose eval prints a provenance table (which rule inferred each triple)
 uv run srl -v eval examples/ancestor_rules.srl examples/family_data.ttl
+```
+
+The `srl shacl` subcommand evaluates the opt-in rule-to-shape targeting
+extension against a SHACL shapes graph:
+
+```bash
+uv run srl shacl examples/shape_targeting.srl examples/shape_targeting_data.ttl \
+    --shapes examples/shape_targeting_shapes.ttl -o out.ttl
 ```
 
 ## Interactive Notebook

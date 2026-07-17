@@ -1,0 +1,5 @@
+@prefix ex: <http://example.org/> .
+
+# Eve works for a company (conforms to EmployeeShape); Frank does not.
+ex:Eve a ex:Person ; ex:worksFor ex:Acme .
+ex:Frank a ex:Person .

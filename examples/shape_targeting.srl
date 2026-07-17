@@ -1,0 +1,12 @@
+PREFIX ex: <http://example.org/>
+
+# Opt-in rule-to-shape targeting extension (NOT part of the SRL spec).
+# Evaluate with the `srl shacl` subcommand, which enables the extension:
+#   srl shacl examples/shape_targeting.srl examples/shape_targeting_data.ttl \
+#       --shapes examples/shape_targeting_shapes.ttl -o out.ttl
+#
+# The rule fires only for focus nodes of ex:EmployeeShape that CONFORM to it,
+# i.e. Persons that actually have a worksFor value.
+RULE ex:EmployeeRule FOR ?e IN ex:EmployeeShape { ?e a ex:Employee } WHERE {
+    ?e ex:worksFor ?company
+}
