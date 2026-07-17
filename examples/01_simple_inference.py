@@ -45,6 +45,7 @@ rule_set = parser.parse(rule_text)
 # Create engine and evaluate rules (inplace=False leaves the input graph intact)
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # Show inferred triples (everything in the result that was not in the input)
 print("\nInferred triples:")

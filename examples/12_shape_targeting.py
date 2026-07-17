@@ -55,7 +55,9 @@ shapes_graph.parse(
 
 print("Data:")
 for s, p, o in sorted(data_graph):
-    print(f"  {s.n3(data_graph.namespace_manager)} {p.n3(data_graph.namespace_manager)} {o}")
+    print(
+        f"  {s.n3(data_graph.namespace_manager)} {p.n3(data_graph.namespace_manager)} {o.n3(data_graph.namespace_manager)}"
+    )
 
 # The targeted rule marks conforming focus nodes as adults.
 rule_text = """
@@ -78,10 +80,13 @@ print(
     f"{len(rule_set.targeted_rules)} targeted rule(s):"
 )
 for tr in rule_set.targeted_rules:
-    print(f"  {tr.rule.iri}: FOR ?{tr.focus_var.name} IN {tr.shape}")
+    rule_name = tr.rule.iri.value.replace(str(EX), "ex:")
+    shape_name = tr.shape.value.replace(str(EX), "ex:")
+    print(f"  {rule_name}: FOR ?{tr.focus_var.name} IN {shape_name}")
 
 engine = RuleEngine(rule_set, extensions=True, shapes_graph=shapes_graph)
 result_graph = engine.evaluate(data_graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # Alice (30) conforms to AdultShape; Bob (10) does not, so only Alice is tagged.
 print("\nInferred triples (only shape-conforming focus nodes fire):")

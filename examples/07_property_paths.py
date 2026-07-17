@@ -57,6 +57,7 @@ rule_set = parser.parse(rule_text)
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 print("\nGrandparent relationships (via parentOf/parentOf):")
 for s, p, o in sorted(result_graph.triples((None, EX.grandparentOf, None))):

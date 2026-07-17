@@ -71,11 +71,12 @@ rule_set = parser.parse(rule_text)
 # The parsed rule set exposes each rule; named rules carry their IRI.
 print("\nParsed rules:")
 for i, rule in enumerate(rule_set.rules):
-    name = str(rule.iri) if rule.iri is not None else "(anonymous)"
+    name = rule.iri.value.replace(str(EX), "ex:") if rule.iri is not None else "(anonymous)"
     print(f"  rule {i}: {name}")
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # Show the classifications produced across all three forms.
 print("\nInferred triples:")

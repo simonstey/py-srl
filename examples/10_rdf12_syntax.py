@@ -57,6 +57,7 @@ rule_set = parser.parse(rule_text)
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 result_graph.bind("rdf", RDF)
 
 # The rdf:first/rdf:rest chain and the blank-node triples are all plain triples.

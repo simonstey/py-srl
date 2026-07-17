@@ -69,6 +69,7 @@ rule_set = parser.parse(rule_text)
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # Show every computed value grouped by person
 print("\nComputed values per person:")

@@ -51,6 +51,7 @@ rule_set = parser.parse(rule_text)
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # Only the people with no hasChild triple should be flagged.
 print("\nPeople with no recorded children:")

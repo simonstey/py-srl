@@ -48,6 +48,7 @@ print(f"Rule set carries {seeded} DATA triple(s) across {len(rule_set.data_block
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # The result contains the seeded DATA facts plus whatever the rule inferred.
 print("\nResult graph (seeded DATA + inferred triples):")

@@ -78,10 +78,15 @@ rule_set = parser.parse(rule_text)
 # Declarations are structured AST nodes you can inspect programmatically.
 print("\nParsed declarations (metadata on rule_set.declarations):")
 for decl in rule_set.declarations:
-    print(f"  {type(decl).__name__}: {decl}")
+    preds = [
+        getattr(decl, f) for f in ("predicate", "predicate1", "predicate2") if hasattr(decl, f)
+    ]
+    compact = ", ".join(p.value.replace(str(EX), "ex:") for p in preds)
+    print(f"  {type(decl).__name__}: {compact}")
 
 engine = RuleEngine(rule_set)
 result_graph = engine.evaluate(graph, inplace=False)
+result_graph.bind("ex", EX)  # evaluate() drops custom prefixes; rebind for compact output
 
 # The newly derived triples come from the rules, guided by the declarations.
 print("\nInferred triples:")
