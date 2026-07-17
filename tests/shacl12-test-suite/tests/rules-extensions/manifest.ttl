@@ -1,0 +1,33 @@
+## Opt-in FOR-IN rule-to-shape targeting tests.
+## NOT part of the W3C SHACL 1.2 Rules spec — see docs/for-in-shape-clause.md.
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX mf:   <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#>
+PREFIX srt:  <http://www.w3.org/ns/shacl-rules-test#>
+PREFIX :     <https://example.org/srl-extensions/>
+
+<#> rdf:type mf:Manifest ;
+  rdfs:label "SHACL Rules FOR-IN targeting tests (opt-in extension, NOT W3C-spec)"@en ;
+  mf:entries (
+    :targeting-adult-01
+    :targeting-conformance-gate-01
+    :targeting-inferred-membership-01
+  ) .
+
+:targeting-adult-01 rdf:type srt:RulesTargetingEvalTest ;
+  mf:name "targeting-adult-01" ;
+  rdfs:comment "Worked example from docs/for-in-shape-clause.md §6: only the conforming focus node fires." ;
+  mf:action [ srt:ruleset <targeting/adult.srl> ; srt:data <targeting/adult-data.ttl> ; srt:shapes <targeting/adult-shapes.ttl> ] ;
+  mf:result <targeting/adult-results.ttl> .
+
+:targeting-conformance-gate-01 rdf:type srt:RulesTargetingEvalTest ;
+  mf:name "targeting-conformance-gate-01" ;
+  rdfs:comment "A target node that fails conformance (missing required property) produces no inference." ;
+  mf:action [ srt:ruleset <targeting/employee.srl> ; srt:data <targeting/employee-data.ttl> ; srt:shapes <targeting/employee-shapes.ttl> ] ;
+  mf:result <targeting/employee-results.ttl> .
+
+:targeting-inferred-membership-01 rdf:type srt:RulesTargetingEvalTest ;
+  mf:name "targeting-inferred-membership-01" ;
+  rdfs:comment "The gate sees a triple inferred by an earlier stratum (closed gate edge orders the strata)." ;
+  mf:action [ srt:ruleset <targeting/inferred.srl> ; srt:data <targeting/inferred-data.ttl> ; srt:shapes <targeting/inferred-shapes.ttl> ] ;
+  mf:result <targeting/inferred-results.ttl> .

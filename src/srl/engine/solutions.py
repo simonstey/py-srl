@@ -6,23 +6,58 @@ substitution, compatibility, merging, and graph matching.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Set, List, Optional, Union
+from typing import Dict, List, Optional, Set, Union
 
-from rdflib import Graph, URIRef, Literal as RDFLiteral, BNode
+from rdflib import BNode, Graph
+from rdflib import Literal as RDFLiteral
+from rdflib import URIRef
 
 from ..ast.nodes import (
-    Variable,
     IRI,
-    Literal,
     BlankNode,
+    InversePath,
+    Literal,
+    PathSequence,
     TriplePattern,
     TripleTemplate,
-    InversePath,
-    PathSequence,
+    TripleTerm,
+    Variable,
 )
+
+try:  # rdflib >= 7 exposes Triple terms via rdflib.term.Triple (RDF-star)
+    from rdflib.term import Triple as RDFTripleTerm  # type: ignore
+except Exception:  # pragma: no cover - older rdflib
+    RDFTripleTerm = None
 
 # Type aliases for RDF terms
 RDFTerm = Union[URIRef, RDFLiteral, BNode]
+
+
+class UnrepresentableTripleTermError(Exception):
+    """Raised when a triple term must be added to a graph but the installed
+    rdflib exposes no triple-term type.
+
+    RDF 1.2 triple terms ``<<( s p o )>>`` — including those produced by
+    desugaring reified triples ``<< >>``, reifier annotations ``~`` and
+    annotation blocks ``{| |}`` into ``reifier rdf:reifies <<( s p o )>>`` —
+    parse and desugar correctly, but cannot be materialized into an rdflib
+    Graph when ``rdflib.term.Triple`` is unavailable (e.g. rdflib 7.5.0).
+    Instantiating such a term in a rule head or DATA block raises this with an
+    actionable message instead of an opaque ``Graph.add`` assertion downstream.
+    """
+
+
+def _materialize_triple_term(s: RDFTerm, p: RDFTerm, o: RDFTerm):
+    """Build an rdflib triple term, or raise if this rdflib exposes none."""
+    if RDFTripleTerm is not None:
+        return RDFTripleTerm((s, p, o))
+    raise UnrepresentableTripleTermError(
+        f"This rdflib version has no triple-term type, so the RDF 1.2 triple "
+        f"term <<( {s} {p} {o} )>> cannot be added to the result graph. Triple "
+        f"terms — and the reified-triple / reifier / annotation-block constructs "
+        f"that desugar to rdf:reifies triple terms — parse but are not evaluable "
+        f"here; upgrade to an rdflib with triple-term support to evaluate them."
+    )
 
 
 @dataclass(frozen=True)
@@ -129,6 +164,11 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
         else:
             # Variable not bound - in evaluation context this is typically an error
             raise ValueError(f"Variable {term.name} not bound in solution mapping")
+    elif isinstance(term, TripleTerm):
+        s = substitute_term(term.subject, mu)
+        p = substitute_term(term.predicate, mu)
+        o = substitute_term(term.object, mu)
+        return _materialize_triple_term(s, p, o)
     elif isinstance(term, IRI):
         return URIRef(term.value)
     elif isinstance(term, Literal):
@@ -149,19 +189,9 @@ def substitute_term(term: Union[Variable, IRI, Literal, BlankNode], mu: Solution
         raise TypeError(f"Unknown term type: {type(term)}")
 
 
-def substitute_term_safe(term: Union[Variable, IRI, Literal, BlankNode], mu: SolutionMapping) -> Optional[RDFTerm]:
-    """
-    Apply substitution with graceful handling of unbound variables.
-
-    Returns None if a variable is not bound, rather than raising an error.
-    """
-    try:
-        return substitute_term(term, mu)
-    except ValueError:
-        return None
-
-
-def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Graph] = None) -> List[SolutionMapping]:
+def graphMatch(
+    graph: Graph, pattern: TriplePattern, active_graph: Optional[Graph] = None
+) -> List[SolutionMapping]:
     """
     Find all solution mappings that match a triple pattern against a graph.
 
@@ -196,6 +226,22 @@ def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Grap
                 return RDFLiteral(term.value)
         elif isinstance(term, BlankNode):
             return BNode(term.label) if term.label else BNode()
+        elif isinstance(term, TripleTerm):
+            # RDF-star triple term: substitute (no variables to bind at match
+            # time here means treat it as ground); build the rdflib term if
+            # available, else a plain tuple. Unbound variables inside make it a
+            # wildcard we cannot match structurally, so fall back to None.
+            try:
+                s = pattern_term(term.subject)
+                p = pattern_term(term.predicate)
+                o = pattern_term(term.object)
+                if None in (s, p, o):
+                    return None
+                if RDFTripleTerm is not None:
+                    return RDFTripleTerm((s, p, o))
+                return (s, p, o)
+            except TypeError:
+                return None
         elif isinstance(term, (InversePath, PathSequence)):
             # Property paths need special evaluation
             return term
@@ -213,22 +259,30 @@ def graphMatch(graph: Graph, pattern: TriplePattern, active_graph: Optional[Grap
     # Query the graph
     target_graph = active_graph if active_graph is not None else graph
 
+    positions = (
+        (pattern.subject, "s"),
+        (pattern.predicate, "p"),
+        (pattern.object, "o"),
+    )
+
     for s, p, o in target_graph.triples((subj, pred, obj)):
-        bindings = {}
+        matched = {"s": s, "p": p, "o": o}
+        bindings: dict = {}
+        consistent = True
 
-        # Bind subject if it's a variable
-        if isinstance(pattern.subject, Variable):
-            bindings[pattern.subject.name] = s
+        # Bind each variable; if the same variable occurs in more than one
+        # position, every occurrence must match the same RDF term (spec:
+        # graphMatch returns only mu such that subst(mu, TP) is a triple in G).
+        for term, key in positions:
+            if isinstance(term, Variable):
+                value = matched[key]
+                if term.name in bindings and bindings[term.name] != value:
+                    consistent = False
+                    break
+                bindings[term.name] = value
 
-        # Bind predicate if it's a variable
-        if isinstance(pattern.predicate, Variable):
-            bindings[pattern.predicate.name] = p
-
-        # Bind object if it's a variable
-        if isinstance(pattern.object, Variable):
-            bindings[pattern.object.name] = o
-
-        solutions.append(SolutionMapping(bindings=bindings))
+        if consistent:
+            solutions.append(SolutionMapping(bindings=bindings))
 
     return solutions
 
@@ -273,6 +327,10 @@ def graphMatchWithPath(
 
         # Check if object matches
         if isinstance(object_pattern, Variable):
+            # Repeated-variable consistency: if the object variable is the same
+            # as the subject variable, both endpoints must be the same term.
+            if object_pattern.name in bindings and bindings[object_pattern.name] != end_node:
+                continue
             bindings[object_pattern.name] = end_node
         else:
             # Object is a constant - check if it matches
@@ -355,8 +413,25 @@ def evaluate_path(graph: Graph, path) -> Set[tuple]:
         raise TypeError(f"Unknown path type: {type(path)}")
 
 
+def _subst_with_bnodes(term, mu, bnode_map):
+    """Substitute a term, minting a fresh BNode for each distinct blank-node
+    label within one instantiation (shared across the triple, fresh per call)."""
+    if isinstance(term, BlankNode):
+        if bnode_map is None:
+            return substitute_term(term, mu)
+        if term.label not in bnode_map:
+            bnode_map[term.label] = BNode()
+        return bnode_map[term.label]
+    if isinstance(term, TripleTerm):
+        s = _subst_with_bnodes(term.subject, mu, bnode_map)
+        p = _subst_with_bnodes(term.predicate, mu, bnode_map)
+        o = _subst_with_bnodes(term.object, mu, bnode_map)
+        return _materialize_triple_term(s, p, o)
+    return substitute_term(term, mu)
+
+
 def substitute_triple_template(
-    template: TripleTemplate, mu: SolutionMapping
+    template: TripleTemplate, mu: SolutionMapping, bnode_map: Optional[Dict] = None
 ) -> Optional[tuple[RDFTerm, RDFTerm, RDFTerm]]:
     """
     Apply substitution to a triple template.
@@ -367,14 +442,20 @@ def substitute_triple_template(
     Args:
         template: Triple template from rule head
         mu: Solution mapping
+        bnode_map: Per-instantiation map from blank-node label to a fresh BNode.
+            The engine passes a fresh dict for each solution mapping so that a
+            head blank node is fresh per generated triple (spec requirement),
+            while multiple occurrences of the same label within one
+            instantiation refer to the same node. If None, blank nodes reuse
+            their (parse-time) label deterministically.
 
     Returns:
         Tuple of (subject, predicate, object) RDF terms, or None
     """
     try:
-        subj = substitute_term(template.subject, mu)
-        pred = substitute_term(template.predicate, mu)
-        obj = substitute_term(template.object, mu)
+        subj = _subst_with_bnodes(template.subject, mu, bnode_map)
+        pred = _subst_with_bnodes(template.predicate, mu, bnode_map)
+        obj = _subst_with_bnodes(template.object, mu, bnode_map)
         return (subj, pred, obj)
     except ValueError:
         # Variable not bound
@@ -388,6 +469,14 @@ def join(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[S
     From SPARQL semantics:
     "Join(Ω₁, Ω₂) = { μ₁ ∪ μ₂ | μ₁ ∈ Ω₁, μ₂ ∈ Ω₂, and μ₁ and μ₂ are compatible }"
 
+    Implemented as a hash join on the shared variables. Within a single rule-body
+    evaluation each Ω is *domain-homogeneous* (every mapping binds the same
+    variables — see ``eval_rule``), so the shared-variable set computed from
+    representative mappings applies to all, and mappings that agree on the shared
+    variables are necessarily compatible. If that invariant does not hold the
+    code falls back to the O(n·m) nested-loop join, so the result is identical
+    either way.
+
     Args:
         omega1: First set of solution mappings
         omega2: Second set of solution mappings
@@ -395,44 +484,53 @@ def join(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[S
     Returns:
         List of joined solution mappings
     """
+    if not omega1 or not omega2:
+        return []
+
+    dom1 = omega1[0].domain()
+    dom2 = omega2[0].domain()
+    homogeneous = all(mu.domain() == dom1 for mu in omega1) and all(
+        mu.domain() == dom2 for mu in omega2
+    )
+
+    if not homogeneous:
+        # Defensive fallback: heterogeneous domains are not produced by normal
+        # rule evaluation, but keep the general (correct) semantics if they occur.
+        result = []
+        for mu1 in omega1:
+            for mu2 in omega2:
+                merged = merge(mu1, mu2)
+                if merged is not None:
+                    result.append(merged)
+        return result
+
+    shared = tuple(dom1 & dom2)
+
+    # No shared variables: every pair is compatible → cartesian product.
+    if not shared:
+        return [
+            SolutionMapping(bindings={**mu1.bindings, **mu2.bindings})
+            for mu1 in omega1
+            for mu2 in omega2
+        ]
+
+    # Index omega2 by the tuple of its shared-variable values.
+    index: Dict[tuple, List[SolutionMapping]] = {}
+    for mu2 in omega2:
+        key = tuple(mu2.bindings[v] for v in shared)
+        index.setdefault(key, []).append(mu2)
+
     result = []
-
     for mu1 in omega1:
-        for mu2 in omega2:
-            merged = merge(mu1, mu2)
-            if merged is not None:
-                result.append(merged)
-
-    return result
-
-
-def minus(omega1: List[SolutionMapping], omega2: List[SolutionMapping]) -> List[SolutionMapping]:
-    """
-    Set difference for solution mappings (for NOT EXISTS / negation).
-
-    From SPARQL semantics:
-    "Minus(Ω₁, Ω₂) = { μ ∈ Ω₁ | for all μ' ∈ Ω₂, μ and μ' are not compatible }"
-
-    Args:
-        omega1: First set of solution mappings
-        omega2: Second set of solution mappings
-
-    Returns:
-        List of solution mappings from omega1 not compatible with any in omega2
-    """
-    result = []
-
-    for mu1 in omega1:
-        # Check if mu1 is compatible with any mapping in omega2
-        is_compatible_with_any = False
-        for mu2 in omega2:
-            if compatible(mu1, mu2):
-                is_compatible_with_any = True
-                break
-
-        # Only include if NOT compatible with any
-        if not is_compatible_with_any:
-            result.append(mu1)
+        key = tuple(mu1.bindings[v] for v in shared)
+        bucket = index.get(key)
+        if not bucket:
+            continue
+        for mu2 in bucket:
+            # mu1 and mu2 agree on every shared variable (same key) and their
+            # remaining domains are disjoint, so they are compatible: merge
+            # directly without re-running the compatibility check.
+            result.append(SolutionMapping(bindings={**mu1.bindings, **mu2.bindings}))
 
     return result
 

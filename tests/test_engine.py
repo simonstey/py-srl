@@ -3,8 +3,8 @@ Test producing both results only and combined results & data
 """
 from rdflib import Graph
 import pytest
-from src.srl.engine import RuleEngine
-from src.srl.parser import SRLParser
+from srl.engine import RuleEngine
+from srl.parser import SRLParser
 
 
 def rule_engine(rule_text):

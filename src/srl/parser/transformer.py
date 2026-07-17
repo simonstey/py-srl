@@ -1,59 +1,85 @@
 """
-Lark transformer to convert parse tree to AST nodes.
+Lark transformer converting the parse tree to AST nodes.
 
-This transformer implements the mapping from Lark parse trees to
-the AST nodes defined in srl.ast.nodes, following the abstract syntax
-from Section 3 of the SHACL 1.2 Rules specification.
+Maps the Lark parse tree (grammar.lark) to the AST nodes in srl.ast.nodes,
+following the Shape Rules abstract syntax and the 2026-07 grammar restructuring.
 """
 
-from typing import Dict
+import uuid
+from dataclasses import dataclass, field
+from typing import Dict, List
 
-from lark import Transformer, Token
+from lark import Token, Transformer
 
 from ..ast.nodes import (
-    # Core structures
-    RuleSet,
+    IRI,
+    Assignment,
+    BinaryOp,
+    BinaryOperator,
+    BlankNode,
+    BuiltInCall,
+    ConditionExpression,
+    DataBlock,
+    Declaration,
+    FunctionCall,
+    InverseDeclaration,
+    InversePath,
+    Literal,
+    NegationElement,
+    PathSequence,
     Prologue,
     Rule,
-    RuleHead,
     RuleBody,
-    DataBlock,
-    # RDF Terms
-    Variable,
-    IRI,
-    Literal,
-    BlankNode,
-    # Property Paths
-    InversePath,
-    PathSequence,
-    # Body elements
+    RuleHead,
+    RuleSet,
+    SymmetricDeclaration,
+    TargetedRule,
+    TransitiveDeclaration,
     TriplePattern,
     TripleTemplate,
-    ConditionExpression,
-    NegationElement,
-    Assignment,
-    Annotation,
-    # Declarations
-    TransitiveDeclaration,
-    SymmetricDeclaration,
-    InverseDeclaration,
-    ReflexiveDeclaration,
-    # Expressions
-    BinaryOp,
+    TripleTerm,
     UnaryOp,
-    FunctionCall,
-    BuiltInCall,
-    ExistsExpression,
-    BinaryOperator,
     UnaryOperator,
+    Variable,
+    WellFormednessError,
 )
 
-# Standard well-known prefixes
+RDF_TYPE = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
+RDF_FIRST = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#first")
+RDF_REST = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#rest")
+RDF_NIL = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil")
+RDF_REIFIES = IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#reifies")
+
+
+@dataclass
+class _Node:
+    """Transform-time carrier for RDF-1.2 desugaring.
+
+    A term standing in the enclosing triple slot (``head``) plus the plain
+    triples it drags along (``side``). NOT an AST node — mutable, transient,
+    never frozen or exported; it only flows between transformer methods.
+
+    Attributes:
+        head: the RDF term occupying the enclosing subject/object slot
+            (IRI / BlankNode / Variable / Literal / TripleTerm, or rdf:nil).
+        side: already-desugared ``(subject, predicate, object)`` AST-term
+            tuples emitted alongside the base triple.
+        annotations: deferred annotation entries for an object, applied once
+            the enclosing subject+predicate are known (see _expand_annotations).
+    """
+
+    head: object
+    side: List[tuple] = field(default_factory=list)
+    annotations: List[tuple] = field(default_factory=list)
+
+
 STANDARD_PREFIXES: Dict[str, str] = {
     "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
     "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "sh": "http://www.w3.org/ns/shacl#",
+    "srl": "http://www.w3.org/ns/shacl-rules#",
+    "sparql": "http://www.w3.org/ns/sparql#",
     "owl": "http://www.w3.org/2002/07/owl#",
     "dc": "http://purl.org/dc/elements/1.1/",
     "dcterms": "http://purl.org/dc/terms/",
@@ -63,259 +89,946 @@ STANDARD_PREFIXES: Dict[str, str] = {
 
 
 class SRLTransformer(Transformer):
-    """
-    Transform Lark parse tree into SRL AST.
+    """Transform a Lark parse tree into an SRL AST."""
 
-    Methods are named after grammar rules and are called automatically
-    by Lark when transforming the parse tree.
-    """
-
-    def __init__(self):
-        """Initialize transformer with prefix tracking."""
+    def __init__(self, extensions: bool = False):
         super().__init__()
-        # Start with standard well-known prefixes
         self._prefixes: Dict[str, str] = dict(STANDARD_PREFIXES)
+        self.extensions = extensions
+        # Monotonic counter for RDF-1.2 desugaring blank nodes.
+        self._bnode_counter = 0
+        # Bind the trivial built-in rules (name -> BuiltInCall(name, items)).
+        for rule_name, bic_name in self._TRIVIAL_BUILTINS.items():
+            setattr(self, rule_name, self._make_trivial_builtin(bic_name))
 
-    # ========================================================================
-    # Top-level structures
-    # ========================================================================
+    def _fresh_bnode(self, kind: str = "b") -> BlankNode:
+        """Mint a fresh blank node for RDF-1.2 desugaring.
+
+        The label carries a per-mint UUID segment, so it is **globally unique**:
+        distinct desugared nodes never collide, even across separately-parsed
+        imported sources merged by :func:`resolve_imports` (which instantiate
+        DATA blank nodes deterministically by label). The ``sx`` marker is
+        purely for readability; uniqueness comes from the UUID, and because the
+        label contains a random segment no realistic user-authored ``_:`` label
+        collides with it. The engine re-mints a per-solution rdflib BNode keyed
+        on the label at instantiation time.
+        """
+        self._bnode_counter += 1
+        return BlankNode(label=f"sx{uuid.uuid4().hex}_{kind}{self._bnode_counter}")
+
+    @staticmethod
+    def _as_node(x) -> "_Node":
+        """Wrap a bare term as a side-effect-free ``_Node`` (idempotent)."""
+        return x if isinstance(x, _Node) else _Node(head=x)
+
+    def _make_trivial_builtin(self, bic_name: str):
+        """Return a rule handler emitting ``BuiltInCall(bic_name, items)``."""
+
+        def handler(items):
+            return self._bic(bic_name, items)
+
+        return handler
+
+    # ------------------------------------------------------------------
+    # Top-level structure
+    # ------------------------------------------------------------------
 
     def rule_set(self, items):
-        """[1] RuleSet ::= ( Prologue ( Rule | Data ) )*"""
+        """[1] RuleSet ::= (Prologue1 | Rule | Data)*"""
+        self._bnode_counter = 0
         prologue = Prologue()
         rules = []
         data_blocks = []
         declarations = []
+        targeted_rules = []
 
         for item in items:
-            if isinstance(item, Prologue):
-                prologue = item
+            if isinstance(item, tuple):
+                self._apply_prologue_decl(prologue, item)
+            elif isinstance(item, TargetedRule):
+                targeted_rules.append(item)
             elif isinstance(item, Rule):
                 rules.append(item)
             elif isinstance(item, DataBlock):
                 data_blocks.append(item)
-            elif isinstance(item, (TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration)):
+            elif isinstance(
+                item, (TransitiveDeclaration, SymmetricDeclaration, InverseDeclaration)
+            ):
                 declarations.append(item)
 
-        return RuleSet(prologue=prologue, rules=rules, data_blocks=data_blocks, declarations=declarations)
+        return RuleSet(
+            prologue=prologue,
+            rules=rules,
+            data_blocks=data_blocks,
+            declarations=declarations,
+            targeted_rules=targeted_rules,
+        )
 
-    def prologue(self, items):
-        """[2] Prologue ::= ( BaseDecl | PrefixDecl | VersionDecl | ImportsDecl )*"""
-        prologue = Prologue()
+    @staticmethod
+    def _apply_prologue_decl(prologue: Prologue, item) -> None:
+        decl_type, value = item
+        if decl_type == "base":
+            prologue.base = value
+        elif decl_type == "prefix":
+            prefix, iri = value
+            prologue.prefixes[prefix] = iri
+        elif decl_type == "version":
+            prologue.version = value
+        elif decl_type == "imports":
+            prologue.imports.append(value)
 
-        for item in items:
-            if isinstance(item, tuple):
-                decl_type, value = item
-                if decl_type == "base":
-                    prologue.base = value
-                elif decl_type == "prefix":
-                    prefix, iri = value
-                    prologue.prefixes[prefix] = iri
-                elif decl_type == "version":
-                    prologue.version = value
-                elif decl_type == "imports":
-                    prologue.imports.append(value)
-
-        return prologue
+    def prologue1(self, items):
+        """[5] Prologue1 ::= BaseDecl | PrefixDecl | VersionDecl | ImportsDecl"""
+        return items[0]
 
     def base_decl(self, items):
-        """[3] BaseDecl ::= 'BASE' IRIREF"""
         return ("base", items[0])
 
     def prefix_decl(self, items):
-        """[4] PrefixDecl ::= 'PREFIX' PNAME_NS IRIREF"""
-        # items[0] is PNAME_NS (e.g., 'ex:'), items[1] is IRIREF (already IRI object)
         prefix_token = str(items[0]).rstrip(":")
         iri = items[1]
         iri_str = iri.value if isinstance(iri, IRI) else str(iri)
-
-        # Store prefix in transformer state for later resolution
         self._prefixes[prefix_token] = iri_str
-
         return ("prefix", (prefix_token, IRI(iri_str)))
 
     def version_decl(self, items):
-        """[5] VersionDecl ::= 'VERSION' VersionSpecifier"""
         return ("version", items[0])
 
+    def version_specifier(self, items):
+        # STRING_LITERAL1 | STRING_LITERAL2 token -> stripped string value.
+        token = str(items[0])
+        return token[1:-1]
+
     def imports_decl(self, items):
-        """[7] ImportsDecl ::= 'IMPORTS' iri"""
         return ("imports", items[0])
 
-    # ========================================================================
-    # Rules
-    # ========================================================================
+    # ------------------------------------------------------------------
+    # Rules and declarations
+    # ------------------------------------------------------------------
 
     def rule(self, items):
-        """[8] Rule ::= Rule1 | Rule2 | Rule3 | Declaration"""
-        # Return the transformed rule or declaration
+        """[11] Rule ::= Rule1 | Rule2 | Declaration"""
         return items[0] if items else None
 
     def declaration(self, items):
-        """[12] Declaration ::= transitive_decl | symmetric_decl | inverse_decl | reflexive_decl"""
-        # Just pass through the specific declaration type
         return items[0] if items else None
 
     def transitive_decl(self, items):
-        """Handle TRANSITIVE declaration explicitly."""
         return TransitiveDeclaration(predicate=items[0])
 
     def symmetric_decl(self, items):
-        """Handle SYMMETRIC declaration explicitly."""
+        """[27] '(' iri ')' 'SYMMETRIC' (postfix)"""
         return SymmetricDeclaration(predicate=items[0])
 
     def inverse_decl(self, items):
-        """Handle INVERSE declaration explicitly."""
         return InverseDeclaration(predicate1=items[0], predicate2=items[1])
 
-    def reflexive_decl(self, items):
-        """Handle REFLEXIVE declaration explicitly."""
-        return ReflexiveDeclaration(predicate=items[0])
+    def for_clause(self, items):
+        """Extension: 'FOR' Var 'IN' iri -> (marker, Variable, IRI)."""
+        return ("for", items[0], items[1])
+
+    @staticmethod
+    def _is_for_clause(item) -> bool:
+        return isinstance(item, tuple) and len(item) == 3 and item[0] == "for"
+
+    def _extract_for_clause(self, items):
+        """Split an optional for-clause tuple out of the item list.
+
+        Returns (for_clause_or_None, remaining_items).
+        """
+        for_clause = None
+        rest = []
+        for item in items:
+            if for_clause is None and self._is_for_clause(item):
+                for_clause = item
+            else:
+                rest.append(item)
+        return for_clause, rest
+
+    def _wrap_targeted(self, rule: Rule, for_clause):
+        """Wrap ``rule`` in a TargetedRule using the parsed for-clause."""
+        _, focus_var, shape = for_clause
+        return TargetedRule(
+            rule=rule,
+            focus_var=focus_var,
+            shape=shape,
+            direction="rule-to-shape",
+        )
 
     def rule1(self, items):
-        """[9] Rule1 ::= 'RULE' HeadTemplate 'WHERE' BodyPattern"""
-        head = items[0]
-        body = items[1]
-        return Rule(head=head, body=body)
+        """[12] Rule1 ::= 'RULE' iri? for_clause? HeadTemplate 'WHERE' BodyPattern"""
+        for_clause, rest = self._extract_for_clause(items)
+        # Remaining items are [iri?, head, body].
+        if len(rest) == 3:
+            rule_iri, head, body = rest
+        else:
+            rule_iri, (head, body) = None, rest
+        rule = Rule(head=head, body=body, iri=rule_iri)
+        if for_clause is not None:
+            return self._wrap_targeted(rule, for_clause)
+        return rule
 
     def rule2(self, items):
-        """[10] Rule2 ::= 'IF' BodyPattern 'THEN' HeadTemplate"""
-        body = items[0]
-        head = items[1]
-        return Rule(head=head, body=body)
-
-    def rule3(self, items):
-        """[11] Rule3 ::= HeadTemplate ':-' BodyPattern"""
-        head = items[0]
-        body = items[1]
-        return Rule(head=head, body=body)
+        """[13] Rule2 ::= 'IF' BodyPattern 'THEN' iri? for_clause? HeadTemplate"""
+        for_clause, rest = self._extract_for_clause(items)
+        # Remaining items are [body, iri?, head].
+        if len(rest) == 3:
+            body, rule_iri, head = rest
+        else:
+            body, head = rest
+            rule_iri = None
+        rule = Rule(head=head, body=body, iri=rule_iri)
+        if for_clause is not None:
+            return self._wrap_targeted(rule, for_clause)
+        return rule
 
     def head_template(self, items):
-        """[14] HeadTemplate ::= TriplesTemplateBlock"""
+        """[15] HeadTemplate ::= '{' TriplesBlockTemplate? '}'"""
         templates = items[0] if items else []
         return RuleHead(templates=templates)
 
     def body_pattern(self, items):
-        """[15] BodyPattern ::= '{' BodyPattern1 '}'"""
-        elements = items[0] if items else []
-        return RuleBody(elements=elements)
-
-    def body_pattern1(self, items):
-        """[16] BodyPattern1 ::= BodyTriplesBlock? ( BodyNotTriples BodyTriplesBlock? )*"""
-        elements = []
-        for item in items:
-            if isinstance(item, list):
-                elements.extend(item)
-            else:
-                elements.append(item)
-        return elements
-
-    def body_basic(self, items):
-        """[20] BodyBasic ::= BodyTriplesBlock? ( Filter BodyTriplesBlock? )*"""
-        # Same structure as body_pattern1 but restricted elements
-        elements = []
-        for item in items:
-            if isinstance(item, list):
-                elements.extend(item)
-            else:
-                elements.append(item)
-        return elements
+        """[16] BodyPattern ::= '{' BodyTriplesBlock? (BodyNotTriples '.'? BodyTriplesBlock?)* '}'"""
+        return RuleBody(elements=self._flatten(items))
 
     def data(self, items):
-        """[13] Data ::= 'DATA' TriplesTemplateBlock"""
+        """[14] Data ::= 'DATA' '{' DataTriplesBlock? '}'"""
         triples = items[0] if items else []
         return DataBlock(triples=triples)
 
-    # ========================================================================
+    @staticmethod
+    def _flatten(items):
+        out = []
+        for item in items:
+            if item is None:
+                continue
+            if isinstance(item, list):
+                out.extend(item)
+            else:
+                out.append(item)
+        return out
+
+    # ------------------------------------------------------------------
     # Body elements
-    # ========================================================================
+    # ------------------------------------------------------------------
 
     def body_not_triples(self, items):
-        """[17] BodyNotTriples ::= Filter | Negation | Assignment"""
-        # Just return the single element
         return items[0]
 
+    def body_basic_not_triples(self, items):
+        return items[0]
+
+    def body_basic(self, items):
+        """[24] BodyBasic -> flat list of triple patterns + filters"""
+        return self._flatten(items)
+
     def filter(self, items):
-        """[29] Filter ::= 'FILTER' Constraint"""
-        expr = items[0]
-        return ConditionExpression(expression=expr)
+        return ConditionExpression(expression=items[0])
 
     def constraint(self, items):
-        """[30] Constraint ::= BrackettedExpression | BuiltInCall | FunctionCall"""
-        # Just return the expression
         return items[0]
 
     def negation(self, items):
-        """[19] Negation ::= 'NOT' '{' BodyBasic '}'"""
+        """[23] Negation ::= 'NOT' '{' BodyBasic '}'"""
         body_patterns = items[0] if items else []
         return NegationElement(body_patterns=body_patterns)
 
     def assignment(self, items):
-        """[26] Assignment ::= 'BIND' '(' Expression 'AS' Var ')'"""
-        expr = items[0]
-        var = items[1]
+        """[26] Assignment ::= 'SET' '(' Var ':=' Expression ')'"""
+        # Drop the ASSIGN_OP (':=') token if the lexer kept it in the tree.
+        parts = [i for i in items if not (isinstance(i, Token) and i.type == "ASSIGN_OP")]
+        var, expr = parts
         return Assignment(variable=var, expression=expr)
 
+    # ------------------------------------------------------------------
+    # Data family (ground triples: no variables, no paths)
+    # ------------------------------------------------------------------
+
+    def data_triples_block(self, items):
+        return self._flatten_triples(items, TripleTemplate)
+
+    def triples_same_subject_data(self, items):
+        return self._emit_same_subject(items, TripleTemplate)
+
+    def property_list_not_empty_data(self, items):
+        return self._pairs(items)
+
+    def verb_data(self, items):
+        """[32] VerbData ::= iri | 'a'"""
+        if items and isinstance(items[0], Token) and items[0].type == "TYPE_A":
+            return RDF_TYPE
+        return items[0]
+
+    def object_list_data(self, items):
+        return list(items)
+
+    def object_data(self, items):
+        return self._object_with_annotations(items)
+
+    def graph_node_data(self, items):
+        return items[0]
+
+    def rdf_term_data(self, items):
+        return self._nil_or_first(items)
+
+    def triple_term_data(self, items):
+        return self._triple_term(items)
+
+    def triple_term_subject_data(self, items):
+        return items[0]
+
+    def triple_term_object_data(self, items):
+        return items[0]
+
+    # ------------------------------------------------------------------
+    # Template family (rule heads: variables, no paths)
+    # ------------------------------------------------------------------
+
+    def triples_block_template(self, items):
+        return self._flatten_triples(items, TripleTemplate)
+
+    def triples_same_subject_template(self, items):
+        return self._emit_same_subject(items, TripleTemplate)
+
+    def property_list_not_empty_template(self, items):
+        return self._pairs(items)
+
+    def object_list_template(self, items):
+        return list(items)
+
+    def object_template(self, items):
+        return self._object_with_annotations(items)
+
+    def graph_node_template(self, items):
+        return items[0]
+
+    # ------------------------------------------------------------------
+    # Pattern family (rule bodies: variables AND paths)
+    # ------------------------------------------------------------------
+
     def body_triples_block(self, items):
-        """[18] BodyTriplesBlock ::= TriplesBlock"""
-        # Returns list of triple patterns
         return items[0] if items else []
 
-    def triples_block(self, items):
-        """[23] TriplesBlock ::= TriplesSameSubjectPath ( '.' TriplesBlock? )?"""
-        patterns = []
-        for item in items:
-            if isinstance(item, list):
-                patterns.extend(item)
-            elif isinstance(item, TriplePattern):
-                patterns.append(item)
-        return patterns
+    def triples_block_pattern(self, items):
+        return self._flatten_triples(items, TriplePattern)
 
-    def triples_template_block(self, items):
-        """[21] TriplesTemplateBlock ::= '{' TriplesTemplate? '}'"""
-        return items[0] if items else []
+    def triples_same_subject_pattern(self, items):
+        return self._emit_same_subject(items, TriplePattern)
 
-    def triples_template(self, items):
-        """[22] TriplesTemplate ::= TriplesSameSubject ( '.' TriplesTemplate? )?"""
-        templates = []
-        for item in items:
-            if isinstance(item, list):
-                templates.extend(item)
-            elif isinstance(item, TripleTemplate):
-                templates.append(item)
-        return templates
+    def property_list_not_empty_pattern(self, items):
+        return self._pairs(items)
 
-    # ========================================================================
-    # Triple patterns and templates
-    # ========================================================================
+    def object_list_pattern(self, items):
+        return list(items)
 
-    def triples_same_subject(self, items):
-        """[34] TriplesSameSubject ::= VarOrTerm PropertyListNotEmpty | ..."""
-        # Simplified: assumes subject + property-object pairs
-        subject = items[0]
-        property_list = items[1] if len(items) > 1 else []
+    def object_pattern(self, items):
+        return self._object_with_annotations(items)
 
-        templates = []
-        for pred, obj in property_list:
-            templates.append(TripleTemplate(subject=subject, predicate=pred, object=obj))
+    def graph_node_pattern(self, items):
+        return items[0]
 
-        return templates
+    def verb(self, items):
+        """[86] Verb ::= VarOrIri | 'a'"""
+        if items and isinstance(items[0], Token) and items[0].type == "TYPE_A":
+            return RDF_TYPE
+        return items[0]
 
-    def triples_same_subject_path(self, items):
-        """[40] TriplesSameSubjectPath ::= VarOrTerm PropertyListPathNotEmpty | ..."""
-        # Simplified: assumes subject + property-object pairs
-        subject = items[0]
-        property_list = items[1] if len(items) > 1 else []
+    def verb_path(self, items):
+        return items[0] if items else None
 
-        patterns = []
-        for pred, obj in property_list:
-            patterns.append(TriplePattern(subject=subject, predicate=pred, object=obj))
+    def verb_simple(self, items):
+        return items[0] if items else None
 
-        return patterns
+    # ------------------------------------------------------------------
+    # Triple terms (shared template/pattern positions)
+    # ------------------------------------------------------------------
 
-    def property_list_not_empty(self, items):
-        """[36] PropertyListNotEmpty ::= Verb ObjectList ( ';' ( Verb ObjectList )? )*"""
-        # Returns list of (predicate, object) pairs
+    def triple_term(self, items):
+        return self._triple_term(items)
+
+    def triple_term_subject(self, items):
+        return items[0]
+
+    def triple_term_object(self, items):
+        return items[0]
+
+    def expr_triple_term(self, items):
+        return self._triple_term(items)
+
+    def expr_triple_term_subject(self, items):
+        return items[0]
+
+    def expr_triple_term_object(self, items):
+        return items[0]
+
+    # ------------------------------------------------------------------
+    # RDF 1.2 constructs (desugared to plain triples; §7 constructors)
+    # Each method is family-agnostic — heads and side-triples are plain AST
+    # terms/tuples, so one implementation serves data / template / pattern.
+    # ------------------------------------------------------------------
+
+    def _make_collection(self, elem_nodes):
+        """[38]/[60]/[74] ``( e1 .. en )`` -> rdf:first/rdf:rest/rdf:nil chain.
+
+        Head is the first fresh blank node; the empty ``()`` never reaches here
+        (it lexes as NIL -> rdf:nil).
+        """
+        elem_nodes = [self._as_node(e) for e in elem_nodes]
+        if not elem_nodes:
+            return _Node(head=RDF_NIL)
+        bnodes = [self._fresh_bnode("c") for _ in elem_nodes]
+        side: List[tuple] = []
+        for i, (b, e) in enumerate(zip(bnodes, elem_nodes)):
+            side += e.side
+            side.append((b, RDF_FIRST, e.head))
+            rest = bnodes[i + 1] if i + 1 < len(bnodes) else RDF_NIL
+            side.append((b, RDF_REST, rest))
+        return _Node(head=bnodes[0], side=side)
+
+    def collection_data(self, items):
+        return self._make_collection(items)
+
+    collection_template = collection_data
+    collection_pattern = collection_data
+
+    def triples_node_data(self, items):
+        """[36]/[58]/[72] pass through the collection / bnode-list ``_Node``."""
+        return items[0]
+
+    triples_node_template = triples_node_data
+    triples_node_pattern = triples_node_data
+
+    def property_list_data(self, items):
+        """[30]/[53]/[68] optional property list -> pairs (or empty)."""
+        return items[0] if items and items[0] is not None else []
+
+    property_list_template = property_list_data
+    property_list_pattern = property_list_data
+
+    def _make_bnode_property_list(self, pairs):
+        """[37]/[59]/[73] ``[ p o ; ... ]`` -> fresh bnode subject + its triples.
+
+        The empty ``[]`` never reaches here (it lexes as ANON).
+        """
+        b = self._fresh_bnode("bpl")
+        side: List[tuple] = []
+        for pred, obj in pairs:
+            obj_node = self._as_node(obj)
+            side += obj_node.side
+            side.append((b, pred, obj_node.head))
+            side += self._expand_annotations(b, pred, obj_node.head, obj_node.annotations)
+        return _Node(head=b, side=side)
+
+    def blank_node_property_list_data(self, items):
+        return self._make_bnode_property_list(items[0])
+
+    blank_node_property_list_template = blank_node_property_list_data
+    blank_node_property_list_pattern = blank_node_property_list_data
+
+    def reifier(self, items):
+        """[78]/[41] ``~ id?`` -> ('reifier', reifier_id | None)."""
+        return ("reifier", items[0] if items else None)
+
+    reifier_data = reifier
+
+    def reifier_id(self, items):
+        """[79]/[42] the reifier IRI / blank node / (pattern-only) Var."""
+        return items[0]
+
+    reifier_id_data = reifier_id
+
+    def _reifier_head(self, reifier):
+        """The reifier term: the given id, else a fresh blank node."""
+        if reifier is not None and reifier[1] is not None:
+            return reifier[1]
+        return self._fresh_bnode("r")
+
+    def _make_reified_triple(self, items):
+        """[80]/[44] ``<< s p o ~x? >>`` as a term.
+
+        Does NOT assert the base triple; emits ``reifier rdf:reifies
+        <<( s p o )>>``. Head is the reifier (fresh bnode when no ``~id``).
+        """
+        subj = self._as_node(items[0])
+        obj = self._as_node(items[2])
+        reifier = items[3] if len(items) > 3 else None
+        r = self._reifier_head(reifier)
+        tt = self._triple_term([subj.head, items[1], obj.head])
+        side = list(subj.side) + list(obj.side) + [(r, RDF_REIFIES, tt)]
+        return _Node(head=r, side=side)
+
+    def reified_triple(self, items):
+        return self._make_reified_triple(items)
+
+    reified_triple_data = reified_triple
+
+    def reified_triple_subject(self, items):
+        return items[0]
+
+    reified_triple_object = reified_triple_subject
+    reified_triple_subject_data = reified_triple_subject
+    reified_triple_object_data = reified_triple_subject
+
+    def reified_triple_block_data(self, items):
+        """[43]/[63]/[66] ``<< s p o >> :q :z``: the reifier is the subject of
+        a further property list. Returns ``[subject_node, pairs]`` in the shape
+        ``triples_same_subject_*`` expects (base still NOT asserted)."""
+        node = self._as_node(items[0])
+        pairs = items[1] if len(items) > 1 else []
+        return [node, pairs]
+
+    reified_triple_block_template = reified_triple_block_data
+    reified_triple_block_pattern = reified_triple_block_data
+
+    def annotation_data(self, items):
+        """[39]/[61]/[75] ordered annotation list on an object.
+
+        Entries are ('reifier', id | None) and ('block', pairs), applied by
+        ``_expand_annotations`` once the enclosing (s, p, o) is known.
+        """
+        return list(items)
+
+    annotation_template = annotation_data
+    annotation_pattern = annotation_data
+
+    def annotation_block_data(self, items):
+        """[40]/[62]/[76] ``{| p o ; ... |}`` -> ('block', pairs)."""
+        return ("block", items[0])
+
+    annotation_block_template = annotation_block_data
+    annotation_block_pattern = annotation_block_data
+
+    # ------------------------------------------------------------------
+    # Property paths
+    # ------------------------------------------------------------------
+
+    def path(self, items):
+        return items[0]
+
+    def path_sequence(self, items):
+        if not items:
+            return None
+        if len(items) == 1:
+            return items[0]
+        return PathSequence(elements=list(items))
+
+    def path_elt_or_inverse(self, items):
+        if len(items) == 2:
+            first = items[0]
+            if isinstance(first, Token) and str(first) == "^":
+                return InversePath(path=items[1])
+        return items[0]
+
+    def path_elt(self, items):
+        """[91] PathElt ::= iri | 'a' | '(' Path ')'"""
+        if items and isinstance(items[0], Token) and items[0].type == "TYPE_A":
+            return RDF_TYPE
+        return items[0]
+
+    # ------------------------------------------------------------------
+    # Terms
+    # ------------------------------------------------------------------
+
+    def var_or_rdf_term(self, items):
+        return self._nil_or_first(items)
+
+    def var_or_iri(self, items):
+        return items[0]
+
+    def var(self, items):
+        token = items[0]
+        return Variable(name=str(token)[1:])  # strip ? or $
+
+    def iri(self, items):
+        if isinstance(items[0], IRI):
+            return items[0]
+        if isinstance(items[0], Token):
+            token = str(items[0])
+            if token.startswith("<") and token.endswith(">"):
+                return IRI(token[1:-1])
+            if ":" in token:
+                prefix, local = token.split(":", 1)
+                if prefix in self._prefixes:
+                    return IRI(self._prefixes[prefix] + local)
+            return IRI(token)
+        return items[0]
+
+    def prefixed_name(self, items):
+        token = str(items[0])
+        if ":" in token:
+            prefix, local = token.split(":", 1)
+            if prefix in self._prefixes:
+                return IRI(self._prefixes[prefix] + local)
+            return IRI(f"{prefix}:{local}")
+        return IRI(token)
+
+    def rdf_literal(self, items):
+        value = items[0]
+        if len(items) > 1:
+            modifier = items[1]
+            if isinstance(modifier, str) and modifier.startswith("@"):
+                return Literal(value=value, language=modifier[1:])
+            if isinstance(modifier, IRI):
+                return Literal(value=value, datatype=modifier)
+        return Literal(value=value)
+
+    def string(self, items):
+        token = str(items[0])
+        if token.startswith('"""') or token.startswith("'''"):
+            return token[3:-3]
+        return token[1:-1]
+
+    def numeric_literal(self, items):
+        return items[0]
+
+    def numeric_literal_unsigned(self, items):
+        return self._numeric(str(items[0]))
+
+    def numeric_literal_positive(self, items):
+        return self._numeric(str(items[0]))
+
+    def numeric_literal_negative(self, items):
+        return self._numeric(str(items[0]))
+
+    @staticmethod
+    def _numeric(value: str) -> Literal:
+        if "e" in value.lower():
+            dt = "http://www.w3.org/2001/XMLSchema#double"
+        elif "." in value:
+            dt = "http://www.w3.org/2001/XMLSchema#decimal"
+        else:
+            dt = "http://www.w3.org/2001/XMLSchema#integer"
+        return Literal(value=value, datatype=IRI(dt))
+
+    def boolean_literal(self, items):
+        value = str(items[0]).lower() if items else "true"
+        return Literal(value=value, datatype=IRI("http://www.w3.org/2001/XMLSchema#boolean"))
+
+    def blank_node(self, items):
+        token = str(items[0])
+        if token.startswith("_:"):
+            return BlankNode(label=token[2:])
+        return BlankNode(label=f"anon_{uuid.uuid4().hex[:8]}")
+
+    # ------------------------------------------------------------------
+    # Expressions
+    # ------------------------------------------------------------------
+
+    def expression(self, items):
+        return items[0]
+
+    def conditional_or_expression(self, items):
+        return self._left_assoc_named(items, BinaryOperator.OR)
+
+    def conditional_and_expression(self, items):
+        return self._left_assoc_named(items, BinaryOperator.AND)
+
+    @staticmethod
+    def _left_assoc_named(items, op):
+        if len(items) == 1:
+            return items[0]
+        result = items[0]
+        i = 1
+        while i < len(items):
+            result = BinaryOp(operator=op, left=result, right=items[i + 1])
+            i += 2
+        return result
+
+    def value_logical(self, items):
+        return items[0]
+
+    def relational_expression(self, items):
+        if len(items) == 1:
+            return items[0]
+        left = items[0]
+        if len(items) == 3:
+            op_token = str(items[1])
+            right = items[2]
+            if op_token.upper() == "IN":
+                exprs = right if isinstance(right, list) else [right]
+                return BuiltInCall(function_name="IN", arguments=[left, *exprs])
+            op_map = {
+                "=": BinaryOperator.EQ,
+                "!=": BinaryOperator.NE,
+                "<": BinaryOperator.LT,
+                ">": BinaryOperator.GT,
+                "<=": BinaryOperator.LE,
+                ">=": BinaryOperator.GE,
+            }
+            operator = op_map.get(op_token)
+            if operator is None:
+                return left
+            return BinaryOp(operator=operator, left=left, right=right)
+        if len(items) == 4:
+            not_kw = str(items[1]).upper()
+            in_kw = str(items[2]).upper()
+            expr_list = items[3]
+            if not_kw == "NOT" and in_kw == "IN":
+                exprs = expr_list if isinstance(expr_list, list) else [expr_list]
+                in_call = BuiltInCall(function_name="IN", arguments=[left, *exprs])
+                return UnaryOp(operator=UnaryOperator.NOT, operand=in_call)
+        return left
+
+    def numeric_expression(self, items):
+        return items[0]
+
+    def additive_expression(self, items):
+        if len(items) == 1:
+            return items[0]
+        result = items[0]
+        i = 1
+        while i + 1 < len(items):
+            op_token = str(items[i])
+            right = items[i + 1]
+            operator = BinaryOperator.ADD if op_token == "+" else BinaryOperator.SUB
+            result = BinaryOp(operator=operator, left=result, right=right)
+            i += 2
+        return result
+
+    def multiplicative_expression(self, items):
+        if len(items) == 1:
+            return items[0]
+        result = items[0]
+        i = 1
+        while i + 1 < len(items):
+            op_token = str(items[i])
+            right = items[i + 1]
+            operator = BinaryOperator.MUL if op_token == "*" else BinaryOperator.DIV
+            result = BinaryOp(operator=operator, left=result, right=right)
+            i += 2
+        return result
+
+    def unary_expression(self, items):
+        if len(items) == 1:
+            return items[0]
+        op_token = str(items[0])
+        operand = items[1]
+        op_map = {
+            "!": UnaryOperator.NOT,
+            "+": UnaryOperator.PLUS,
+            "-": UnaryOperator.MINUS,
+        }
+        return UnaryOp(operator=op_map.get(op_token), operand=operand)
+
+    def primary_expression(self, items):
+        return items[0]
+
+    def bracketted_expression(self, items):
+        return items[0]
+
+    def built_in_call(self, items):
+        return items[0]
+
+    def iri_or_function(self, items):
+        """[116] iriOrFunction ::= iri ArgList?"""
+        function_iri = items[0]
+        if len(items) > 1:
+            args = items[1] if isinstance(items[1], list) else [items[1]]
+            return FunctionCall(function=function_iri, arguments=args)
+        return function_iri
+
+    def function_call(self, items):
+        """[20] FunctionCall ::= iri ArgList"""
+        function_iri = items[0]
+        args = items[1] if len(items) > 1 else []
+        return FunctionCall(function=function_iri, arguments=args)
+
+    def arg_list(self, items):
+        if len(items) == 1 and isinstance(items[0], Token) and items[0].type == "NIL":
+            return []
+        return list(items) if items else []
+
+    def expression_list(self, items):
+        if len(items) == 1 and isinstance(items[0], Token) and items[0].type == "NIL":
+            return []
+        return list(items) if items else []
+
+    # ------------------------------------------------------------------
+    # Built-in function builders (spec [121] only)
+    # ------------------------------------------------------------------
+
+    def _bic(self, name, items):
+        return BuiltInCall(function_name=name, arguments=list(items))
+
+    # Trivial built-in rules: grammar-rule name -> emitted BuiltInCall name.
+    # These map a parse-tree node straight to ``BuiltInCall(name, items)`` with
+    # no extra logic. The transformer methods are generated in ``__init__`` via
+    # ``setattr``. Rules needing real logic (bnode/concat/now/uuid/struuid) keep
+    # their own methods below.
+    _TRIVIAL_BUILTINS: Dict[str, str] = {
+        "builtin_str": "STR",
+        "builtin_lang": "LANG",
+        "builtin_langmatches": "LANGMATCHES",
+        "builtin_langdir": "LANGDIR",
+        "builtin_datatype": "DATATYPE",
+        "builtin_iri": "IRI",
+        "builtin_uri": "URI",
+        "builtin_abs": "ABS",
+        "builtin_ceil": "CEIL",
+        "builtin_floor": "FLOOR",
+        "builtin_round": "ROUND",
+        "builtin_substr": "SUBSTR",
+        "builtin_strlen": "STRLEN",
+        "builtin_replace": "REPLACE",
+        "builtin_ucase": "UCASE",
+        "builtin_lcase": "LCASE",
+        "builtin_encode_for_uri": "ENCODE_FOR_URI",
+        "builtin_contains": "CONTAINS",
+        "builtin_strstarts": "STRSTARTS",
+        "builtin_strends": "STRENDS",
+        "builtin_strbefore": "STRBEFORE",
+        "builtin_strafter": "STRAFTER",
+        "builtin_year": "YEAR",
+        "builtin_month": "MONTH",
+        "builtin_day": "DAY",
+        "builtin_hours": "HOURS",
+        "builtin_minutes": "MINUTES",
+        "builtin_seconds": "SECONDS",
+        "builtin_timezone": "TIMEZONE",
+        "builtin_tz": "TZ",
+        "builtin_if": "IF",
+        "builtin_strlang": "STRLANG",
+        "builtin_strlangdir": "STRLANGDIR",
+        "builtin_strdt": "STRDT",
+        "builtin_sameterm": "sameTerm",
+        "builtin_isiri": "isIRI",
+        "builtin_isuri": "isURI",
+        "builtin_isblank": "isBLANK",
+        "builtin_isliteral": "isLITERAL",
+        "builtin_isnumeric": "isNUMERIC",
+        "builtin_haslang": "hasLANG",
+        "builtin_haslangdir": "hasLANGDIR",
+        "builtin_regex": "REGEX",
+        "builtin_istriple": "isTRIPLE",
+        "builtin_triple": "TRIPLE",
+        "builtin_subject": "SUBJECT",
+        "builtin_predicate": "PREDICATE",
+        "builtin_object": "OBJECT",
+    }
+
+    def builtin_bnode(self, items):
+        # BNODE ( expr ) | BNODE NIL  ->  drop NIL token to an empty arg list.
+        args = [i for i in items if not (isinstance(i, Token) and i.type == "NIL")]
+        return self._bic("BNODE", args)
+
+    def builtin_concat(self, items):
+        if len(items) == 1 and isinstance(items[0], list):
+            items = items[0]
+        return self._bic("CONCAT", items)
+
+    def builtin_now(self, items):
+        return self._bic("NOW", [])
+
+    def builtin_uuid(self, items):
+        return self._bic("UUID", [])
+
+    def builtin_struuid(self, items):
+        return self._bic("STRUUID", [])
+
+    # ------------------------------------------------------------------
+    # Shared helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _nil_or_first(items):
+        if items and isinstance(items[0], Token) and items[0].type == "NIL":
+            return RDF_NIL
+        return items[0]
+
+    def _emit_same_subject(self, items, kind):
+        """Build the base triples for one subject, hoisting carrier side-triples.
+
+        ``kind`` is ``TripleTemplate`` (data/template families) or
+        ``TriplePattern`` (pattern family). ``items`` is ``[subject, pairs]``
+        where ``subject`` may be a bare term or a ``_Node`` (collection /
+        blank-node list / reified-triple subject) and ``pairs`` is the
+        ``(predicate, object)`` list from ``_pairs`` (objects may be ``_Node``s
+        carrying side-triples and annotations).
+        """
+        # The ReifiedTripleBlock alternative ([43]/[63]/[66]) reduces to a single
+        # child ``[subject_node, pairs]``; unwrap it to the two-item shape. The
+        # other alternatives always yield a non-list ``items[0]``.
+        if len(items) == 1 and isinstance(items[0], list):
+            items = items[0]
+        subj_node = self._as_node(items[0])
+        subject = subj_node.head
+        triples = [kind(subject=s, predicate=p, object=o) for (s, p, o) in subj_node.side]
+        pairs = items[1] if len(items) > 1 else []
+        for pred, obj in pairs:
+            obj_node = self._as_node(obj)
+            # A reified triple's predicate must be an IRI or Variable (spec
+            # productions [80]-[85]; TripleTerm invariant). Annotating an object
+            # reached by a property path would reify `<<( s <path> o )>>`, which
+            # is ill-formed — the sibling `<< s <path> o >>` forms reject paths
+            # too, so reject the annotation form here for consistency.
+            if obj_node.annotations and isinstance(pred, (InversePath, PathSequence)):
+                raise WellFormednessError(
+                    "Cannot reify/annotate a triple whose predicate is a property "
+                    "path; a reified triple term requires an IRI or variable predicate."
+                )
+            triples += [kind(subject=s, predicate=p, object=o) for (s, p, o) in obj_node.side]
+            triples.append(kind(subject=subject, predicate=pred, object=obj_node.head))
+            triples += [
+                kind(subject=s, predicate=p, object=o)
+                for (s, p, o) in self._expand_annotations(
+                    subject, pred, obj_node.head, obj_node.annotations
+                )
+            ]
+        return triples
+
+    def _object_with_annotations(self, items):
+        """``ObjectData/Template/Pattern ::= GraphNode Annotation``.
+
+        Wrap the graph node as a ``_Node`` and attach its (possibly empty)
+        annotation list so ``_emit_same_subject`` can expand it once the
+        enclosing subject+predicate are known.
+        """
+        node = self._as_node(items[0])
+        # object_* always reduces to [graph_node, annotation_list]; the list is
+        # empty when there are no annotations.
+        if items[1]:
+            node.annotations.extend(items[1])
+        return node
+
+    def _expand_annotations(self, s, p, o, annotations):
+        """Expand an object's RDF-1.2 annotation list to side-triple tuples.
+
+        The base triple ``(s, p, o)`` is asserted by the caller. Per RDF 1.2
+        Turtle §7, the list ``(reifier | annotationBlock)*`` is processed
+        left-to-right with a ``pending`` reifier:
+
+          * ``~x?``: reifier = ``x`` (else fresh); emit
+            ``reifier rdf:reifies <<( s p o )>>``; remember it as ``pending``.
+          * ``{| pol |}``: reuse ``pending`` if set (consuming it), else mint a
+            fresh reifier and emit its ``rdf:reifies``; then emit ``pol`` with
+            the reifier as subject (recursing into each object's own side and
+            annotations).
+        """
+        # (s, p, o) is fixed for this frame, so the reified triple term is too.
+        tt = self._triple_term([s, p, o])
+        out: List[tuple] = []
+        pending = None
+        for entry in annotations:
+            if entry[0] == "reifier":
+                r = self._reifier_head(entry)
+                out.append((r, RDF_REIFIES, tt))
+                pending = r
+            else:  # ('block', pairs)
+                if pending is not None:
+                    r, pending = pending, None
+                else:
+                    r = self._fresh_bnode("r")
+                    out.append((r, RDF_REIFIES, tt))
+                for bp, bo in entry[1]:
+                    bo_node = self._as_node(bo)
+                    out += bo_node.side
+                    out.append((r, bp, bo_node.head))
+                    out += self._expand_annotations(r, bp, bo_node.head, bo_node.annotations)
+        return out
+
+    @staticmethod
+    def _pairs(items):
+        """Turn [verb, objlist, verb, objlist, ...] into (predicate, object) pairs."""
         pairs = []
         i = 0
         while i < len(items):
@@ -331,651 +1044,32 @@ class SRLTransformer(Transformer):
                     pairs.append((verb, objects))
         return pairs
 
-    def property_list_path_not_empty(self, items):
-        """[42] PropertyListPathNotEmpty ::= ( VerbPath | VerbSimple ) ObjectListPath ..."""
-        # Similar to property_list_not_empty
-        return self.property_list_not_empty(items)
+    @staticmethod
+    def _triple_term(items):
+        """Build a TripleTerm from a [subject, predicate, object] item list.
+        Shared by the data, template/pattern, and expression triple-term rules."""
+        subj, verb, obj = items
+        return TripleTerm(subject=subj, predicate=verb, object=obj)
 
-    def object_list(self, items):
-        """[38] ObjectList ::= Object ( ',' Object )*"""
-        return items
-
-    def object_list_path(self, items):
-        """[45] ObjectListPath ::= ObjectPath ( ',' ObjectPath )*"""
-        return items
-
-    def verb(self, items):
-        """[37] Verb ::= VarOrIri | 'a'"""
-        if len(items) == 1 and isinstance(items[0], str) and items[0] == "a":
-            return IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-        return items[0]
-
-    def verb_path(self, items):
-        """[43] VerbPath ::= Path"""
-        return items[0] if items else None
-
-    def verb_simple(self, items):
-        """[44] VerbSimple ::= Var"""
-        return items[0] if items else None
-
-    def object(self, items):
-        """[39] Object ::= GraphNode Annotation"""
-        # Return just the graph node, ignore annotation for now
-        return items[0] if items else None
-
-    def object_path(self, items):
-        """[46] ObjectPath ::= GraphNodePath AnnotationPath"""
-        # Return just the graph node, ignore annotation for now
-        return items[0] if items else None
-
-    def graph_node(self, items):
-        """[52] GraphNode ::= VarOrTerm | TriplesNode"""
-        return items[0] if items else None
-
-    def graph_node_path(self, items):
-        """[53] GraphNodePath ::= VarOrTerm | TriplesNodePath"""
-        return items[0] if items else None
-
-    def annotation(self, items):
-        """[60] Annotation ::= ( Reifier | AnnotationBlock )*"""
-        if not items:
-            return None
-        # Collect all annotation properties
-        properties = []
+    @staticmethod
+    def _flatten_triples(items, kind):
+        triples = []
         for item in items:
             if isinstance(item, list):
-                properties.extend(item)
-        if properties:
-            return Annotation(properties=properties)
-        return None
+                triples.extend(item)
+            elif isinstance(item, kind):
+                triples.append(item)
+        return triples
 
-    def annotation_path(self, items):
-        """[58] AnnotationPath ::= ( Reifier | AnnotationBlockPath )*"""
-        if not items:
-            return None
-        # Collect all annotation properties
-        properties = []
-        for item in items:
-            if isinstance(item, list):
-                properties.extend(item)
-        if properties:
-            return Annotation(properties=properties)
-        return None
+    # ------------------------------------------------------------------
+    # Terminal pass-throughs
+    # ------------------------------------------------------------------
 
-    def annotation_block(self, items):
-        """[61] AnnotationBlock ::= '{|' PropertyListNotEmpty '|}'"""
-        # items[0] is the property list - list of (predicate, object) tuples
-        return items[0] if items else []
-
-    def annotation_block_path(self, items):
-        """[59] AnnotationBlockPath ::= '{|' PropertyListPathNotEmpty '|}'"""
-        # items[0] is the property list - list of (predicate, object) tuples
-        return items[0] if items else []
-
-    def path(self, items):
-        """[47] Path ::= PathSequence"""
-        return items[0]
-
-    def path_sequence(self, items):
-        """[48] PathSequence ::= PathEltOrInverse ( '/' PathEltOrInverse )*"""
-        if not items:
-            return None
-        if len(items) == 1:
-            return items[0]
-        # Multiple elements = sequence path
-        return PathSequence(elements=items)
-
-    def path_elt_or_inverse(self, items):
-        """[49] PathEltOrInverse ::= PathElt | '^' PathElt"""
-        if not items:
-            return None
-        # Check if this is an inverse path (starts with ^)
-        if len(items) == 2:
-            # First item might be the ^ token
-            first = items[0]
-            if isinstance(first, Token) and str(first) == "^":
-                return InversePath(path=items[1])
-        # Not inverse, return the path element
-        return items[0]
-
-    def path_elt(self, items):
-        """[50] PathElt ::= PathPrimary"""
-        return items[0]
-
-    def path_primary(self, items):
-        """[51] PathPrimary ::= iri | 'a' | '(' Path ')'"""
-        if len(items) == 1:
-            item = items[0]
-            if item == "a":
-                return IRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-            return item
-        
-        # Parenthesized path
-        for item in items:
-            if not isinstance(item, Token):
-                return item
-        
-        return items[0]
-
-    def prefixed_name(self, items):
-        """[100] PrefixedName ::= PNAME_LN | PNAME_NS"""
-        token = str(items[0])
-
-        if ":" in token:
-            prefix, local = token.split(":", 1)
-
-            # Look up prefix in transformer state
-            if prefix in self._prefixes:
-                return IRI(self._prefixes[prefix] + local)
-
-            # Unknown prefix - return as unresolved for error handling
-            # Could raise an error here, but keeping lenient for partial parsing
-            return IRI(f"{prefix}:{local}")
-
-        return IRI(token)
-
-    # ========================================================================
-    # Terminals and basic types
-    # ========================================================================
-
-    def var(self, items):
-        """[75] Var ::= VAR1 | VAR2"""
-        token = items[0]
-        # Remove ? or $ prefix
-        name = str(token)[1:]
-        return Variable(name=name)
-
-    def iri(self, items):
-        """[99] iri ::= IRIREF | PrefixedName"""
-        if isinstance(items[0], IRI):
-            return items[0]
-        elif isinstance(items[0], Token):
-            token = str(items[0])
-            if token.startswith("<") and token.endswith(">"):
-                return IRI(token[1:-1])
-            # Handle as prefixed name if it contains a colon
-            if ":" in token:
-                prefix, local = token.split(":", 1)
-                if prefix in self._prefixes:
-                    return IRI(self._prefixes[prefix] + local)
-            return IRI(token)
-        return items[0]
-
-    def rdf_literal(self, items):
-        """[92] RDFLiteral ::= String ( LANG_DIR | '^^' iri )?"""
-        value = items[0]
-
-        if len(items) > 1:
-            modifier = items[1]
-            if isinstance(modifier, str) and modifier.startswith("@"):
-                return Literal(value=value, language=modifier[1:])
-            elif isinstance(modifier, IRI):
-                return Literal(value=value, datatype=modifier)
-
-        return Literal(value=value)
-
-    def string(self, items):
-        """[98] String ::= STRING_LITERAL1 | STRING_LITERAL2 | ..."""
-        token = str(items[0])
-        # Remove quotes
-        if token.startswith('"""') or token.startswith("'''"):
-            return token[3:-3]
-        else:
-            return token[1:-1]
-
-    def numeric_literal_unsigned(self, items):
-        """[94] NumericLiteralUnsigned ::= INTEGER | DECIMAL | DOUBLE"""
-        value = str(items[0])
-        # Determine datatype based on format
-        if "e" in value.lower():
-            datatype = IRI("http://www.w3.org/2001/XMLSchema#double")
-        elif "." in value:
-            datatype = IRI("http://www.w3.org/2001/XMLSchema#decimal")
-        else:
-            datatype = IRI("http://www.w3.org/2001/XMLSchema#integer")
-
-        return Literal(value=value, datatype=datatype)
-
-    def numeric_literal(self, items):
-        """[93] NumericLiteral ::= NumericLiteralUnsigned | ..."""
-        # Just return the unsigned literal (items[0] is already transformed)
-        return items[0]
-
-    def boolean_literal(self, items):
-        """[97] BooleanLiteral ::= 'true' | 'false'"""
-        if items:
-            value = str(items[0]).lower()
-        else:
-            value = "true"
-        return Literal(value=value, datatype=IRI("http://www.w3.org/2001/XMLSchema#boolean"))
+    def IRIREF(self, token):
+        return IRI(str(token)[1:-1])
 
     def TRUE(self, token):
         return token
 
     def FALSE(self, token):
-        return token
-
-    def blank_node(self, items):
-        """[101] BlankNode ::= BLANK_NODE_LABEL | ANON"""
-        token = str(items[0])
-        if token.startswith("_:"):
-            return BlankNode(label=token[2:])
-        else:
-            # Generate unique label for anonymous blank node
-            import uuid
-
-            return BlankNode(label=f"anon_{uuid.uuid4().hex[:8]}")
-
-    # ========================================================================
-    # Expressions
-    # ========================================================================
-
-    def expression(self, items):
-        """[76] Expression ::= ConditionalOrExpression"""
-        return items[0]
-
-    def conditional_or_expression(self, items):
-        """[77] ConditionalOrExpression ::= ConditionalAndExpression ( '||' ConditionalAndExpression )*"""
-        if len(items) == 1:
-            return items[0]
-
-        # With named terminals, items are interleaved: expr, OR_OP, expr, OR_OP, expr, ...
-        result = items[0]
-        i = 1
-        while i < len(items):
-            # items[i] is the operator token (OR_OP)
-            right = items[i + 1]
-            result = BinaryOp(operator=BinaryOperator.OR, left=result, right=right)
-            i += 2
-        return result
-
-    def conditional_and_expression(self, items):
-        """[78] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*"""
-        if len(items) == 1:
-            return items[0]
-
-        # With named terminals, items are interleaved: expr, AND_OP, expr, AND_OP, expr, ...
-        result = items[0]
-        i = 1
-        while i < len(items):
-            right = items[i + 1]
-            result = BinaryOp(operator=BinaryOperator.AND, left=result, right=right)
-            i += 2
-        return result
-
-    def value_logical(self, items):
-        """[79] ValueLogical ::= RelationalExpression"""
-        return items[0]
-
-    def relational_expression(self, items):
-        """[80] RelationalExpression ::= NumericExpression ( '=' NumericExpression | ... )?"""
-        if len(items) == 1:
-            return items[0]
-
-        left = items[0]
-
-        # Comparison: left OP right
-        if len(items) == 3:
-            op_token = str(items[1])
-            right = items[2]
-
-            # IN(...) is represented via the existing built-in dispatch in the engine.
-            if op_token.upper() == "IN":
-                exprs = right if isinstance(right, list) else [right]
-                return BuiltInCall(function_name="IN", arguments=[left, *exprs])
-
-            op_map = {
-                "=": BinaryOperator.EQ,
-                "!=": BinaryOperator.NE,
-                "<": BinaryOperator.LT,
-                ">": BinaryOperator.GT,
-                "<=": BinaryOperator.LE,
-                ">=": BinaryOperator.GE,
-            }
-
-            operator = op_map.get(op_token)
-            if operator is None:
-                return left
-            return BinaryOp(operator=operator, left=left, right=right)
-
-        # NOT IN (...) -> !(IN(...))
-        if len(items) == 4:
-            not_kw = str(items[1]).upper()
-            in_kw = str(items[2]).upper()
-            expr_list = items[3]
-
-            if not_kw == "NOT" and in_kw == "IN":
-                exprs = expr_list if isinstance(expr_list, list) else [expr_list]
-                in_call = BuiltInCall(function_name="IN", arguments=[left, *exprs])
-                return UnaryOp(operator=UnaryOperator.NOT, operand=in_call)
-
-        # Fallback: return the left side if something unexpected is produced.
-        return left
-
-    def numeric_expression(self, items):
-        """[81] NumericExpression ::= AdditiveExpression"""
-        return items[0]
-
-    def additive_expression(self, items):
-        """[82] AdditiveExpression ::= MultiplicativeExpression ( '+' | '-' ... )*"""
-        if len(items) == 1:
-            return items[0]
-
-        # With named terminals, items are interleaved: expr, PLUS_OP|MINUS_OP, expr, ...
-        result = items[0]
-        i = 1
-        while i + 1 < len(items):
-            op_token = str(items[i])
-            right = items[i + 1]
-            operator = BinaryOperator.ADD if op_token == "+" else BinaryOperator.SUB
-            result = BinaryOp(operator=operator, left=result, right=right)
-            i += 2
-
-        return result
-
-    def multiplicative_expression(self, items):
-        """[83] MultiplicativeExpression ::= UnaryExpression ( '*' | '/' UnaryExpression )*"""
-        if len(items) == 1:
-            return items[0]
-
-        # With named terminals, items are interleaved: expr, TIMES_OP|DIV_OP, expr, ...
-        result = items[0]
-        i = 1
-        while i + 1 < len(items):
-            op_token = str(items[i])
-            right = items[i + 1]
-            operator = BinaryOperator.MUL if op_token == "*" else BinaryOperator.DIV
-            result = BinaryOp(operator=operator, left=result, right=right)
-            i += 2
-
-        return result
-
-    def unary_expression(self, items):
-        """[84] UnaryExpression ::= '!' PrimaryExpression | '+' | '-' | PrimaryExpression"""
-        if len(items) == 1:
-            return items[0]
-
-        op_token = str(items[0])
-        operand = items[1]
-
-        op_map = {
-            "!": UnaryOperator.NOT,
-            "+": UnaryOperator.PLUS,
-            "-": UnaryOperator.MINUS,
-        }
-
-        operator = op_map.get(op_token)
-        return UnaryOp(operator=operator, operand=operand)
-
-    def primary_expression(self, items):
-        """[85] PrimaryExpression ::= BrackettedExpression | BuiltInCall | ..."""
-        return items[0]
-
-    def bracketted_expression(self, items):
-        """[89] BrackettedExpression ::= '(' Expression ')'"""
-        return items[0]
-
-    def built_in_call(self, items):
-        """[90] BuiltInCall ::= builtin_str | builtin_lang | ..."""
-        # Items contains the result from one of the specific builtin rules
-        return items[0]
-
-    def builtin_str(self, items):
-        return BuiltInCall(function_name="STR", arguments=items)
-
-    def builtin_lang(self, items):
-        return BuiltInCall(function_name="LANG", arguments=items)
-
-    def builtin_langmatches(self, items):
-        return BuiltInCall(function_name="LANGMATCHES", arguments=items)
-
-    def builtin_langdir(self, items):
-        return BuiltInCall(function_name="LANGDIR", arguments=items)
-
-    def builtin_datatype(self, items):
-        return BuiltInCall(function_name="DATATYPE", arguments=items)
-
-    def builtin_bound(self, items):
-        return BuiltInCall(function_name="BOUND", arguments=items)
-
-    def builtin_iri(self, items):
-        return BuiltInCall(function_name="IRI", arguments=items)
-
-    def builtin_uri(self, items):
-        return BuiltInCall(function_name="URI", arguments=items)
-
-    def builtin_bnode(self, items):
-        return BuiltInCall(function_name="BNODE", arguments=items)
-
-    def builtin_concat(self, items):
-        # Grammar uses ExpressionList, which is transformed as a single Python list.
-        # Unwrap that list so BuiltInCall.arguments is a flat list of expressions.
-        if len(items) == 1 and isinstance(items[0], list):
-            items = items[0]
-        return BuiltInCall(function_name="CONCAT", arguments=items)
-    
-    def builtin_rand(self, items):
-        return BuiltInCall(function_name="RAND", arguments=[])
-    
-    def builtin_abs(self, items):
-        return BuiltInCall(function_name="ABS", arguments=items)
-    
-    def builtin_ceil(self, items):
-        return BuiltInCall(function_name="CEIL", arguments=items)
-    
-    def builtin_floor(self, items):
-        return BuiltInCall(function_name="FLOOR", arguments=items)
-    
-    def builtin_round(self, items):
-        return BuiltInCall(function_name="ROUND", arguments=items)
-    
-    def builtin_substr(self, items):
-        return BuiltInCall(function_name="SUBSTR", arguments=items)
-    
-    def builtin_strlen(self, items):
-        return BuiltInCall(function_name="STRLEN", arguments=items)
-    
-    def builtin_replace(self, items):
-        return BuiltInCall(function_name="REPLACE", arguments=items)
-    
-    def builtin_ucase(self, items):
-        return BuiltInCall(function_name="UCASE", arguments=items)
-    
-    def builtin_lcase(self, items):
-        return BuiltInCall(function_name="LCASE", arguments=items)
-    
-    def builtin_encode_for_uri(self, items):
-        return BuiltInCall(function_name="ENCODE_FOR_URI", arguments=items)
-    
-    def builtin_contains(self, items):
-        return BuiltInCall(function_name="CONTAINS", arguments=items)
-    
-    def builtin_strstarts(self, items):
-        return BuiltInCall(function_name="STRSTARTS", arguments=items)
-    
-    def builtin_strends(self, items):
-        return BuiltInCall(function_name="STRENDS", arguments=items)
-    
-    def builtin_strbefore(self, items):
-        return BuiltInCall(function_name="STRBEFORE", arguments=items)
-    
-    def builtin_strafter(self, items):
-        return BuiltInCall(function_name="STRAFTER", arguments=items)
-    
-    def builtin_year(self, items):
-        return BuiltInCall(function_name="YEAR", arguments=items)
-    
-    def builtin_month(self, items):
-        return BuiltInCall(function_name="MONTH", arguments=items)
-    
-    def builtin_day(self, items):
-        return BuiltInCall(function_name="DAY", arguments=items)
-    
-    def builtin_hours(self, items):
-        return BuiltInCall(function_name="HOURS", arguments=items)
-    
-    def builtin_minutes(self, items):
-        return BuiltInCall(function_name="MINUTES", arguments=items)
-    
-    def builtin_seconds(self, items):
-        return BuiltInCall(function_name="SECONDS", arguments=items)
-    
-    def builtin_timezone(self, items):
-        return BuiltInCall(function_name="TIMEZONE", arguments=items)
-    
-    def builtin_tz(self, items):
-        return BuiltInCall(function_name="TZ", arguments=items)
-    
-    def builtin_now(self, items):
-        return BuiltInCall(function_name="NOW", arguments=[])
-    
-    def builtin_uuid(self, items):
-        return BuiltInCall(function_name="UUID", arguments=[])
-    
-    def builtin_struuid(self, items):
-        return BuiltInCall(function_name="STRUUID", arguments=[])
-    
-    def builtin_md5(self, items):
-        return BuiltInCall(function_name="MD5", arguments=items)
-    
-    def builtin_sha1(self, items):
-        return BuiltInCall(function_name="SHA1", arguments=items)
-    
-    def builtin_sha256(self, items):
-        return BuiltInCall(function_name="SHA256", arguments=items)
-    
-    def builtin_sha384(self, items):
-        return BuiltInCall(function_name="SHA384", arguments=items)
-    
-    def builtin_sha512(self, items):
-        return BuiltInCall(function_name="SHA512", arguments=items)
-    
-    def builtin_coalesce(self, items):
-        if len(items) == 1 and isinstance(items[0], list):
-            items = items[0]
-        return BuiltInCall(function_name="COALESCE", arguments=items)
-    
-    def builtin_if(self, items):
-        return BuiltInCall(function_name="IF", arguments=items)
-    
-    def builtin_strlang(self, items):
-        return BuiltInCall(function_name="STRLANG", arguments=items)
-    
-    def builtin_strlangdir(self, items):
-        return BuiltInCall(function_name="STRLANGDIR", arguments=items)
-    
-    def builtin_strdt(self, items):
-        return BuiltInCall(function_name="STRDT", arguments=items)
-    
-    def builtin_sameterm(self, items):
-        return BuiltInCall(function_name="sameTerm", arguments=items)
-    
-    def builtin_isiri(self, items):
-        return BuiltInCall(function_name="isIRI", arguments=items)
-    
-    def builtin_isuri(self, items):
-        return BuiltInCall(function_name="isURI", arguments=items)
-    
-    def builtin_isblank(self, items):
-        return BuiltInCall(function_name="isBLANK", arguments=items)
-    
-    def builtin_isliteral(self, items):
-        return BuiltInCall(function_name="isLITERAL", arguments=items)
-    
-    def builtin_isnumeric(self, items):
-        return BuiltInCall(function_name="isNUMERIC", arguments=items)
-    
-    def builtin_haslang(self, items):
-        return BuiltInCall(function_name="hasLANG", arguments=items)
-    
-    def builtin_haslangdir(self, items):
-        return BuiltInCall(function_name="hasLANGDIR", arguments=items)
-    
-    def builtin_regex(self, items):
-        return BuiltInCall(function_name="REGEX", arguments=items)
-    
-    def builtin_istriple(self, items):
-        return BuiltInCall(function_name="isTRIPLE", arguments=items)
-    
-    def builtin_triple(self, items):
-        return BuiltInCall(function_name="TRIPLE", arguments=items)
-    
-    def builtin_subject(self, items):
-        return BuiltInCall(function_name="SUBJECT", arguments=items)
-    
-    def builtin_predicate(self, items):
-        return BuiltInCall(function_name="PREDICATE", arguments=items)
-    
-    def builtin_object(self, items):
-        return BuiltInCall(function_name="OBJECT", arguments=items)
-
-    def builtin_exists(self, items):
-        # items[0] is body_basic (list of patterns)
-        return ExistsExpression(patterns=items[0], negated=False)
-
-    def builtin_not_exists(self, items):
-        # items[0] is body_basic (list of patterns)
-        return ExistsExpression(patterns=items[0], negated=True)
-
-    def function_call(self, items):
-        """[31] FunctionCall ::= iri ArgList"""
-        function_iri = items[0]
-        args = items[1] if len(items) > 1 else []
-        return FunctionCall(function=function_iri, arguments=args)
-
-    def arg_list(self, items):
-        """[32] ArgList ::= NIL | '(' Expression ( ',' Expression )* ')'"""
-        # NIL is a named terminal for "( WS* )"; when present, it arrives as a single Token.
-        if len(items) == 1 and isinstance(items[0], Token) and items[0].type == "NIL":
-            return []
-        return items if items else []
-
-    def expression_list(self, items):
-        """[33] ExpressionList ::= NIL | '(' Expression ( ',' Expression )* ')'"""
-        if len(items) == 1 and isinstance(items[0], Token) and items[0].type == "NIL":
-            return []
-        return items if items else []
-
-    # ========================================================================
-    # Misc
-    # ========================================================================
-
-    def var_or_term(self, items):
-        """[64] VarOrTerm ::= Var | iri | RDFLiteral | ..."""
-        return items[0]
-
-    def var_or_iri(self, items):
-        """[74] VarOrIri ::= Var | iri"""
-        return items[0]
-
-    # Terminal pass-throughs
-    def IRIREF(self, token):
-        value = str(token)[1:-1]  # Remove < >
-        return IRI(value)
-
-    def VAR1(self, token):
-        return token
-
-    def VAR2(self, token):
-        return token
-
-    def INTEGER(self, token):
-        return token
-
-    def DECIMAL(self, token):
-        return token
-
-    def DOUBLE(self, token):
-        return token
-
-    def STRING_LITERAL1(self, token):
-        return token
-
-    def STRING_LITERAL2(self, token):
-        return token
-
-    def STRING_LITERAL_LONG1(self, token):
-        return token
-
-    def STRING_LITERAL_LONG2(self, token):
         return token

@@ -1,4 +1,4 @@
-"""Test BIND/CONCAT evaluation."""
+"""Test SET/CONCAT evaluation."""
 
 import logging
 from rdflib import Graph, Namespace, Literal
@@ -11,14 +11,14 @@ logger = logging.getLogger(__name__)
 EX = Namespace("http://example.org/")
 
 def test_bind_concat():
-    """Test BIND with CONCAT function."""
+    """Test SET assignment with CONCAT function."""
     # Test data
     g = Graph()
     g.bind("ex", EX)
     g.add((EX.Person1, EX.firstName, Literal("John")))
     g.add((EX.Person1, EX.lastName, Literal("Doe")))
 
-    # Rule with BIND
+    # Rule with SET assignment
     rule_text = """
     PREFIX ex: <http://example.org/>
 
@@ -27,7 +27,7 @@ def test_bind_concat():
     } WHERE {
         ?person ex:firstName ?first .
         ?person ex:lastName ?last .
-        BIND(CONCAT(?first, " ", ?last) AS ?fullName)
+        SET(?fullName := CONCAT(?first, " ", ?last))
     }
     """
 
@@ -47,4 +47,4 @@ def test_bind_concat():
     
     # Check for expected triple
     assert (EX.Person1, EX.fullName, Literal("John Doe")) in result
-    logger.info("BIND/CONCAT test passed.")
+    logger.info("SET/CONCAT test passed.")

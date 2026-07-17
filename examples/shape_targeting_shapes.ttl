@@ -1,0 +1,7 @@
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix ex: <http://example.org/> .
+
+# Targets every Person, but conforms only when a worksFor value is present.
+ex:EmployeeShape a sh:NodeShape ;
+    sh:targetClass ex:Person ;
+    sh:property [ sh:path ex:worksFor ; sh:minCount 1 ] .

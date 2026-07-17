@@ -1,14 +1,17 @@
 PREFIX : <http://example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
+# NOT EXISTS is not a built-in in SHACL 1.2 Rules. The only negation construct
+# is the NOT { ... } negation element.
+
 # Find people without children (childless)
 RULE { ?person :isChildless true } WHERE {
     ?person rdf:type :Person .
-    FILTER(NOT EXISTS { ?person :parentOf ?child })
+    NOT { ?person :parentOf ?child }
 }
 
 # Find products not in any order
 RULE { ?product :neverOrdered true } WHERE {
     ?product rdf:type :Product .
-    FILTER(NOT EXISTS { ?order :contains ?product })
+    NOT { ?order :contains ?product }
 }

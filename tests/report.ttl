@@ -1,0 +1,1605 @@
+@prefix dc1: <http://purl.org/dc/terms/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix earl: <http://www.w3.org/ns/earl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://github.com/simonstey> a foaf:Person ;
+    foaf:homepage <https://github.com/simonstey> ;
+    foaf:name "Simon Steyskal" .
+
+<https://github.com/simonstey/py-srl#project> a doap:Project,
+        earl:Software,
+        earl:TestSubject ;
+    doap:description "Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine" ;
+    doap:developer <https://github.com/simonstey> ;
+    doap:homepage <https://github.com/simonstey/py-srl> ;
+    doap:name "shacl-rules" ;
+    doap:programming-language "Python" ;
+    doap:release [ a doap:Version ;
+            doap:created "2026-07-14"^^xsd:date ;
+            doap:revision "0.1.5.dev0+gb075671cf.d20260713" ] .
+
+<https://github.com/simonstey/py-srl#test-runner> a earl:Assertor,
+        earl:Software ;
+    dc1:description "Automated test runner for W3C SHACL 1.2 Rules test suite" ;
+    dc1:title "SHACL Rules Test Runner" .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.418228+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_95> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.403069+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_79> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.335675+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_59> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.420771+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_98> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.140156+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 4, column 24" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_26> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.144206+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 3, column 27" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_31> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.430354+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_111> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.480893+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.412186+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_88> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.342303+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_66> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.394492+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_8> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.445404+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_9> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.200382+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_41> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.454117+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_137> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:07.983064+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.479344+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_7> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.457680+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.447400+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_11> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.451121+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_134> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.450074+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_133> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.502466+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-data-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.148751+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_36> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.447536+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_130> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.141167+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 4, column 24" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_28> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.218203+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_4> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.455675+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:15.249295+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://example.org/srl-extensions/targeting-inferred-membership-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.565252+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-domain-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.142167+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 3, column 27" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_29> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.147785+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_35> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.494313+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-basic-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.438378+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_119> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.558149+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-subproperty-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.330147+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_55> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.480893+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.539010+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-data-02> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.398485+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 14" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_74> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.877739+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_20> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.412186+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 3, column 26" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_89> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.145199+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 3, column 27" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_32> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.199382+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_40> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.446404+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_10> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.246562+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 2, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_52> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.245560+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 2, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_51> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.405102+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_82> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.197381+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_38> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.452084+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_135> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.145749+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 27" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_33> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.444536+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_127> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:07.985072+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_3> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.003219+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_21> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.429325+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_109> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.005315+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_23> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.425353+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_103> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.140156+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 4, column 18" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_27> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.004224+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_22> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.543535+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-neg-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.488730+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_8> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.477343+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_6> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.433857+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_114> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.443537+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_125> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.426356+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_105> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.442494+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_124> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.476339+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_5> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.440411+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_121> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.198349+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_39> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.578819+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-range-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.344303+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_69> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.332157+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_56> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.416228+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 26" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_93> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.440954+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_123> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.513165+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_12> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:07.966498+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.485727+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_5> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.586345+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-range-2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.424353+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_102> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.435367+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_115> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.426356+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_104> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.338719+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_62> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.453084+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_136> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.328600+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_53> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.446539+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_129> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.345269+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_70> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.333199+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_57> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.437410+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_117> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.401101+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_77> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.438378+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_118> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.490271+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_9> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.475342+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_4> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.484481+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_4> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.243562+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 2, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_48> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.410643+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_87> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.648394+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_17> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.417201+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_94> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.445554+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_128> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.397483+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 14" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_73> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.572281+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-domain-2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.413226+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 26" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_90> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.336686+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_60> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.146799+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_34> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.482434+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_3> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.240081+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 2, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_44> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.404100+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_81> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.337717+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_61> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:11.526562+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://example.org/srl-extensions/targeting-adult-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.408100+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_85> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.419231+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_97> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.238079+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_42> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.239080+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_43> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.432887+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_113> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.196347+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_37> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.143200+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 27" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_30> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.415227+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 26" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_92> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.244560+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 2, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_50> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.604307+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_16> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.550107+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-subclass-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.338719+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_63> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.396487+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 14" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_72> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.422311+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 23" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_100> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.242560+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 2, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_47> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.439412+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_120> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.486730+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_6> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.406065+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_83> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.448526+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_132> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.479344+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_8> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.243562+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 2, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_49> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.407101+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_84> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.418228+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_96> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.334169+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_58> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.404100+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_80> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.395484+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_71> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.138648+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '{' at line 2, column 33" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_25> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.716266+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_18> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.444536+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_126> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.487695+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_7> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.282165+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_6> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.241564+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 2, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_46> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.431845+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_112> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.240081+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 2, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_45> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.563438+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_13> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.498314+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-basic-02> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.428357+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_107> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.423321+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 23" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_101> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.343301+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_67> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.565482+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_15> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.402104+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_78> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.392481+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_7> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.409101+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_86> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.455132+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_138> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.420771+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 23" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_99> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.340259+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_64> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.876709+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_19> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.414228+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 26" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_91> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.399519+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_75> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.436411+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_116> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.448526+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_131> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:13.408612+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://example.org/srl-extensions/targeting-conformance-gate-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.328600+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_54> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.429325+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_108> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.564472+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_14> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.137650+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 2, column 41" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_24> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.430354+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_110> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.440954+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_122> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.474309+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_3> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.341272+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_65> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.427353+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected character at line 3, column 17" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_106> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:08.281168+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_5> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.400058+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '(' at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_76> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T08:20:09.344303+00:00"^^xsd:dateTime ;
+            dc1:description "Parse error (expected success): Unexpected token '<' at line 3, column 8" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_68> .
+

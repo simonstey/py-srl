@@ -15,29 +15,90 @@ class ParseError(Exception):
     pass
 
 
+class ExtensionError(Exception):
+    """Raised when an opt-in extension feature is used without enabling it."""
+    pass
+
+
+def _build_extended_grammar(base_grammar: str, ext_grammar: str) -> str:
+    """Combine the base grammar with the opt-in extension productions.
+
+    The extension file redefines ``rule1``/``rule2`` (to accept an optional
+    ``FOR Var IN iri`` focus clause) and adds a ``for_clause`` production. Lark
+    forbids duplicate rule definitions, so the base ``rule1:``/``rule2:`` lines
+    are replaced in place with the extension versions and ``for_clause`` is
+    appended. The base grammar file itself is never modified.
+    """
+    ext_productions: dict[str, str] = {}
+    extra_lines: list[str] = []
+    for line in ext_grammar.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("//"):
+            continue
+        name = stripped.split(":", 1)[0].strip()
+        if name in ("rule1", "rule2"):
+            ext_productions[name] = stripped
+        else:
+            extra_lines.append(stripped)
+
+    out_lines = []
+    for line in base_grammar.splitlines():
+        name = line.split(":", 1)[0].strip()
+        if name in ext_productions:
+            out_lines.append(ext_productions.pop(name))
+        else:
+            out_lines.append(line)
+
+    # Any ext production that had no base counterpart is appended as well.
+    out_lines.extend(ext_productions.values())
+    out_lines.extend(extra_lines)
+    return "\n".join(out_lines)
+
+
 class SRLParser:
     """
     Parser for the Shape Rule Language (SRL).
-    
+
     Uses Lark parser with EBNF grammar from Section 6 of the specification.
+
+    When ``extensions=True`` the parser additionally accepts the opt-in
+    rule-to-shape targeting clause ``RULE iri? FOR Var IN iri { ... } WHERE
+    { ... }`` (and the ``IF ... THEN`` analogue), building ``TargetedRule``
+    nodes. This is NOT part of the SRL spec; the default (flag-off) grammar
+    stays byte-for-byte spec-conformant.
     """
-    
-    def __init__(self):
-        """Initialize the parser with the SRL grammar."""
-        grammar_path = Path(__file__).parent / "grammar.lark"
-        
+
+    def __init__(self, extensions: bool = False):
+        """Initialize the parser with the SRL grammar.
+
+        Args:
+            extensions: Enable the opt-in ``FOR ?v IN <shape>`` targeting clause.
+        """
+        self.extensions = extensions
+        base_dir = Path(__file__).parent
+        grammar_path = base_dir / "grammar.lark"
+
         try:
             with open(grammar_path, 'r', encoding='utf-8') as f:
                 grammar = f.read()
         except FileNotFoundError:
             raise ParseError(f"Grammar file not found: {grammar_path}")
-        
+
+        if extensions:
+            ext_path = base_dir / "grammar-ext.lark"
+            try:
+                with open(ext_path, 'r', encoding='utf-8') as f:
+                    ext_grammar = f.read()
+            except FileNotFoundError:
+                raise ParseError(f"Extension grammar file not found: {ext_path}")
+            grammar = _build_extended_grammar(grammar, ext_grammar)
+
         try:
             self.parser = Lark(
                 grammar,
                 start='rule_set',
                 parser='lalr',  # LALR(1) parser for efficiency
-                transformer=SRLTransformer(),
+                transformer=SRLTransformer(extensions=extensions),
             )
         except Exception as e:
             raise ParseError(f"Failed to initialize parser: {e}")

@@ -1,8 +1,13 @@
-# Rule Format Example 9: Datalog Form with Type Pattern
-# Demonstrates Rule3 with rdf:type using 'a' keyword
+# Rule Format Example 9: RULE/WHERE Form with Type Pattern
+# Demonstrates the Rule1 syntax with rdf:type using the 'a' keyword.
+# (The former Datalog `:-` form has been removed from SHACL 1.2 Rules.)
 
 PREFIX ex: <http://example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
 # Infer animal classification
-?x a ex:Animal :- ?x a ex:Dog .
+RULE {
+    ?x a ex:Animal .
+} WHERE {
+    ?x a ex:Dog .
+}

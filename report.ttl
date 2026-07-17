@@ -1,0 +1,1552 @@
+@prefix dc1: <http://purl.org/dc/terms/> .
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix earl: <http://www.w3.org/ns/earl#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://github.com/simonstey> a foaf:Person ;
+    foaf:homepage <https://github.com/simonstey> ;
+    foaf:name "Simon Steyskal" .
+
+<https://github.com/simonstey/py-srl#project> a doap:Project,
+        earl:Software,
+        earl:TestSubject ;
+    doap:description "Python SHACL 1.2 Rules (SRL) Parser and Evaluation Engine" ;
+    doap:developer <https://github.com/simonstey> ;
+    doap:homepage <https://github.com/simonstey/py-srl> ;
+    doap:name "shacl-rules" ;
+    doap:programming-language "Python" ;
+    doap:release [ a doap:Version ;
+            doap:created "2026-07-14"^^xsd:date ;
+            doap:revision "0.1.5.dev0+gb075671cf.d20260713" ] .
+
+<https://github.com/simonstey/py-srl#test-runner> a earl:Assertor,
+        earl:Software ;
+    dc1:description "Automated test runner for W3C SHACL 1.2 Rules test suite" ;
+    dc1:title "SHACL Rules Test Runner" .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.742003+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_41> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.288639+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_72> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.294649+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_76> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.333700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_111> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.327697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_105> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.325698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_103> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.896564+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_46> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.112945+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_59> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.430756+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_6> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.516609+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-domain-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.476699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-basic-02> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.214636+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_62> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.409700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_119> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.688443+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_36> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.777977+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_43> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.687472+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_35> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.299648+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_80> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.471697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-basic-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.420697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_131> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.316698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_95> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.123359+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_20> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.480701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-data-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.108933+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_56> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.410700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_120> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.634841+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_31> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.121391+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_19> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.850019+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_44> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.686474+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_34> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.407696+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_116> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.314701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_93> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.897564+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_47> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.113945+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_60> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.252918+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_22> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.405181+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_114> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.443397+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_25> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.425703+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_137> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.789600+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_14> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.499706+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-subclass-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.424697+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_135> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.426731+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_138> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.898564+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_48> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.251950+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_21> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.323698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_101> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.449699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_6> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.224638+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_71> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.138421+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.414703+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_124> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.319701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_97> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.643065+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_11> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.642070+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_10> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.999625+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_49> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.463698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_9> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.524607+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-domain-2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.218635+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_65> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.334700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_113> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.456697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_4> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.109949+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_57> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.110948+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_58> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.215636+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_63> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.408701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_118> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.874824+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_17> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.419698+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_129> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.429702+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.458702+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_6> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.106709+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_54> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.000622+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_50> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.441360+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_24> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.491698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-neg-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.322698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_100> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.310697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_90> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.411697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_121> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.631837+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_29> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.329699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_107> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.124677+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.221636+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_68> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.454700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_3> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.309698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_89> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.295651+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_77> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.894563+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_45> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.718597+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_12> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.531608+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-range-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.429751+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_5> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.452699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.422699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_133> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.418703+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_128> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.567545+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_26> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.421696+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_132> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:20.637369+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://example.org/srl-extensions/targeting-inferred-membership-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.419698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_130> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.684473+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_32> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.311700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_91> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.461698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_8> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.791610+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_15> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.408701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_117> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.304163+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_84> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.412699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_122> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.460701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_7> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.293649+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_75> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.324698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_102> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.222636+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_69> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.427695+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.453702+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.561895+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_8> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.413702+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_123> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.139431+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_3> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.302650+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_83> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.315696+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_94> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.629839+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_28> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.559895+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_7> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.317701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_96> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.223634+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_70> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.947395+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_18> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.457697+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/stratification/manifest#test_5> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.297650+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_79> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.107722+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_55> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.406687+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_115> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.105654+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_53> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.253953+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_23> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.306688+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_87> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.448699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_5> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.307698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_88> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.305179+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_85> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.300649+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_81> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.776979+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_42> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.326698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_104> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.445698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_3> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.305179+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_86> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.641065+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_9> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.423703+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_134> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.313701+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_92> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.320699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_98> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.450698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_7> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.739004+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_38> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.216636+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_64> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.220634+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_67> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.632838+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_30> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.301654+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_82> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.787605+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_13> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.332699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_110> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.508223+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-subproperty-1> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.838127+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_16> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.425703+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_136> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.568546+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_27> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.739971+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_39> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.331699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_109> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.539607+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-rdfs-range-2> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.002615+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_52> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.296648+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_78> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.415699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_125> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.451700+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_8> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.417698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_127> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.686474+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_33> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.741005+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_40> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.328698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_106> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:13.738004+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_37> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.001618+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_51> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:18.726455+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://example.org/srl-extensions/targeting-conformance-gate-01> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.114949+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_61> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.330699+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_108> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:12.362698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_4> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.289653+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_73> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.447737+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/wellformed/manifest#test_4> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.486698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://w3c.github.io/rdf-tests/shacl/shacl12/eval-data-02> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.219634+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_66> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.416704+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_126> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.291650+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_74> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.333700+00:00"^^xsd:dateTime ;
+            dc1:description "Parse succeeded (expected failure)" ;
+            earl:outcome earl:failed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_112> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:14.321698+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <file:///F:/Projects/shacl/py-srl/tests/shacl12-test-suite/tests/rules/syntax/manifest#test_99> .
+
+[] a earl:Assertion ;
+    earl:assertedBy <https://github.com/simonstey/py-srl#test-runner> ;
+    earl:mode earl:automatic ;
+    earl:result [ a earl:TestResult ;
+            dc1:date "2026-07-14T13:57:16.802616+00:00"^^xsd:dateTime ;
+            earl:outcome earl:passed ] ;
+    earl:subject <https://github.com/simonstey/py-srl#project> ;
+    earl:test <https://example.org/srl-extensions/targeting-adult-01> .
+

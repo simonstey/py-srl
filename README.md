@@ -28,29 +28,29 @@ pip install -e ".[dev]"
 
 ### Running Examples
 
+The `examples/` directory contains 12 standalone scripts, each isolating one
+feature (see [`examples/README.md`](examples/README.md) for the full index):
+
 ```bash
-# Run simple inference example
+# Basic inference
 python examples/01_simple_inference.py
 
-# Run transitive closure example
-python examples/02_transitive_closure.py
+# Recursion / transitive closure
+python examples/03_recursion_transitive.py
 
-# Run FILTER example
-python examples/03_filter_conditions.py
+# Rule-to-shape targeting (opt-in extension)
+python examples/12_shape_targeting.py
 
-# Run BIND/CONCAT example
-python examples/04_bind_concat.py
-
-# Run complete test suite
-python -m pytest tests/test_complete.py -v
+# Run the test suite
+python -m pytest
 ```
 
 ## Python API Usage
 
 ```python
 from rdflib import Graph, Namespace, Literal
-from src.srl.parser import SRLParser
-from src.srl.engine import RuleEngine
+from srl.parser import SRLParser
+from srl.engine import RuleEngine
 
 # Define namespace
 EX = Namespace("http://example.org/")
@@ -88,10 +88,13 @@ for s, p, o in result_graph:
 
 ### Rule Syntax Forms
 
+SHACL 1.2 Rules provides two rule forms. (The Datalog `head :- body` form of
+earlier drafts has been removed and no longer parses.)
+
 ```sparql
 PREFIX ex: <http://example.org/>
 
-# RULE/WHERE form
+# RULE/WHERE form (an optional IRI may name the rule: RULE ex:AdultRule { ... } WHERE { ... })
 RULE {
     ?person ex:isAdult true .
 } WHERE {
@@ -107,21 +110,16 @@ IF {
     ?x ex:grandparent ?z .
 }
 
-# Datalog form
-?x ex:ancestor ?z :- 
-    ?x ex:parent ?y ,
-    ?y ex:parent ?z .
-
-# BIND expressions
+# SET assignment (BIND(expr AS ?var) has been replaced by SET(?var := expr))
 RULE {
     ?person ex:fullName ?fullName .
 } WHERE {
     ?person ex:firstName ?first .
     ?person ex:lastName ?last .
-    BIND(CONCAT(?first, " ", ?last) AS ?fullName)
+    SET(?fullName := CONCAT(?first, " ", ?last))
 }
 
-# Negation
+# Negation (NOT { ... } is the only negation construct; EXISTS/NOT EXISTS are removed)
 RULE {
     ?person ex:hasNoChildren true .
 } WHERE {
@@ -132,6 +130,23 @@ RULE {
 }
 ```
 
+## Known Limitations (Deferred)
+
+This implementation tracks the current (2026-07) [W3C SHACL 1.2 Rules](https://w3c.github.io/data-shapes/shacl12-rules/) spec. The following parts of the spec are **not yet implemented** and are deferred for a later iteration. They are known gaps, not bugs — a full audit and remediation record is in [SPEC-COMPLIANCE-AUDIT.md](SPEC-COMPLIANCE-AUDIT.md) (§6).
+
+- **RDF 1.2 collection & reification syntax — parsed & desugared, but evaluation is gated by rdflib.** The SRL text parser now accepts blank-node property lists `[ … ]`, RDF collections `( … )`, reified triples `<< s p o >>` / reified-triple blocks, annotation blocks `{| … |}`, and reifiers `~` (alongside the triple-term form `<<( s p o )>>`), desugaring them to plain triples per RDF 1.2 Turtle §7. Two evaluation-time caveats remain, both rooted in the engine/rdflib rather than the parser:
+  - **Triple terms cannot be materialized on the pinned rdflib.** The reification constructs desugar to `reifier rdf:reifies <<( s p o )>>`; because the pinned rdflib exposes no triple-term type, evaluating a rule **head** or **DATA** block that produces such a term raises a clear `UnrepresentableTripleTermError` (rather than an opaque failure). Collections `( … )` and blank-node lists `[ … ]` — which emit no triple terms — evaluate normally. Full support needs an rdflib release with RDF 1.2 triple terms.
+  - **Blank nodes in a rule body are matched by label, not as existentials.** A `[ … ]` / `( … )` / `<< … >>` in a rule *body* desugars to labeled blank nodes, and the engine's `graphMatch` treats body blank nodes as concrete labels (the same is true of a hand-written `_:b` in a body), so they do not act as existential variables and typically match nothing. Use variables (`?x`) for body matching. This is pre-existing engine behavior, not specific to the desugaring.
+- **Base-direction language literals.** `LANGDIR`, `STRLANGDIR`, and `hasLANGDIR` are dispatched but effectively no-ops because the pinned rdflib exposes no literal base-direction API. `hasLANG` and language tags work normally. Full support needs an rdflib release with base-direction literals (or a shim).
+- **SRL/RDF concrete syntax coverage.** The `srl.rdf` reader parses the `srl:RuleSet` RDF encoding (rules, data, filters, assignments, negation, `sparql:*` operators) and a serializer (`srl.rdf.to_rdf_graph` / `serialize`) inverts it; RDF-side triple terms / collections mirror the text-syntax gaps above.
+- **Minor SPARQL-fidelity edges.** A few evaluation corners still diverge from strict SPARQL semantics: relational comparison of incomparable operand types falls back to string ordering instead of raising a type error, and `xsd:float ÷ xsd:float` yields `xsd:decimal` rather than `xsd:float`.
+
+### Opt-in rule-to-shape targeting extension (`--extensions`)
+
+Beyond the spec, this project ships an **opt-in** rule-to-shape targeting feature (the `FOR ?v IN <shape>` clause, the `srl shacl` command, and an in-house SHACL 1.2 Core subset). It is **not part of the SRL spec** and is reachable only behind the `--extensions`/`-x` CLI flag (or `SRLParser(extensions=True)` / `RuleEngine(..., extensions=True)`). With the flag off, the parser and engine remain byte-for-byte spec-conformant. Exactly which SHACL constraints and targets the subset supports — and what it deliberately does not — is documented in the [SHACL Core support matrix](docs/shacl-core-support-matrix.md). A worked example is [`examples/12_shape_targeting.py`](examples/12_shape_targeting.py) (`srl shacl` walkthrough in [`examples/README.md`](examples/README.md)).
+
+**Unsupported property paths** (also deferred, and *not* in the current spec): alternative `|`, transitive `+`/`*`, optional `?`, and negated property sets. Only sequence `a/b` and inverse `^a` paths are supported. Test cases exercising the unsupported forms are marked `xfail`.
+
 ## CLI Usage and Sample Output
 
 This project provides a command-line interface (CLI) for parsing, analyzing, and evaluating SRL rules. The CLI is installed as the `srl` command when the package is installed (e.g. `pip install -e .`).
@@ -141,7 +156,7 @@ Basic CLI commands:
 - `srl parse RULES_FILE` — Parse and validate a rules file and display an overview
 - `srl analyze RULES_FILE [--show-layers]` — Analyze rules for stratification and dependencies
 - `srl eval RULES_FILE DATA_FILE [-o OUTPUT] [--format FORMAT]` — Evaluate rules on an RDF data file and optionally write results
-- `srl shacl` — Placeholder: SHACL shapes integration (not implemented yet)
+- `srl shacl RULES_FILE DATA_FILE --shapes SHAPES_FILE [-o OUTPUT]` — Evaluate rule-to-shape targeting (opt-in extension; see the [support matrix](docs/shacl-core-support-matrix.md))
 
 Examples (PowerShell / pwsh):
 
@@ -167,7 +182,7 @@ Sample output:
 ┏━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Prefix ┃ IRI                   ┃
 ┡━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│        │ <http://example.org/> │
+│ ex     │ <http://example.org/> │
 └────────┴───────────────────────┘
                   Rules
 ┏━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
@@ -189,15 +204,15 @@ srl analyze examples/ancestor_rules.srl --show-layers
 Sample output:
 
 ```text
-✓ Successfully parsed examples/ancestor_rules.srl (2 rule(s))
+✓ Parsed examples/ancestor_rules.srl (2 rule(s))
 
 Total strata: 1
 Total rules: 2
 
 Stratification Layers
 └── Stratum 0 (2 rule(s))
-    ├── Rule 1: ?grandparent <http://example.org/grandchildOf> ?grandchild .
-    └── Rule 2: ?person <http://example.org/greatGrandparent> ?ggp .
+    ├── Rule 1: ?grandparent <http://example.org/grandparentOf> ?grandchild .
+    └── Rule 2: ?person <http://example.org/greatGrandparentOf> ?ggc .
 ```
 
 ```pwsh
@@ -207,17 +222,17 @@ srl -v analyze examples/ancestor_rules.srl --show-layers
 Sample output:
 
 ```text
-✓ Successfully parsed examples/ancestor_rules.srl (2 rule(s))
+✓ Parsed examples/ancestor_rules.srl (2 rule(s))
 
 Total strata: 1
 Total rules: 2
 
 Stratification Layers
 └── Stratum 0 (2 rule(s))
-    ├── Rule 1: ?grandparent <http://example.org/grandchildOf> ?grandchild .
-    │   └── PATTERN: ?grandchild <http://example.org/parentOf>/<http://example.org/parentOf> ?grandparent .
-    └── Rule 2: ?person <http://example.org/greatGrandparent> ?ggp .
-        └── PATTERN: ?person <http://example.org/parentOf>/<http://example.org/parentOf>/<http://example.org/parentOf> ?ggp .
+    ├── Rule 1: ?grandparent <http://example.org/grandparentOf> ?grandchild .
+    │   └── PATTERN: ?grandparent <http://example.org/parentOf>/<http://example.org/parentOf> ?grandchild .
+    └── Rule 2: ?person <http://example.org/greatGrandparentOf> ?ggc .
+        └── PATTERN: ?person <http://example.org/parentOf>/<http://example.org/parentOf>/<http://example.org/parentOf> ?ggc .
 ```
 
 3) Evaluate rules on an RDF data file and show inferred triples
@@ -239,7 +254,7 @@ Sample output (summary):
 │ Inferred triples: 3                    │
 └────────────────────────────────────────┘
 
-Use -o/--output to save results to a file.
+ℹ Use -o/--output to save results to a file.
 ```
 
 You can save the resulting graph to a file with the `-o` option:

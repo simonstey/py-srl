@@ -1,0 +1,3 @@
+@prefix ex: <http://example.org/> .
+ex:Eve a ex:Person ; ex:worksFor ex:Acme .
+ex:Frank a ex:Person .

@@ -3,5 +3,5 @@ PREFIX : <http://example.org/>
 RULE { ?x :displayName ?name } WHERE {
     ?x :firstName ?first ;
        :lastName ?last .
-    BIND(CONCAT(?first, " ", ?last) AS ?name)
+    SET(?name := CONCAT(?first, " ", ?last))
 }

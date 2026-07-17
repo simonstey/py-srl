@@ -1,0 +1,2 @@
+PREFIX ex: <http://example.org/>
+RULE ex:r FOR ?this IN ex:AdultShape { ?this ex:status ex:adult } WHERE { ?this ex:age ?a }

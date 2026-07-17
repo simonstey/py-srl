@@ -1,11 +1,17 @@
 PREFIX : <http://example.org/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-# Default name from given name + family name
+# Default full name from given name + family name, unless an explicit full
+# name was already provided.
+#
+# The negated pattern must reference a DIFFERENT predicate than the rule head:
+# a rule that negated its own head predicate (:fullName) would create a closed
+# self-dependency in the dependency graph, which violates the stratification
+# condition of SHACL 1.2 Rules.
 RULE { ?x :fullName ?FN } WHERE {
     ?x rdf:type :Person .
-    NOT { ?x :fullName ?existingName } 
+    NOT { ?x :explicitFullName ?existingName }
     ?x :givenName ?gn ;
        :familyName ?fn .
-    BIND(CONCAT(?gn, " ", ?fn) AS ?FN)
+    SET(?FN := CONCAT(?gn, " ", ?fn))
 }

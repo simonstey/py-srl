@@ -1,0 +1,70 @@
+name: GitHub Pages
+
+# Publishes the SHACL 1.2 Rules conformance report — including the interactive
+# in-browser SRL playground — to GitHub Pages. The report is a single
+# self-contained HTML file; the playground loads the srl-engine JS library from
+# a CDN at runtime, so no build step or bundling is needed here.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow the workflow to publish a Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One in-flight Pages deployment at a time; let a newer push cancel an older run.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # hatch-vcs needs full tag history for the version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project + dev deps
+        run: uv sync --extra dev
+
+      - name: Generate conformance report + playground into _site
+        working-directory: tests
+        run: |
+          uv run python run_shacl_rules_tests.py \
+            -o report.ttl \
+            --test-suite-path shacl12-test-suite \
+            --include-extensions || true
+          mkdir -p ../_site
+          # The report HTML (with the embedded playground) is the site landing page.
+          cp report.html ../_site/index.html
+          # Ship the machine-readable + Markdown reports alongside it.
+          cp report.ttl ../_site/report.ttl
+          cp report.md ../_site/report.md
+          # Skip Jekyll processing (the report is already final HTML).
+          touch ../_site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

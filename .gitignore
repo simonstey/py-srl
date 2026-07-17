@@ -167,6 +167,22 @@ htmlcov/
 
 # Auto-generated version file
 src/srl/_version.py
-/tests/shacl12-test-suite
-/tests/report.ttl
-/tests/run_shacl_rules_tests.py
+
+# W3C test suite: only the SHACL 1.2 *Rules* tree is mirrored in git.
+# The sibling spec suites (core/, node-expr/, sparql/) and top-level suite
+# files stay local-only — they are not part of the rules conformance work.
+/tests/shacl12-test-suite/*
+!/tests/shacl12-test-suite/tests/
+/tests/shacl12-test-suite/tests/*
+!/tests/shacl12-test-suite/tests/rules/
+!/tests/shacl12-test-suite/tests/rules-extensions/
+
+# Spec compliance audit artifacts (local reference snapshot of the W3C spec)
+/.spec-snapshot/
+
+# Generated example outputs
+examples/*-out.ttl
+/*-out.ttl
+/[0-9].ttl
+/[0-9]-out.ttl
+/docs

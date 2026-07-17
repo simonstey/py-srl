@@ -1,0 +1,10 @@
+// Extension productions (opt-in; NOT part of the SRL spec).
+// Redefine rule1/rule2 to accept an optional focus clause: FOR Var IN iri.
+//
+// These productions are loaded as text by SRLParser(extensions=True) and used
+// to override the base grammar's rule1/rule2 (see parser.py). The base grammar
+// file (grammar.lark) is never modified. Keeping them here documents the exact
+// surface syntax of the rule-to-shape targeting extension.
+rule1: "RULE"i iri? for_clause? head_template "WHERE"i body_pattern
+rule2: "IF"i body_pattern "THEN"i iri? for_clause? head_template
+for_clause: "FOR"i var "IN"i iri

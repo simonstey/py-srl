@@ -1,0 +1,2 @@
+@prefix ex: <http://example.org/> .
+ex:Dana a ex:Person ; ex:bornYear 1980 .

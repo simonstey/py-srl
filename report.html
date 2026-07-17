@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>shacl-rules conformance report</title>
+<script>try{var t=localStorage.getItem('srl-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
+<style>
+    :root {
+      color-scheme: light dark;
+      --bg: oklch(0.985 0.003 255); --surface: oklch(1 0 0);
+      --surface-2: oklch(0.968 0.004 255); --hover: oklch(0.955 0.006 255);
+      --border: oklch(0.905 0.006 255); --border-strong: oklch(0.83 0.01 255);
+      --ink: oklch(0.26 0.02 262); --ink-muted: oklch(0.505 0.02 262);
+      --accent: oklch(0.55 0.16 264); --ext: oklch(0.55 0.2 300);
+      --pass-ink: oklch(0.46 0.11 150); --pass-bg: oklch(0.945 0.045 150);
+      --pass-solid: oklch(0.63 0.14 150); --pass-row: oklch(0.986 0.012 150);
+      --fail-ink: oklch(0.5 0.17 26); --fail-bg: oklch(0.948 0.045 26);
+      --fail-solid: oklch(0.6 0.2 26); --fail-row: oklch(0.975 0.022 26);
+      --warn-ink: oklch(0.48 0.09 80); --warn-bg: oklch(0.945 0.06 90);
+      --warn-solid: oklch(0.76 0.14 85); --warn-row: oklch(0.98 0.03 90);
+      --shadow: 0 1px 2px oklch(0.2 0.03 262 / 0.06), 0 4px 16px oklch(0.2 0.03 262 / 0.05);
+      --radius: 14px; --radius-sm: 8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: oklch(0.185 0.012 262); --surface: oklch(0.222 0.014 262);
+        --surface-2: oklch(0.262 0.016 262); --hover: oklch(0.29 0.018 262);
+        --border: oklch(0.32 0.016 262); --border-strong: oklch(0.42 0.02 262);
+        --ink: oklch(0.955 0.008 262); --ink-muted: oklch(0.72 0.016 262);
+        --accent: oklch(0.72 0.14 264); --ext: oklch(0.76 0.16 300);
+        --pass-ink: oklch(0.86 0.14 150); --pass-bg: oklch(0.32 0.06 150);
+        --pass-solid: oklch(0.66 0.15 150); --pass-row: oklch(0.24 0.03 150);
+        --fail-ink: oklch(0.83 0.13 26); --fail-bg: oklch(0.34 0.08 26);
+        --fail-solid: oklch(0.62 0.2 26); --fail-row: oklch(0.27 0.045 26);
+        --warn-ink: oklch(0.88 0.11 90); --warn-bg: oklch(0.34 0.06 85);
+        --warn-solid: oklch(0.78 0.14 85); --warn-row: oklch(0.26 0.035 85);
+        --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 6px 20px oklch(0 0 0 / 0.35);
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: oklch(0.185 0.012 262); --surface: oklch(0.222 0.014 262);
+      --surface-2: oklch(0.262 0.016 262); --hover: oklch(0.29 0.018 262);
+      --border: oklch(0.32 0.016 262); --border-strong: oklch(0.42 0.02 262);
+      --ink: oklch(0.955 0.008 262); --ink-muted: oklch(0.72 0.016 262);
+      --accent: oklch(0.72 0.14 264); --ext: oklch(0.76 0.16 300);
+      --pass-ink: oklch(0.86 0.14 150); --pass-bg: oklch(0.32 0.06 150);
+      --pass-solid: oklch(0.66 0.15 150); --pass-row: oklch(0.24 0.03 150);
+      --fail-ink: oklch(0.83 0.13 26); --fail-bg: oklch(0.34 0.08 26);
+      --fail-solid: oklch(0.62 0.2 26); --fail-row: oklch(0.27 0.045 26);
+      --warn-ink: oklch(0.88 0.11 90); --warn-bg: oklch(0.34 0.06 85);
+      --warn-solid: oklch(0.78 0.14 85); --warn-row: oklch(0.26 0.035 85);
+      --shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 6px 20px oklch(0 0 0 / 0.35);
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      margin: 0; background: var(--bg); color: var(--ink);
+      line-height: 1.5; font-size: 15px;
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    .wrap { max-width: 74rem; margin-inline: auto; padding: 2rem 1.25rem 4rem; }
+    code, pre, .mono { font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace; }
+    .vh {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+    }
+    a { color: var(--accent); }
+
+    /* Header */
+    .top {
+      display: flex; flex-wrap: wrap; gap: 1rem 1.5rem;
+      align-items: flex-start; justify-content: space-between;
+    }
+    .brand h1 {
+      font-size: clamp(1.35rem, 1rem + 1.4vw, 1.9rem); font-weight: 700;
+      letter-spacing: -0.02em; margin: 0; display: flex; align-items: center;
+      gap: 0.6rem; flex-wrap: wrap;
+    }
+    .brand .tag {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+      color: var(--accent); background: color-mix(in oklch, var(--accent) 14%, transparent);
+      padding: 0.2rem 0.55rem; border-radius: 999px; white-space: nowrap;
+    }
+    .brand .sub { margin: 0.35rem 0 0; color: var(--ink-muted); font-size: 0.92rem; }
+    .top-right { display: flex; align-items: center; gap: 1.25rem; }
+    .meta { display: flex; gap: 1.5rem; margin: 0; }
+    .meta div { margin: 0; }
+    .meta dt {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--ink-muted); margin: 0;
+    }
+    .meta dd { margin: 0.15rem 0 0; font-size: 0.86rem; font-weight: 600; }
+    .theme-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 2.3rem; height: 2.3rem; padding: 0; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+      cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .theme-btn:hover { background: var(--hover); border-color: var(--border-strong); }
+    .theme-btn .ic { display: inline-flex; }
+    .theme-btn .i-moon { display: none; }
+    .theme-btn[data-mode="dark"] .i-sun { display: none; }
+    .theme-btn[data-mode="dark"] .i-moon { display: inline-flex; }
+
+    /* Hero */
+    .hero {
+      display: grid; gap: 1.5rem; margin: 1.75rem 0 1.25rem;
+      padding: 1.4rem 1.5rem; background: var(--surface);
+      border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    @media (min-width: 46rem) {
+      .hero { grid-template-columns: auto 1fr; align-items: center; gap: 2.5rem; }
+    }
+    .rate { font-size: clamp(2.4rem, 1.6rem + 3vw, 3.2rem); font-weight: 750;
+            line-height: 1; letter-spacing: -0.03em; color: var(--pass-ink); }
+    .rate.has-fail { color: var(--ink); }
+    .rate-sub { margin-top: 0.45rem; color: var(--ink-muted); font-size: 0.95rem; }
+    .rate-note { color: var(--fail-ink); font-weight: 600; }
+    .bar {
+      display: flex; height: 0.8rem; border-radius: 999px; overflow: hidden;
+      background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border);
+    }
+    .seg { min-width: 0.2rem; }
+    .seg.passed { background: var(--pass-solid); }
+    .seg.failed { background: var(--fail-solid); }
+    .seg.other { background: var(--warn-solid); }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem;
+      list-style: none; margin: 0.9rem 0 0; padding: 0;
+    }
+    .leg {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: none; border: 0; padding: 0.2rem 0; font: inherit;
+      font-size: 0.88rem; color: var(--ink-muted); cursor: pointer; border-radius: 6px;
+    }
+    .leg:hover { color: var(--ink); }
+    .leg b { color: var(--ink); font-variant-numeric: tabular-nums; }
+    .leg .sw { width: 0.7rem; height: 0.7rem; border-radius: 3px; flex: none; }
+    .leg .sw.passed { background: var(--pass-solid); }
+    .leg .sw.failed { background: var(--fail-solid); }
+    .leg .sw.other { background: var(--warn-solid); }
+
+    /* Toolbar */
+    .toolbar {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+      padding: 0.75rem 0; margin-bottom: 0.5rem;
+      background: color-mix(in oklch, var(--bg) 92%, transparent);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+    }
+    .search { position: relative; flex: 1 1 15rem; min-width: 12rem; }
+    .search svg {
+      position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+      color: var(--ink-muted); pointer-events: none;
+    }
+    .search input {
+      width: 100%; padding: 0.5rem 0.75rem 0.5rem 2.2rem; font: inherit;
+      color: var(--ink); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 9px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .search input::placeholder { color: var(--ink-muted); }
+    .search input:focus-visible {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 25%, transparent);
+    }
+    .filters { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; font: inherit; font-size: 0.85rem; font-weight: 500;
+      color: var(--ink-muted); background: var(--surface);
+      border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+      transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .chip:hover { color: var(--ink); border-color: var(--border-strong); }
+    .chip .chip-n {
+      font-variant-numeric: tabular-nums; font-weight: 600; font-size: 0.78rem;
+      color: var(--ink-muted);
+    }
+    .chip[aria-pressed="true"] {
+      color: var(--ink); background: var(--hover); border-color: var(--border-strong);
+    }
+    .chip-pass[aria-pressed="true"] {
+      color: var(--pass-ink); background: var(--pass-bg);
+      border-color: color-mix(in oklch, var(--pass-solid) 45%, transparent);
+    }
+    .chip-fail[aria-pressed="true"] {
+      color: var(--fail-ink); background: var(--fail-bg);
+      border-color: color-mix(in oklch, var(--fail-solid) 45%, transparent);
+    }
+    .chip-other[aria-pressed="true"] {
+      color: var(--warn-ink); background: var(--warn-bg);
+      border-color: color-mix(in oklch, var(--warn-solid) 55%, transparent);
+    }
+    .chip[aria-pressed="true"] .chip-n { color: inherit; }
+    .bulk { display: flex; gap: 0.25rem; margin-left: auto; }
+    .txtbtn {
+      background: none; border: 0; font: inherit; font-size: 0.82rem;
+      color: var(--ink-muted); cursor: pointer; padding: 0.4rem 0.55rem; border-radius: 7px;
+    }
+    .txtbtn:hover { color: var(--accent); background: var(--hover); }
+
+    /* Category sections */
+    .cat { margin-top: 2.25rem; }
+    .cat-head {
+      display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+      padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+    }
+    .cat-head h2 {
+      font-size: 1.1rem; font-weight: 650; letter-spacing: -0.01em; margin: 0;
+    }
+    .cat.ext .cat-head h2 { color: var(--ext); }
+    .cat-count {
+      font-size: 0.85rem; color: var(--ink-muted); font-variant-numeric: tabular-nums;
+    }
+    .cat-badge {
+      font-size: 0.75rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 999px;
+      margin-left: auto;
+    }
+    .cat-badge.ok { color: var(--pass-ink); background: var(--pass-bg); }
+    .cat-badge.bad { color: var(--fail-ink); background: var(--fail-bg); }
+    .note { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--ink-muted); }
+
+    /* Rows */
+    .tbl { margin-top: 0.4rem; }
+    .row { border-bottom: 1px solid var(--border); }
+    .row[data-outcome="failed"] { background: var(--fail-row); }
+    .row[data-outcome="other"] { background: var(--warn-row); }
+    .rowhead {
+      display: grid; align-items: center; gap: 0.15rem 0.6rem; padding: 0.5rem 0.6rem;
+      grid-template-columns: 1.1rem 1fr auto;
+      grid-template-areas: "caret name pill" "msg msg msg";
+    }
+    @media (min-width: 52rem) {
+      .rowhead {
+        grid-template-columns: 1.1rem minmax(0, 22rem) 7.5rem minmax(0, 1fr);
+        grid-template-areas: "caret name pill msg";
+      }
+    }
+    details.row > summary.rowhead { cursor: pointer; list-style: none; }
+    details.row > summary.rowhead::-webkit-details-marker { display: none; }
+    details.row > summary:hover { background: var(--hover); }
+    details.row > summary:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 7px;
+    }
+    .c-caret { grid-area: caret; display: inline-flex; }
+    details.row > summary .c-caret::before {
+      content: ""; width: 0.42rem; height: 0.42rem; margin-left: 0.15rem;
+      border-right: 2px solid var(--ink-muted); border-bottom: 2px solid var(--ink-muted);
+      transform: rotate(-45deg); transition: transform 0.15s ease;
+    }
+    details.row[open] > summary .c-caret::before { transform: rotate(45deg); }
+    .c-name {
+      grid-area: name; min-width: 0; font-size: 0.86rem; overflow-wrap: anywhere;
+      color: var(--ink);
+    }
+    .c-pill { grid-area: pill; justify-self: start; }
+    .c-msg {
+      grid-area: msg; font-size: 0.82rem; color: var(--ink-muted); overflow-wrap: anywhere;
+    }
+    .c-msg:empty { display: none; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.15rem 0.55rem; border-radius: 999px;
+      font-size: 0.76rem; font-weight: 600; white-space: nowrap;
+    }
+    .pill .dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; flex: none; }
+    .pill.passed { color: var(--pass-ink); background: var(--pass-bg); }
+    .pill.failed { color: var(--fail-ink); background: var(--fail-bg); }
+    .pill.other { color: var(--warn-ink); background: var(--warn-bg); }
+
+    /* Expanded source panel */
+    .panel { padding: 0.25rem 0.6rem 0.9rem 1.85rem; display: grid; gap: 0.7rem; }
+    .snip { display: grid; gap: 0.3rem; }
+    .snip-label {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--ink-muted);
+    }
+    .snip pre {
+      margin: 0; padding: 0.7rem 0.85rem; font-size: 0.8rem; line-height: 1.55;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); overflow-x: auto;
+    }
+    .snip-inferred .snip-label { color: var(--accent); }
+    .snip-inferred pre {
+      background: color-mix(in oklch, var(--accent) 8%, var(--surface));
+      border-color: color-mix(in oklch, var(--accent) 30%, var(--border));
+    }
+    details.row[open] > .panel { animation: reveal 0.18s ease; }
+    @keyframes reveal { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; } }
+
+    .empty { text-align: center; color: var(--ink-muted); padding: 3rem 1rem; font-size: 0.95rem; }
+    .foot {
+      margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+      color: var(--ink-muted); font-size: 0.82rem;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
+    </style></head><body><div class="wrap">
+<header class="top"><div class="brand">
+<h1>shacl-rules <span class="tag">SHACL 1.2 Rules</span></h1>
+<p class="sub">Shape Rule Language conformance report</p></div>
+<div class="top-right"><dl class="meta"><div><dt>Version</dt><dd>0.1.5.dev0+gb075671cf.d20260713</dd></div><div><dt>Generated</dt><dd>2026-07-14</dd></div></dl><button id="theme" class="theme-btn" type="button" aria-label="Toggle theme"><svg class="ic i-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.2 17.2L18.6 18.6M18.6 5.4L17.2 6.8M6.8 17.2L5.4 18.6"/></svg><svg class="ic i-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></div></header>
+<section class="hero"><div class="hero-rate"><div class="rate has-fail">97.6%</div><div class="rate-sub">165 / 169 tests passed &middot; <span class="rate-note">4 failing</span></div></div><div class="hero-bar"><div class="bar" role="img" aria-label="165 passed, 4 failed, 0 other of 169"><div class="seg passed" style="flex:165 1 0"></div><div class="seg failed" style="flex:4 1 0"></div></div><ul class="legend"><li><button class="leg" data-filter-set="passed"><span class="sw passed"></span>Passed <b>165</b></button></li><li><button class="leg" data-filter-set="failed"><span class="sw failed"></span>Failed <b>4</b></button></li></ul></div></section>
+<div class="toolbar"><div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><label class="vh" for="q">Search tests</label><input id="q" type="search" placeholder="Search tests…" autocomplete="off"></div><div class="filters" role="group" aria-label="Filter by outcome"><button class="chip" type="button" data-filter="all" aria-pressed="true">All <span class="chip-n">169</span></button><button class="chip chip-pass" type="button" data-filter="passed" aria-pressed="false">Passed <span class="chip-n">165</span></button><button class="chip chip-fail" type="button" data-filter="failed" aria-pressed="false">Failed <span class="chip-n">4</span></button><button class="chip chip-other" type="button" data-filter="other" aria-pressed="false">Other <span class="chip-n">0</span></button></div><div class="bulk"><button class="txtbtn" type="button" data-bulk="expand">Expand all</button><button class="txtbtn" type="button" data-bulk="collapse">Collapse all</button></div></div>
+<main>
+<section class="cat">
+<div class="cat-head"><h2>Syntax</h2><span class="cat-count">134 / 138 passed</span><span class="cat-badge bad">4 not passed</span></div>
+<div class="tbl">
+<div class="row static" data-outcome="passed" data-name="syntax-ruleset-structure-01.srl"><div class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-ruleset-structure-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></div></div>
+<details class="row" data-outcome="passed" data-name="syntax-ruleset-structure-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-ruleset-structure-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>BASE &lt;http://example/base&gt;
+PREFIX : &lt;http://example/&gt;
+PREFIX ns: &lt;http://example/ns#&gt;</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-ruleset-structure-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-ruleset-structure-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>BASE &lt;http://example/base1&gt;
+PREFIX : &lt;http://example/&gt;
+BASE &lt;http://example/base2&gt;
+PREFIX ns: &lt;http://example/ns#&gt;</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-ruleset-structure-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-ruleset-structure-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>DATA {}
+RULE {} WHERE {}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-ruleset-structure-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-ruleset-structure-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE { }
+
+PREFIX ns: &lt;http://example/ns#&gt;
+RULE {} WHERE { :x :p ns:o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-07.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-07.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE { :s :p :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-08.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-08.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { } WHERE { ?s :p [] }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-09.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-09.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { } WHERE { ?s :p _:b . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-10.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-10.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+PREFIX xsd: &lt;http://www.w3.org/2001/XMLSchema#&gt;
+
+RULE { } WHERE { ?s :p 123e+10 }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-11.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-11.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { ?s :p 123 }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-12.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-12.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { ?s :p -123.5e+10 }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-13.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-13.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { ?s :p &lt;&lt;( :a :b :c )&gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-14.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-14.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p &quot;string&quot; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-15.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-15.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p &quot;abc&quot;@en }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-16.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-16.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p &quot;abc&quot;@en--ltr }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-paths-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-paths-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { :sx :p1/:p2 :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-paths-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-paths-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { ?x ^:p1/^:p2 ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-paths-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-paths-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { ?x :p1/a ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-filter-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-filter-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { :s :p ?x FILTER( ?x &gt; 0 ) }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-filter-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-filter-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { FILTER( true ) ?s ?p ?o FILTER ( isURI(?s) ) }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-filter-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-filter-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { FILTER( true ) ?s ?p ?o NOT { ?x ?y ?o FILTER ( isURI(?s) ) } }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-not-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-not-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { :sx :p1 :o NOT { ?a ?b ?c } }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-not-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-not-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { NOT { ?a ?b ?c } ?s ?p ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-not-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-not-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { NOT { :a :b :c1, :c2 , [ ?q ?z ] } ?s ?p ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-elements-not-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-elements-not-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { NOT { :a :b :c {| :saidBy :person |} } }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+
+RULE { } WHERE { ?s :p &lt;&lt; :a :b :c &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+
+RULE { } WHERE { &lt;&lt; :a :b :c &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+PREFIX rdf: &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+
+RULE { } WHERE { ?s :p &lt;&lt; :a :b :c ~:r &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p :o {| :q :r |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p :o ~_:b {| :q :r |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p :o {| :q1 :r1 , :r2 |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-07.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-07.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p :o {| :q1 :r1 ; :q2 :r2 |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-reification-08.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-reification-08.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+
+RULE { } WHERE { :s :p :o ~:r1 {| :q1 :r1 |} ~_:r2 {| :q2 :r2 |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s a :T }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA {
+   # Symmetric RDF
+   123 :q 456 .
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p1 &quot;abc&quot;, &quot;abc&quot;@en , &quot;abc&quot;@en--ltr . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-07.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-07.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA {   :s :p1 1, 1.0, 1e0 . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-08.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-08.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA {   :s :p1 true, false }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-09.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-09.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA {   :s :p1 &quot;xyz&quot;^^:datatype }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-10.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-10.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA {   :s :p :o1, :o2 . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-11.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-11.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o {| :q1 &quot;abc&quot;, &quot;abc&quot;@en , &quot;abc&quot;@EN-GB , &quot;abc&quot;@en--ltr ; :q2 1, true |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-12.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-12.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o ~:r {| :q :z |} . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-13.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-13.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o ~:r1 {| :q1 :z1 |} ~_:B {| :q1 :z1 |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-14.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-14.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :x :p :z ~_:B {| :q _:B |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-15.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-15.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :a :b :c ~:r . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-16.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-16.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { &lt;&lt; :s :p :o &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-17.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-17.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { &lt;&lt; :s :p :o &gt;&gt; . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-18.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-18.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { &lt;&lt; :a :b :c ~:r &gt;&gt; . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-19.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-19.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { &lt;&lt; :s :p :o &gt;&gt; :q &lt;&lt; :s1 :p1 :o1 &gt;&gt; . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-20.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-20.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { &lt;&lt;( :s :p :o )&gt;&gt; :q &lt;&lt;( :s1 :p1 :o1 )&gt;&gt; . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-21.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-21.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o }
+DATA { :x :y :z . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a ?b ?c } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a a :T } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a ?b :c1 , :c2 } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a ?b  &quot;abc&quot;, &quot;abc&quot;@en , &quot;abc&quot;@en--ltr . } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a :p1 1, 1.0, 1e0 . } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a :p1 true, false . } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-07.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-07.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a :p  &quot;xyz&quot;^^:datatype } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-08.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-08.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :s :p :o {| ?b ?c , &quot;abc&quot;, &quot;abc&quot;@en , &quot;abc&quot;@en--ltr ; :q2 1, true |} } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-09.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-09.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :s :p :o ~:r {| :q :z |} } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-10.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-10.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :s :p ?a ~ ?c1 {| ?b ?c2 |} } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-11.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-11.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :s :p :o ~:r1 {| :q1 :z1 |} ~_:B {| :q1 :z1 |} } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-12.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-12.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :x :p :z ~_:B {| :q _:B |} } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-13.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-13.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { &lt;&lt; ?a ?b ?c &gt;&gt; } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-14.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-14.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { &lt;&lt; ?a ?b ?c ~:r &gt;&gt; } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-15.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-15.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { &lt;&lt; :s :p :o &gt;&gt; :q &lt;&lt; ?a ?b ?c  &gt;&gt; } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-16.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-16.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { &lt;&lt;( ?a ?b :o )&gt;&gt; :q &lt;&lt;( :s :p ?c )&gt;&gt; } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-17.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-17.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a :p () } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-18.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-18.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a ?b (1) } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-19.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-19.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { ?a ?b (?c) } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-20.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-20.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :x :q (&quot;a&quot; :x true) } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-21.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-21.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { () :q :x } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-22.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-22.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { (2) :q :x } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-23.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-23.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { (1 2 3) :p :z } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-24.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-24.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { [ ?b ?c ] } WHERE { ?a ?b ?c  }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-25.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-25.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { [ ?b ?c ; :p :z ] } WHERE { ?a ?b ?c  }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-26.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-26.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { [ ?b ?c ; :p :z ] :q :z } WHERE { ?a ?b ?c  }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-27.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-27.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { [ ?b ?c ; :p :z ] :q [] } WHERE { ?a ?b ?c  }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a a :T }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a ?b :c1 , :c2 }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a ?b  &quot;abc&quot;, &quot;abc&quot;@en , &quot;abc&quot;@en--ltr . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a :p1 1, 1.0, 1e0 . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a :p1 true, false . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-07.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-07.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a :p  &quot;xyz&quot;^^:datatype }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-08.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-08.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { :s :p :o {| ?b ?c , &quot;abc&quot;, &quot;abc&quot;@en , &quot;abc&quot;@en--ltr ; :q2 1, true |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-09.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-09.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { :s :p :o ~:r {| :q :z |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-10.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-10.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { :s :p ?a ~ ?c1 {| ?b ?c2 |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-11.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-11.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { :s :p :o ~:r1 {| :q1 :z1 |} ~_:B {| :q1 :z1 |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-12.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-12.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { :x :p :z ~_:B {| :q _:B |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-13.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-13.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { &lt;&lt; ?a ?b ?c &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-14.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-14.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { &lt;&lt; ?a ?b ?c ~:r &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-15.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-15.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { &lt;&lt; :s :p :o &gt;&gt; :q &lt;&lt; ?a ?b ?c  &gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-16.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-16.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { &lt;&lt;( ?a ?b :o )&gt;&gt; :q &lt;&lt;( :s :p ?c )&gt;&gt; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-17.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-17.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a :p () }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-18.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-18.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a ?b (1) }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-19.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-19.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { ?a ?b (?c) }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-20.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-20.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { :x :q (&quot;a&quot; :x true) }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-21.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-21.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { () :q :x }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-22.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-22.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { (2) :q :x }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-23.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-23.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { (1 2 3) :p :z }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-24.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-24.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { [ ?b ?c ] }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-25.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-25.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { [ ?b ?c ; :p :z ] }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-26.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-26.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { [ ?b ?c ; :p :z ] :q :z }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-27.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-27.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE {} WHERE { [ ?b ?c ; :p :z ] :q [] }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-bad-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE</pre></div></div></details>
+<details class="row" data-outcome="failed" data-name="syntax-rule-bad-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-bad-04.srl</code><span class="pill c-pill failed"><span class="dot"></span>failed</span><span class="c-msg">Parse succeeded (expected failure)</span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>RULE {} WHERE {:s :p :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-bad-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-bad-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE {:s [] :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-bad-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-bad-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE {?s ?p ?o NOT { ?a ?b ?c { NOT ?d ?e ?f } } }</pre></div></div></details>
+<details class="row" data-outcome="failed" data-name="syntax-rule-terms-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-bad-01.srl</code><span class="pill c-pill failed"><span class="dot"></span>failed</span><span class="c-msg">Parse succeeded (expected failure)</span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { :s :p &quot;abc&quot;@en--LTR }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+## Blank node labels don&#x27;t end in . so it becomes a DOT
+RULE { } WHERE { :s :p _:label. ; :q &quot;&quot; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-rule-terms-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-rule-terms-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+## Decimals do not end in . so it becomes a DOT
+RULE { } WHERE { :s :p 123. ; :q &quot;&quot; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { a :p :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p a }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s &quot;literal&quot; :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s ?p :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { ?s :p :o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-07.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-07.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o ~:r {| |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-08.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-08.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p :o ~ ?r {| :p :z |} }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-09.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-09.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p &quot;xyx&quot;^^:datatype. . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-10.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-10.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p 1. . }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-data-bad-11.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-data-bad-11.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+DATA { :s :p _:b. . }</pre></div></div></details>
+<details class="row" data-outcome="failed" data-name="syntax-template-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-bad-01.srl</code><span class="pill c-pill failed"><span class="dot"></span>failed</span><span class="c-msg">Parse succeeded (expected failure)</span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { :s :p &quot;abc&quot;@en--LTR } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { &lt;iri with space&gt; :p &quot;abc&quot; } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { a :p &quot;abc&quot; } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-bad-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-bad-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { :s :p :o ~:r {| |} } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-bad-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-bad-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { :s :p1/:p2 :o } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-template-bad-06.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-template-bad-06.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { :s :p :o {| :p1/:p2 :oz } WHERE { ?a ?b ?c }</pre></div></div></details>
+<details class="row" data-outcome="failed" data-name="syntax-pattern-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-bad-01.srl</code><span class="pill c-pill failed"><span class="dot"></span>failed</span><span class="c-msg">Parse succeeded (expected failure)</span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { :s :p &quot;abc&quot;@en--LTR }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { &lt;iri with space&gt; :p &quot;abc&quot; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX :    &lt;http://example/&gt;
+RULE { } WHERE { a :p &quot;abc&quot; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="syntax-pattern-bad-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">syntax-pattern-bad-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE { :s :p :o ~:r {| |} }</pre></div></div></details>
+</div></section>
+<section class="cat">
+<div class="cat-head"><h2>Well-formedness</h2><span class="cat-count">8 / 8 passed</span><span class="cat-badge ok">all passing</span></div>
+<div class="tbl">
+<details class="row" data-outcome="passed" data-name="wellformed-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example&gt;
+RULE { ?s ?p ?o }
+WHERE {
+    ?s ?p ?o
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example&gt;
+RULE { ?s ?p ?o }
+WHERE {
+    ?s ?p ?o . FILTER(?o &lt; 50)
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s ?p ?o }
+WHERE {
+    ?s :p ?o .
+    SET ( ?p := :p )
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s ?p ?o }
+WHERE {
+    ?s :p :z .
+    NOT { ?s :q ?y }
+    ?s  :q ?o
+    SET(?p := :p)
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-bad-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s ?p ?o }
+WHERE {
+    ?s ?p ?o
+    SET(?o := 123)
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { :s :p ?x }
+WHERE {
+    SET(?x := 1)
+    SET(?x := 1)
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s ?p ?o }
+WHERE {
+    FILTER(?o &lt; 50)
+    ?s ?p ?o
+}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="wellformed-bad-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">wellformed-bad-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s ?p ?o }
+WHERE {
+  ?s ?p ?z
+}</pre></div></div></details>
+</div></section>
+<section class="cat">
+<div class="cat-head"><h2>Stratification</h2><span class="cat-count">9 / 9 passed</span><span class="cat-badge ok">all passing</span></div>
+<div class="tbl">
+<details class="row" data-outcome="passed" data-name="stratification-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE {}</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE {?s ?p ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE {} WHERE {:s :p ?o . NOT { :x :data ?z } }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s :p &quot;abc&quot; } WHERE { NOT { ?s :p &quot;XYZ&quot; } SET ( ?s := :sz ) }
+RULE { :s :p &quot;ABC&quot; } WHERE { ?s :q :z }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-05.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-05.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { [] :q &quot;Rule&quot; } WHERE { ?s :z ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-bad-01.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-bad-01.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s :p &quot;ABC&quot; } WHERE { ?s :data &quot;&quot; . NOT { ?s :p &quot;ABC&quot; } }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-bad-02.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-bad-02.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { ?s :p &quot;abc&quot; } WHERE { ?s :data &quot;&quot; . NOT { ?s :p &quot;ABC&quot; } }
+RULE { :s :p &quot;ABC&quot; } WHERE { NOT { ?x :p &quot;abc&quot; } ?s :data &quot;&quot; }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-bad-03.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-bad-03.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { [] :q &quot;Rule&quot; } WHERE { ?s :q ?o }</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="stratification-bad-04.srl"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">stratification-bad-04.srl</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">source</span><pre>PREFIX : &lt;http://example/&gt;
+RULE { [] :q ?o } WHERE { ?s :p ?o }
+RULE { ?s :p &quot;Rule&quot; } WHERE { ?s ?p &quot;Rule&quot; }
+RULE { ?s :q &quot;Rule&quot; } WHERE { ?s :q ?o }</pre></div></div></details>
+</div></section>
+<section class="cat">
+<div class="cat-head"><h2>Evaluation</h2><span class="cat-count">11 / 11 passed</span><span class="cat-badge ok">all passing</span></div>
+<div class="tbl">
+<details class="row" data-outcome="passed" data-name="Eval-basic-01"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-basic-01</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :x :q ?o } WHERE { :s :p ?o }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX : &lt;http://example/&gt;
+
+:s :p :o .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX : &lt;http://example/&gt;
+
+## ## Data graph
+## :s :p :o
+## 
+## ## Inferred
+## :x :q :o
+## 
+## ## Output graph
+## :s :p :o
+## :x :q :o
+
+:x :q :o .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:x :q :o .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-basic-02"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-basic-02</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :x :q ?o } WHERE { :s :p ?z . ?z :q ?o }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX : &lt;http://example/&gt;
+
+:s :p :z .
+:z :q :o .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX : &lt;http://example/&gt;
+
+:x :q :o .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:x :q :o .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-data-01"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-data-01</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX : &lt;http://example/&gt;
+
+DATA { :a :b :c }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre># Empty graph</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX : &lt;http://example/&gt;
+
+:a :b :c .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:a :b :c .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-data-02"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-data-02</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX : &lt;http://example/&gt;
+
+DATA { :a :b :c1 , :c2  }
+
+RULE {} WHERE {}
+
+DATA { :a :b1 :c1 ;
+          :b2 :c2
+     }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre># Empty graph</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX : &lt;http://example/&gt;
+
+:a :b :c1 .
+:a :b :c2 .
+:a :b1 :c1 .
+:a :b2 :c2 .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:a :b :c1,
+        :c2 ;
+    :b1 :c1 ;
+    :b2 :c2 .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-negation-01"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-negation-01</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX : &lt;http://example/&gt;
+
+RULE { :x :p &#x27;:q absent&#x27; } WHERE { NOT { ?s :q ?o } }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre># Empty graph</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX : &lt;http://example/&gt;
+
+:x :p &#x27;:q absent&#x27; .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:x :p &quot;:q absent&quot; .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-rdfs-subclassof-1"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-rdfs-subclassof-1</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>## RDFS (without no axoimatic triples)
+
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+## subClassOf
+RULE { ?a rdfs:subClassOf ?c } WHERE { ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c }
+RULE { ?a rdf:type ?y } WHERE { ?a rdf:type ?x . ?x rdfs:subClassOf ?y }
+
+## subPropertyOf
+RULE { ?a rdfs:subPropertyOf ?c } WHERE { ?a rdfs:subPropertyOf ?b . ?b rdfs:subPropertyOf ?c }
+RULE { ?a ?prop ?o } WHERE { ?a ?subProp ?o . ?subProp rdfs:subPropertyOf ?prop }
+
+## Domain
+RULE { ?a rdf:type ?y } WHERE { ?a ?p ?o . ?p rdfs:domain ?y }
+
+## Range
+RULE { ?a rdf:type ?y } WHERE { ?s ?p ?a . ?p rdfs:range ?y }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:A rdf:type :S .
+
+:S  rdfs:subClassOf :T1 .
+
+:T1 rdfs:subClassOf :T2 .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+
+:S rdfs:subClassOf :T2 .
+:A rdf:type :T1 .
+:A rdf:type :T2 .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:A a :T1,
+        :T2 .
+:S rdfs:subClassOf :T2 .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-rdfs-subproperty-1"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-rdfs-subproperty-1</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>## RDFS (without no axoimatic triples)
+
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+## subClassOf
+RULE { ?a rdfs:subClassOf ?c } WHERE { ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c }
+RULE { ?a rdf:type ?y } WHERE { ?a rdf:type ?x . ?x rdfs:subClassOf ?y }
+
+## subPropertyOf
+RULE { ?a rdfs:subPropertyOf ?c } WHERE { ?a rdfs:subPropertyOf ?b . ?b rdfs:subPropertyOf ?c }
+RULE { ?a ?prop ?o } WHERE { ?a ?subProp ?o . ?subProp rdfs:subPropertyOf ?prop }
+
+## Domain
+RULE { ?a rdf:type ?y } WHERE { ?a ?p ?o . ?p rdfs:domain ?y }
+
+## Range
+RULE { ?a rdf:type ?y } WHERE { ?s ?p ?a . ?p rdfs:range ?y }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt;
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:s :p :o .
+
+:p  rdfs:subPropertyOf :p1 .
+:p1 rdfs:subPropertyOf :p2 .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:p rdfs:subPropertyOf :p2 .
+:s :p1 :o .
+:s :p2 :o .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:p rdfs:subPropertyOf :p2 .
+:s :p1 :o ;
+    :p2 :o .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-rdfs-domain-1"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-rdfs-domain-1</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>## RDFS (without no axoimatic triples)
+
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+## subClassOf
+RULE { ?a rdfs:subClassOf ?c } WHERE { ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c }
+RULE { ?a rdf:type ?y } WHERE { ?a rdf:type ?x . ?x rdfs:subClassOf ?y }
+
+## subPropertyOf
+RULE { ?a rdfs:subPropertyOf ?c } WHERE { ?a rdfs:subPropertyOf ?b . ?b rdfs:subPropertyOf ?c }
+RULE { ?a ?prop ?o } WHERE { ?a ?subProp ?o . ?subProp rdfs:subPropertyOf ?prop }
+
+## Domain
+RULE { ?a rdf:type ?y } WHERE { ?a ?p ?o . ?p rdfs:domain ?y }
+
+## Range
+RULE { ?a rdf:type ?y } WHERE { ?s ?p ?a . ?p rdfs:range ?y }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:p rdfs:domain :T.
+
+:s :p &quot;123&quot; .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:s rdf:type :T .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:s a :T .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-rdfs-domain-2"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-rdfs-domain-2</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>## RDFS (without no axoimatic triples)
+
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+## subClassOf
+RULE { ?a rdfs:subClassOf ?c } WHERE { ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c }
+RULE { ?a rdf:type ?y } WHERE { ?a rdf:type ?x . ?x rdfs:subClassOf ?y }
+
+## subPropertyOf
+RULE { ?a rdfs:subPropertyOf ?c } WHERE { ?a rdfs:subPropertyOf ?b . ?b rdfs:subPropertyOf ?c }
+RULE { ?a ?prop ?o } WHERE { ?a ?subProp ?o . ?subProp rdfs:subPropertyOf ?prop }
+
+## Domain
+RULE { ?a rdf:type ?y } WHERE { ?a ?p ?o . ?p rdfs:domain ?y }
+
+## Range
+RULE { ?a rdf:type ?y } WHERE { ?s ?p ?a . ?p rdfs:range ?y }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:p rdfs:domain :T1 .
+:T1 rdfs:subClassOf :T2 .
+
+:s :p &quot;123&quot; .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:s rdf:type :T1 .
+:s rdf:type :T2 .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:s a :T1,
+        :T2 .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-rdfs-range-1"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-rdfs-range-1</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>## RDFS (without no axoimatic triples)
+
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+## subClassOf
+RULE { ?a rdfs:subClassOf ?c } WHERE { ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c }
+RULE { ?a rdf:type ?y } WHERE { ?a rdf:type ?x . ?x rdfs:subClassOf ?y }
+
+## subPropertyOf
+RULE { ?a rdfs:subPropertyOf ?c } WHERE { ?a rdfs:subPropertyOf ?b . ?b rdfs:subPropertyOf ?c }
+RULE { ?a ?prop ?o } WHERE { ?a ?subProp ?o . ?subProp rdfs:subPropertyOf ?prop }
+
+## Domain
+RULE { ?a rdf:type ?y } WHERE { ?a ?p ?o . ?p rdfs:domain ?y }
+
+## Range
+RULE { ?a rdf:type ?y } WHERE { ?s ?p ?a . ?p rdfs:range ?y }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:p rdfs:range :T.
+
+:s :p :o .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:o rdf:type :T .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:o a :T .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="Eval-rdfs-range-2"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">Eval-rdfs-range-2</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>## RDFS (without no axoimatic triples)
+
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+## subClassOf
+RULE { ?a rdfs:subClassOf ?c } WHERE { ?a rdfs:subClassOf ?b . ?b rdfs:subClassOf ?c }
+RULE { ?a rdf:type ?y } WHERE { ?a rdf:type ?x . ?x rdfs:subClassOf ?y }
+
+## subPropertyOf
+RULE { ?a rdfs:subPropertyOf ?c } WHERE { ?a rdfs:subPropertyOf ?b . ?b rdfs:subPropertyOf ?c }
+RULE { ?a ?prop ?o } WHERE { ?a ?subProp ?o . ?subProp rdfs:subPropertyOf ?prop }
+
+## Domain
+RULE { ?a rdf:type ?y } WHERE { ?a ?p ?o . ?p rdfs:domain ?y }
+
+## Range
+RULE { ?a rdf:type ?y } WHERE { ?s ?p ?a . ?p rdfs:range ?y }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:p rdfs:range :T1 .
+:T1 rdfs:subClassOf :T2 .
+
+:s :p :o .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>PREFIX :      &lt;http://example/&gt;
+PREFIX rdf:   &lt;http://www.w3.org/1999/02/22-rdf-syntax-ns#&gt; 
+PREFIX rdfs:  &lt;http://www.w3.org/2000/01/rdf-schema#&gt;
+
+:o rdf:type :T1 .
+:o rdf:type :T2 .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>:o a :T1,
+        :T2 .</pre></div></div></details>
+</div></section>
+<section class="cat ext">
+<div class="cat-head"><h2>Targeting extension (opt-in, NOT W3C-spec)</h2><span class="cat-count">3 / 3 passed</span><span class="cat-badge ok">all passing</span></div>
+<p class="note">Opt-in extension &mdash; not part of the W3C SHACL 1.2 specification.</p>
+<div class="tbl">
+<details class="row" data-outcome="passed" data-name="targeting-adult-01"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">targeting-adult-01</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX ex: &lt;http://example.org/&gt;
+RULE ex:r FOR ?this IN ex:AdultShape { ?this ex:status ex:adult } WHERE { ?this ex:age ?a }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>@prefix ex: &lt;http://example.org/&gt; .
+ex:Alice a ex:Person ; ex:age 30 .
+ex:Bob a ex:Person ; ex:age 10 .</pre></div><div class="snip snip-src"><span class="snip-label">shapes</span><pre>@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix ex: &lt;http://example.org/&gt; .
+ex:AdultShape a sh:NodeShape ; sh:targetClass ex:Person ;
+  sh:property [ sh:path ex:age ; sh:minCount 1 ; sh:minInclusive 18 ] .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>@prefix ex: &lt;http://example.org/&gt; .
+ex:Alice ex:status ex:adult .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>ex:Alice ex:status ex:adult .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="targeting-conformance-gate-01"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">targeting-conformance-gate-01</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX ex: &lt;http://example.org/&gt;
+RULE ex:r FOR ?e IN ex:EmployeeShape { ?e a ex:Employee } WHERE { ?e ex:worksFor ?c }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>@prefix ex: &lt;http://example.org/&gt; .
+ex:Eve a ex:Person ; ex:worksFor ex:Acme .
+ex:Frank a ex:Person .</pre></div><div class="snip snip-src"><span class="snip-label">shapes</span><pre>@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix ex: &lt;http://example.org/&gt; .
+ex:EmployeeShape a sh:NodeShape ; sh:targetClass ex:Person ;
+  sh:property [ sh:path ex:worksFor ; sh:minCount 1 ] .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>@prefix ex: &lt;http://example.org/&gt; .
+ex:Eve a ex:Employee .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>ex:Eve a ex:Employee .</pre></div></div></details>
+<details class="row" data-outcome="passed" data-name="targeting-inferred-membership-01"><summary class="rowhead"><span class="c-caret" aria-hidden="true"></span><code class="c-name">targeting-inferred-membership-01</code><span class="pill c-pill passed"><span class="dot"></span>passed</span><span class="c-msg"></span></summary><div class="panel"><div class="snip snip-src"><span class="snip-label">ruleset</span><pre>PREFIX ex: &lt;http://example.org/&gt;
+RULE { ?x ex:age 40 } WHERE { ?x ex:bornYear ?y }
+RULE ex:r FOR ?this IN ex:AdultShape { ?this ex:status ex:adult } WHERE { ?this ex:age ?a }</pre></div><div class="snip snip-src"><span class="snip-label">data</span><pre>@prefix ex: &lt;http://example.org/&gt; .
+ex:Dana a ex:Person ; ex:bornYear 1980 .</pre></div><div class="snip snip-src"><span class="snip-label">shapes</span><pre>@prefix sh: &lt;http://www.w3.org/ns/shacl#&gt; .
+@prefix ex: &lt;http://example.org/&gt; .
+ex:AdultShape a sh:NodeShape ; sh:targetClass ex:Person ;
+  sh:property [ sh:path ex:age ; sh:minCount 1 ; sh:minInclusive 18 ] .</pre></div><div class="snip snip-src"><span class="snip-label">expected</span><pre>@prefix ex: &lt;http://example.org/&gt; .
+ex:Dana ex:age 40 .
+ex:Dana ex:status ex:adult .</pre></div><div class="snip snip-inferred"><span class="snip-label">inferred (actual)</span><pre>ex:Dana ex:age 40 ;
+    ex:status ex:adult .</pre></div></div></details>
+</div></section>
+<p id="empty" class="empty" hidden>No tests match your search.</p>
+</main>
+<footer class="foot">Generated by the shacl-rules W3C conformance runner &middot; 2026-07-14</footer>
+<script>
+    (function () {
+      var rows = [].slice.call(document.querySelectorAll('.row'));
+      var sections = [].slice.call(document.querySelectorAll('.cat'));
+      var chips = [].slice.call(document.querySelectorAll('.chip'));
+      var q = document.getElementById('q');
+      var empty = document.getElementById('empty');
+      var state = { q: '', f: 'all' };
+
+      function apply() {
+        var term = state.q.trim().toLowerCase();
+        var any = false;
+        rows.forEach(function (row) {
+          var okF = state.f === 'all' || row.getAttribute('data-outcome') === state.f;
+          var okQ = !term || row.getAttribute('data-name').toLowerCase().indexOf(term) > -1;
+          var vis = okF && okQ;
+          row.hidden = !vis;
+          if (vis) any = true;
+        });
+        sections.forEach(function (sec) {
+          sec.hidden = sec.querySelectorAll('.row:not([hidden])').length === 0;
+        });
+        empty.hidden = any;
+      }
+
+      function setFilter(f) {
+        state.f = f;
+        chips.forEach(function (c) {
+          c.setAttribute('aria-pressed', c.getAttribute('data-filter') === f ? 'true' : 'false');
+        });
+        apply();
+      }
+
+      q.addEventListener('input', function () { state.q = q.value; apply(); });
+      chips.forEach(function (c) {
+        c.addEventListener('click', function () { setFilter(c.getAttribute('data-filter')); });
+      });
+      [].slice.call(document.querySelectorAll('[data-filter-set]')).forEach(function (el) {
+        el.addEventListener('click', function () { setFilter(el.getAttribute('data-filter-set')); });
+      });
+      [].slice.call(document.querySelectorAll('[data-bulk]')).forEach(function (b) {
+        b.addEventListener('click', function () {
+          var open = b.getAttribute('data-bulk') === 'expand';
+          rows.forEach(function (r) {
+            if (r.tagName === 'DETAILS' && !r.hidden) r.open = open;
+          });
+        });
+      });
+
+      var tbtn = document.getElementById('theme');
+      function resolved() {
+        return document.documentElement.getAttribute('data-theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      }
+      function syncTheme() { if (tbtn) tbtn.setAttribute('data-mode', resolved()); }
+      if (tbtn) {
+        syncTheme();
+        tbtn.addEventListener('click', function () {
+          var next = resolved() === 'dark' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          try { localStorage.setItem('srl-theme', next); } catch (e) {}
+          syncTheme();
+        });
+      }
+      apply();
+    })();
+    </script>
+</div></body></html>

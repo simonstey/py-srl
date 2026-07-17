@@ -8,4 +8,4 @@
 :jane rdf:type :Person ;
     :givenName "Jane" ;
     :familyName "Smith" ;
-    :fullName "Dr. Jane Smith" .
+    :explicitFullName "Dr. Jane Smith" .

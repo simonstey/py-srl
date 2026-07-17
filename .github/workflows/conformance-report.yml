@@ -1,0 +1,55 @@
+name: Conformance report
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # upload assets to the release
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # hatch-vcs needs full tag history for the version
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project + dev deps
+        run: uv sync --extra dev
+
+      - name: Generate conformance reports (report-only, never fails the job)
+        working-directory: tests
+        run: |
+          uv run python run_shacl_rules_tests.py \
+            -o report.ttl \
+            --test-suite-path shacl12-test-suite \
+            --include-extensions || true
+
+      - name: Run unit test suite (this step may fail the job)
+        run: uv run pytest -q
+
+      - name: Attach reports to the release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            tests/report.ttl
+            tests/report.md
+            tests/report.html
+
+      - name: Upload reports as artifacts (manual runs)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-reports
+          path: |
+            tests/report.ttl
+            tests/report.md
+            tests/report.html

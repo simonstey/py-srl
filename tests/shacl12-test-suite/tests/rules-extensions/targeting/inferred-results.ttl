@@ -1,0 +1,3 @@
+@prefix ex: <http://example.org/> .
+ex:Dana ex:age 40 .
+ex:Dana ex:status ex:adult .
